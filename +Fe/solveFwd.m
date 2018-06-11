@@ -39,6 +39,9 @@ function u = solveFwd(sol, fe, verbosity)
            fprintf('Solve via ''\\'' ... ');
         end
         u_red = sol.A \ sol.b;
+        if verbosity
+           fprintf('done.\n'); 
+        end
         
         % Construct full solution vector (containing the Dirichlet values).
         if verbosity
@@ -46,16 +49,13 @@ function u = solveFwd(sol, fe, verbosity)
         end
         u = zeros(fe.sizes.DOF, 1);
         u(sol.dirichlet.inner_DOF) = u_red;
-        u(sol.dirichlet.bnd_DOF_bot) = sol.dirichlet.val(1);
-        u(sol.dirichlet.bnd_DOF_top) = sol.dirichlet.val(2);
-        u(sol.dirichlet.bnd_DOF_left) = sol.dirichlet.val(3);
-        u(sol.dirichlet.bnd_DOF_right) = sol.dirichlet.val(4);
+        u(sol.dirichlet.bnd_DOF) = sol.dirichlet.val;
+        if verbosity
+           fprintf('done.\n'); 
+        end
     end
     
     if isfield(sol, 'newmann')
        error('Not supported yet.');
-    end
-    if verbosity
-       fprintf('done.\n'); 
     end
 end
