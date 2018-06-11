@@ -45,6 +45,9 @@ function mesh = initMesh(var, bnd, ref, verbosity)
         otherwise 
             error('Unknown mesh type.');
     end
+    if verbosity
+       fprintf('done.\n'); 
+    end
     mesh.type = var;
     
     % Append edge information.
@@ -52,19 +55,25 @@ function mesh = initMesh(var, bnd, ref, verbosity)
        fprintf('Append edge info ... '); 
     end
     mesh = Mesh.appendElementInfo(mesh);
+    if verbosity
+       fprintf('done.\n'); 
+    end
     
     % Append mapping between information and coordinates.
     if verbosity
        fprintf('Append Coo map ... '); 
     end
     mesh = Mesh.appendMappings(mesh);
+    if verbosity
+       fprintf('done.\n'); 
+    end
     
     % Append boundary information.
     if verbosity
        fprintf('Append BND info ... '); 
     end
-    mesh = Mesh.appendBndInfo(mesh);
     mesh.bnd = bnd;
+    mesh = Mesh.appendBndInfo(mesh);
     if verbosity
        fprintf('done.\n'); 
     end

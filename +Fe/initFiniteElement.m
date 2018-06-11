@@ -42,14 +42,14 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Set up quadrature rule ... '); 
     end
-    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(fe.order);
+    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(fe.order, fe.dim);
     if verbosity
        fprintf('done.\n'); 
     end
 
     % Get affine mappings.
     if verbosity
-       fprintf('Obtaine affine maps ... '); 
+       fprintf('Obtain affine maps ... '); 
     end
     fe.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, num2cell(1:length(mesh.cell2vtx)).');
     if verbosity
@@ -67,7 +67,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     
     % Get DOF mapping.
     if verbosity
-       fprintf('Obtaine DOF maps ... '); 
+       fprintf('Obtain DOF maps ... '); 
     end
     fe.DOF_maps = Fe.getDOFMap(mesh, fe);
     if verbosity
@@ -83,7 +83,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     
     % Get interpolation operator.
     if verbosity
-       fprintf('Obtaine interpolation operator ... '); 
+       fprintf('Obtain interpolation operator ... '); 
     end
     fe.I = Fe.getInterpolation(fe, mesh, point);
     if verbosity

@@ -50,14 +50,16 @@ function [] = plotMesh(mesh, params, debug)
     cell_coo_all = cell2mat(mesh.cell2cord);
     cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
     cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
-    pause_time = 5/n_cells;
     hold on
-    for kk = 1:n_cells
-        patch(cell_coo_x(:,kk), cell_coo_y(:,kk), params(kk));
-        title(sprintf('num cells: %2.d', kk));
-        if debug
+    if debug
+        pause_time = 5/n_cells;
+        for kk = 1:n_cells
+            patch(cell_coo_x(:,kk), cell_coo_y(:,kk), params(kk));
+            title(sprintf('num cells: %2.d', kk));
             pause(pause_time);
         end
+    else
+        patch(cell_coo_x, cell_coo_y, params);
     end
     hold off
     drawnow();
