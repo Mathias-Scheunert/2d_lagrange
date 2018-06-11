@@ -12,6 +12,11 @@ function mesh = appendBndInfo(mesh)
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the boundary
     %            information.
+    %
+    % REMARKS
+    %   Note, that this procedure will only work for grids which doesn't
+    %   contain any cutting areas and which is bordered by a strict
+    %   rectangular shape.
 
     %% Check input.
     
@@ -23,17 +28,13 @@ function mesh = appendBndInfo(mesh)
        
     %% Add bnd edge identifier.
     
-    bnd_bot = cellfun(@(x) [all(x(:,2) == min(mesh.vertices(:,2)))], ...
-        mesh.edge2cord);
-    bnd_top = cellfun(@(x) [all(x(:,2) == max(mesh.vertices(:,2)))], ...
-        mesh.edge2cord);
-    bnd_left = cellfun(@(x) [all(x(:,1) == min(mesh.vertices(:,1)))], ...
-        mesh.edge2cord);
-    bnd_right = cellfun(@(x) [all(x(:,1) == max(mesh.vertices(:,1)))], ...
-        mesh.edge2cord);
+    bnd_bot = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
+    bnd_top = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
+    bnd_left = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
+    bnd_right = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);
     mesh.bnd_edge = bnd_bot | bnd_top | bnd_left | bnd_right;
-    mesh.bnd_bot = bnd_bot;
-    mesh.bnd_top = bnd_top;
-    mesh.bnd_left = bnd_left;
-    mesh.bnd_right = bnd_right;
+    mesh.bnd_edge_bot = bnd_bot;
+    mesh.bnd_edge_top = bnd_top;
+    mesh.bnd_edge_left = bnd_left;
+    mesh.bnd_edge_right = bnd_right;
 end
