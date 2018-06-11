@@ -13,6 +13,8 @@ function S = assembleStiff(fe, param)
     % OUTPUT PARAMETER
     %   S ... Matrix, representing the stiffness part of the variational
     %         formulation.
+    %
+    % TODO: implement tensor-based handling (e.g. from toolbox).
     
     %% Check input.
     
@@ -28,27 +30,25 @@ function S = assembleStiff(fe, param)
     n_DOF_glob = fe.sizes.DOF;
     n_DOF_loc = fe.sizes.DOF_loc;
     n_quad_point = fe.sizes.quad_point;
+    n_entry_loc = n_DOF_loc^2;
     
     % Extract quadrature info from struct.
     gauss_cords = fe.quad.nodes;
-    gauss_weights = fe.quad.weights;
+    gauss_weights = num2cell(fe.quad.weights);
     
-    % Initialize global stiffness matrix.
-    S = zeros(n_DOF_glob, n_DOF_glob);
+    % Initialize index and value vector for sparse matrix assembling.
+    [i, j, s] = deal(zeros(n_cell * n_entry_loc, 1));
     
     % Set up recurring quantity.
-    grad_quad_eval_loc = arrayfun(@(x) ...
-            {fe.base.grad_Phi(gauss_cords(x,1), gauss_cords(x,2))}, ...
-            (1:n_quad_point).');        
+    % Evaluate gradients of basis functions for all Gauss quadrature nodes 
+    % on the reference simplex.
+    grad_quad_eval_loc = arrayfun(@(x,y) ...
+            {fe.base.grad_Phi(x, y)}, gauss_cords(:,1), gauss_cords(:,2));      
     term2 = cell2mat(grad_quad_eval_loc);
     
     % Iterate over all simplices.
     for ii = 1:n_cell
-        % Get basis function gradients for all quadrature nodes referred to
-        % the reference simplex by incorporating the inverse mapping.
-%         % Slow variant.
-%         grad_quad_eval = cellfun(@(x) {fe.maps{ii}.BinvT * x},  grad_quad_eval_loc);
-        % Fast variant.
+        % Incorporate inverse of mapping 
         term1 = kron(eye(n_quad_point, n_quad_point), fe.maps{ii}.BinvT);
         prod = term1 * term2;
         grad_quad_eval = mat2cell(prod, 2 + zeros(n_quad_point, 1), n_DOF_loc);
@@ -60,23 +60,27 @@ function S = assembleStiff(fe, param)
         % only one step.
         % (note: base_quad_eval is defined as row vector of gradients)
         quad_kern = cellfun(@(x, y) {y * (x.' * x)}, ...
-            grad_quad_eval, num2cell(gauss_weights));
+            grad_quad_eval, gauss_weights);
         
         % Combine constant local cell parameter with the integral over the
         % current simplex (quadrature summation).
         % As integral is referred to the reference simplex, the
         % Jacobi-determinat has to be incorporated.
-        A_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
+        s_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
             sum(cat(3, quad_kern{:}), 3);
-        
-        % Map entries of local to entries of the global stiffness matrix.
-        % Therefore, local entries referring to the same global entry are
-        % summed up.
+               
+        % Fill up index and value vectors.
         cur_DOF_map = fe.DOF_maps.cell2DOF{ii};
-        S(cur_DOF_map, cur_DOF_map) = S(cur_DOF_map, cur_DOF_map) + A_loc;
+        [i_loc, j_loc] = ndgrid(cur_DOF_map);
+        glob_idx_start = ((ii-1) * n_entry_loc) + 1;
+        glob_idx_end = glob_idx_start + n_entry_loc - 1;
+        i(glob_idx_start:glob_idx_end) = i_loc(:);
+        j(glob_idx_start:glob_idx_end) = j_loc(:);
+        s(glob_idx_start:glob_idx_end) = s_loc(:);
     end
     
-    % Convert to sparse matrix.
-    % TODO: implement tensor-based handling (e.g. from toolbox).
-    S = sparse(S);
+    % Create sparse matrix from index and value vectors.
+    % Note, values belonging to the same index pair are automatically
+    % summed up by sparse().
+    S = sparse(i, j, s, n_DOF_glob, n_DOF_glob);
 end

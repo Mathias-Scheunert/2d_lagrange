@@ -13,6 +13,10 @@ function M = assembleMass(fe, param)
     % OUTPUT PARAMETER
     %   M ... Matrix, representing the mass part of the variational
     %         formulation.
+    %
+    % TODO: implement tensor-based handling (e.g. from toolbox).
+    
+    warning('Function not tested, yet.');
     
     %% Check input.
     
@@ -26,26 +30,24 @@ function M = assembleMass(fe, param)
     % Get common sizes.
     n_cell = fe.sizes.cell;
     n_DOF_glob = fe.sizes.DOF;
-    n_quad_point = fe.sizes.quad_point;
+    n_entry_loc = n_DOF_loc^2;
+    
     
     % Extract quadrature info from struct.
     gauss_cords = fe.quad.nodes;
-    gauss_weights = fe.quad.weights;
+    gauss_weights = num2cell(fe.quad.weights);
+        
+    % Initialize index and value vector for sparse matrix assembling.
+    [i, j, m] = deal(zeros(n_cell * n_entry_loc, 1));
     
-    % Initialize global stiffness matrix.
-    M = zeros(n_DOF_glob, n_DOF_glob);
+    % Set up recurring quantity.
+    % Get basis functions for all quadrature nodes referred to
+    % the reference simplex.
+    quad_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
+        gauss_cords(:,1), gauss_cords(:,2)).';      
         
     % Iterate over all simplices.
-    for ii = 1:n_cell
-        % TODO: speed up implementation (see assembleStiff.m)
-
-        % Get basis functions for all quadrature nodes referred to
-        % the reference simplex by incorporating the inverse mapping.
-        coord_map = fe.maps{ii}.BinvT.' * gauss_cords.';
-        quad_eval = arrayfun(@(x) ...
-            {fe.base.Phi(coord_map(1,x), coord_map(2,x))}, ...
-                (1:n_quad_point).');
-            
+    for ii = 1:n_cell                   
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions by itselfe
         % using the outer (tensor / dyadic) product the 
@@ -53,22 +55,27 @@ function M = assembleMass(fe, param)
         % only one step.
         % (note: base_quad_eval is defined as row vector of gradients)
         quad_kern = cellfun(@(x, y) {y * (x.' * x)}, ...
-            quad_eval, num2cell(gauss_weights));
+            quad_eval, gauss_weights);
         
         % Combine constant local cell parameter with the integral over the
         % current simplex (quadrature summation).
         % As integral is referred to the reference simplex, the
         % Jacobi-determinat has to be incorporated.
-        A_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
+        m_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
             sum(cat(3, quad_kern{:}), 3);
-        
-        % Map entries of local to entries of the global stiffness matrix.
-        % Therefore, local entries referring to the same global entry are
-        % summed up.
+                  
+        % Fill up index and value vectors.
         cur_DOF_map = fe.DOF_maps.cell2DOF{ii};
-        M(cur_DOF_map, cur_DOF_map) = S(cur_DOF_map, cur_DOF_map) + A_loc;
+        [i_loc, j_loc] = ndgrid(cur_DOF_map);
+        glob_idx_start = ((ii-1) * n_entry_loc) + 1;
+        glob_idx_end = glob_idx_start + n_entry_loc - 1;
+        i(glob_idx_start:glob_idx_end) = i_loc(:);
+        j(glob_idx_start:glob_idx_end) = j_loc(:);
+        m(glob_idx_start:glob_idx_end) = m_loc(:);
     end
     
-    % Convert to sparse matrix.
-    M = sparse(M);
+    % Create sparse matrix from index and value vectors.
+    % Note, values belonging to the same index pair are automatically
+    % summed up by sparse().
+    M = sparse(i, j, m, n_DOF_glob, n_DOF_glob);
 end
