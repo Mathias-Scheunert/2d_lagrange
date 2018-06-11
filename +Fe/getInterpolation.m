@@ -53,9 +53,9 @@ function I = getInterpolation(fe, mesh, point)
     for ii = 1:n_cell_idx_fail
         % Use 'own' functionality to obtain cell index for corrupt points.
         % Get point coordinates w.r.t. the reference simplex.
-        maps_fail = cellfun(@(x) ...
-            {Mesh.getAffineMap(x, mesh, point(cell_idx_fail(ii),:))}, ...
-            num2cell(1:fe.sizes.cell).');
+        maps_fail = arrayfun(@(x) ...
+        {(Mesh.getAffineMap(x, mesh, point(cell_idx_fail(ii),:)))}, ...
+        (1:fe.sizes.cell).');
 
         % Check if point(s) is/are inside simplex.
         tol = pick(2, 0, eps * 1e1);
@@ -89,7 +89,6 @@ function I = getInterpolation(fe, mesh, point)
         cur_y_ref = maps{kk}.xy_ref(2);
         cur_base(:, kk) = fe.base.Phi(cur_x_ref, cur_y_ref).';
     end
-    s = cur_base(:);
     
     % Set up interpolation matrix for the linear combination of respective 
     % basis functions.
@@ -97,18 +96,6 @@ function I = getInterpolation(fe, mesh, point)
     n_DOF_loc = fe.sizes.DOF_loc;
     i = kron((1:n_point).', ones(n_DOF_loc, 1));
     j = cells2DOF(:);
+    s = cur_base(:);
     I = sparse(i, j, s, n_point, n_DOF);
 end
-
-%% Debugging.
-%{
-for ii = 1:size(point, 1)
-    Plot.plotMesh(mesh, double(cells_fit(:, ii)));
-    hold on
-    plot(point(ii, 1), point(ii, 2), '+r', ...
-        'MarkerSize', 8, 'LineWidth', 2);
-    hold off
-    pause(0.5);
-    close(gcf);
-end
-%}
