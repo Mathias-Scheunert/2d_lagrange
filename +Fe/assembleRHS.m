@@ -60,7 +60,7 @@ function b = assembleRHS(fe, mesh, TX)
             
         % Get reference/source function for all quadrature nodes in simplex
         % w.r.t. to the global coordinate system.
-        coord_ref = fe.maps{ii}.B * gauss_cords.' + fe.maps{ii}.b;
+        coord_ref = bsxfun(@plus, fe.maps{ii}.B * gauss_cords.', fe.maps{ii}.b);
         fun_eval = arrayfun(@(x, y) {TX.ref_sol.f(x, y)}, ...
                 coord_ref(1,:), coord_ref(2,:));
             

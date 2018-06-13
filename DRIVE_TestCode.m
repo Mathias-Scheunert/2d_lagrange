@@ -12,7 +12,7 @@
 % If required, update path using startup.m from the submodule toolbox.
 path_req = {'generic'};
 path_req = cellfun(@(x) {[pwd, '/', x]}, path_req);
-path_cur = strsplit(path, pathsep);
+path_cur = regexp(path, regexptranslate('escape', ':'), 'split');
 path_missing = ~any(cell2mat(cellfun(@(x) strcmp(x, path_req), path_cur, ...
         'UniformOutput', false).'));
 if any(path_missing)

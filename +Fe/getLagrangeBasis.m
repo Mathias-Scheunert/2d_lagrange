@@ -58,7 +58,7 @@ function base = getLagrangeBasis(order)
             Phi_var = @(x_hat, y_hat) ...
                 [1; x_hat; y_hat];
             base.Phi = @(x_hat, y_hat) ...
-                sum(base.coef .* Phi_var(x_hat, y_hat));
+                sum(bsxfun(@times, base.coef, Phi_var(x_hat, y_hat)));
 
             % Get gradient from symbolic derivative.
             syms poly1(x_hat, y_hat, a_0, a_1, a_2)
@@ -99,7 +99,7 @@ function base = getLagrangeBasis(order)
             Phi_var = @(x_hat, y_hat) ...
                 [1; x_hat; y_hat; x_hat^2; x_hat * y_hat; y_hat^2];
             base.Phi = @(x_hat, y_hat) ...
-                sum(base.coef .* Phi_var(x_hat, y_hat));
+                sum(bsxfun(@times, base.coef, Phi_var(x_hat, y_hat)));
 
             % Get gradient from symbolic derivative.
             syms poly2(x_hat, y_hat, a_0, a_1, a_2, a_3, a_4, a_5)

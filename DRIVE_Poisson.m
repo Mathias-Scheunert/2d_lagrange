@@ -18,7 +18,7 @@
 % If required, update path using startup.m from the submodule toolbox.
 path_req = {'generic'};
 path_req = cellfun(@(x) {[pwd, '/', x]}, path_req);
-path_cur = strsplit(path, pathsep);
+path_cur = regexp(path, regexptranslate('escape', ':'), 'split');
 path_missing = ~any(cell2mat(cellfun(@(x) strcmp(x, path_req), path_cur, ...
         'UniformOutput', false).'));
 if any(path_missing)
@@ -97,7 +97,7 @@ if verbosity
    else
        fprintf(sprintf('- use inhomogeneous "%s" boundary conditions\n', bnd.type));
    end
-   fprintf(sprintf('- use oder "%d"-order Lagrange elements\n', order));
+   fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
 if verbosity
    fprintf('... FE-FWP set up.\n \n'); 
