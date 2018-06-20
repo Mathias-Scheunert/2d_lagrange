@@ -30,7 +30,6 @@ function b = assembleRHS(fe, mesh, TX)
     % elements/cells is required, whereas the product of the basis
     % functions with a function (describing the source) forms the integral
     % kernel.
-    % Iterate over all simplices.
     
     % Get common sizes.
     n_cell = fe.sizes.cell;
@@ -50,14 +49,9 @@ function b = assembleRHS(fe, mesh, TX)
     basis_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
         gauss_cords(:,1), gauss_cords(:,2)).';
         
-    % Loop over cells.
+    % Iterate over all simplices.
     for ii = 1:n_cell
-%         % Get basis functions for all quadrature nodes referred to
-%         % the reference simplex by incorporating the inverse mapping.
-%         coord_map = fe.maps{ii}.BinvT.' * gauss_cords.';
-%         basis_eval = arrayfun(@(x, y) {fe.base.Phi(x, y)}, ...
-%                 coord_map(1,:), coord_map(2,:));
-            
+        
         % Get reference/source function for all quadrature nodes in simplex
         % w.r.t. to the global coordinate system.
         coord_ref = bsxfun(@plus, fe.maps{ii}.B * gauss_cords.', fe.maps{ii}.b);

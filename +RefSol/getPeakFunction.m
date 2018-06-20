@@ -1,5 +1,5 @@
 function Peak = getPeakFunction(eps_peak, pos)
-    % Get information for 2D peak function simulating Dirac.
+    % Get information for 2D peak function which simulates Dirac.
     %
     % SYNTAX
     %
@@ -30,11 +30,11 @@ function Peak = getPeakFunction(eps_peak, pos)
     % Arbitrarily modify shape of the peak.
     % The peak should comprise a somehow small area and have the desired
     % amplitude.
-    % TODO: automatically determine scaling factors.
+    % TODO: automatically determine scaling factors w.r.t. the cell sizes.
     scale_C = eps_peak * 1e-4;
     scale_f = scale_C ^ 1.65;
     
-    % Assuming a uniform covariance matrix.
+    % Define function (assuming a uniform covariance matrix).
     cord = @(x, y) [x - pos(1); y - pos(2)];
     C = scale_C * eye(2, 2);
     CI = 1/scale_C * eye(2, 2);

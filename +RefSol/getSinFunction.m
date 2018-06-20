@@ -1,7 +1,7 @@
 function Sin = getSinFunction()
-    % Get predefined sin-function information.
+    % Get information for 2D sin and polynomial function.
     %
-    % Provides relevant information of an analytic sin-function 
+    % Provides relevant information of an analytic sin-function:
     %   f(x,y) = −10x² + 10y² + 4sin(xy) − 2x + x⁴
     %
     % SYNTAX
@@ -11,7 +11,7 @@ function Sin = getSinFunction()
     %   Sin ... Struct, containing function handles of the sin function as 
     %           well as its Jacobian and Hessian matrix.
     
-    %% Define sin-fuction.
+    %% Define fuction.
 
     Sin.f = @(X, Y) -10 * X .^ 2 + 10 * Y .^ 2 + ...
         4 * sin(X .* Y) - 2 * X + X.^ 4;
