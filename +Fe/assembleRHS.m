@@ -39,7 +39,7 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     end
     
     switch TX.type
-        case {'homogeneous', 'point_approx'}
+        case {'reference', 'point_approx'}
             getRHS = @getFunctionRHS;
             
         case 'point_exact'

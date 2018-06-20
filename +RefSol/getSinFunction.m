@@ -14,7 +14,7 @@ function sin_fun = getSinFunction()
     %% Define fuction.
 
     sin_fun.f = @(X, Y) -10 * X .^ 2 + 10 * Y .^ 2 + ...
-        4 * sin_fun(X .* Y) - 2 * X + X.^ 4;
+        4 * sin(X .* Y) - 2 * X + X.^ 4;
 
     %% Define derivatives.
 
@@ -26,13 +26,13 @@ function sin_fun = getSinFunction()
     sin_fun.J = @(X, Y) [Jx(X, Y), Jy(X, Y)];
 
     % Define Hessian terms.
-    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin_fun(X .* Y) + 12 * X .^ 2; 
-    Hxy = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin_fun(X .* Y);
-    Hyx = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin_fun(X .* Y);
-    Hyy = @(X, Y) 20 - 4 * X .^ 2 .* sin_fun(X .* Y);
+    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin(X .* Y) + 12 * X .^ 2; 
+    Hxy = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
+    Hyx = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
+    Hyy = @(X, Y) 20 - 4 * X .^ 2 .* sin(X .* Y);
 
     % Summarize Hessian matrix and -Laplace.
     sin_fun.H = @(X, Y) [Hxx(X, Y), Hxy(X, Y); ...
-                     Hyx(X, Y), Hyy(X, Y)];
+                         Hyx(X, Y), Hyy(X, Y)];
     sin_fun.L = @(X, Y) -(Hxx(X, Y) + Hyy(X, Y));
 end
