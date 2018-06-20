@@ -52,16 +52,24 @@ RX = pick(1, ...
 RX = scale * RX;
 
 % Define source point and strength.
-[Tx, Txp, Txh] = deal(struct());
-TXp.type = 'point';
+[TXp, TXd, TXq, TXh] = deal(struct());
+TXp.type = 'point_exact';
 TXp.coo = scale * pick(2, [.1, .3], [0, 0]);
-TXp.val = 1; % discrete    Poisson problem
-TXp.ref_sol = RefSol.getPeakFunction(TXp.val, TXp.coo);
+TXp.val = 1;                  % discrete    Poisson problem (pole)
+TXp.ref_sol = RefSol.getPeakFunction(TXp.val, TXp.coo, 1e-5);
+TXd.type = 'point_exact';
+TXd.coo = scale * pick(2, [.1, .3; -0.2, -0.2], [-0.5, -0.5; 0.5,  0.5]);             
+TXd.val = [1, -1];            % discrete    Poisson problem (dipole)
+TXd.ref_sol = RefSol.getPeakFunction(TXd.val, TXd.coo, 1e-5);
+TXq.type = 'point_approx';
+TXq.coo = scale * [0.5, 0.5; -0.5, -0.5; -0.5, 0.5; 0.5, -0.5];
+TXq.val = [1, 0.5, -1, -0.5]; % discrete    Poisson problem (quadrupole)
+TXq.ref_sol = RefSol.getPeakFunction(TXq.val, TXq.coo, 1e-5);
 TXh.type = 'reference';
-TXh.val = 1; % homogeneous Poisson problem
+TXh.val = 1;                  % homogeneous Poisson problem
 TXh.ref_sol = RefSol.getConstFunction(TXh.val);
-%
-TX = pick(1, TXp, TXh);
+%              1    2    3    4
+TX = pick(2, TXp, TXd, TXq, TXh);
 
 % Define boundary conditions.
 % ([in]homogeneous Dirichlet conditions,pequal for all four sides)
@@ -82,7 +90,7 @@ y = scale * [-1, 1];
 mesh_type = pick(2, 'rhomb', 'cube');
 
 % Set number of grid refinements.
-ref_steps = 4;
+ref_steps = 3;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);

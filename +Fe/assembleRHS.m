@@ -38,8 +38,94 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
        fprintf('Assemble rhs ... '); 
     end
     
-    % The assembling of the rhs vector follows the same procedure as
-    % assembling the mass matrix.
+    switch TX.type
+        case {'homogeneous', 'point_approx'}
+            getRHS = @getFunctionRHS;
+            
+        case 'point_exact'
+            getRHS = @getDistributionRHS;
+            
+        otherwise
+            error('Unknown soure type.');
+    end
+    
+    b = getRHS(fe, mesh, TX);
+    
+    if verbosity
+       fprintf('done.\n'); 
+    end
+end
+
+function b = getDistributionRHS(fe, mesh, TX)
+    % The assembling of the rhs vector for a distribution rhs (Dirac) 
+    % follows the same procedure as assembling the interpolation operator.
+    % I.e. the evaluation of basisfunctions at the source location whereas
+    % the source strengh acts as scaling.
+
+    % Get common sizes.
+    n_point = size(TX.coo, 1);
+    
+    % Try to identify cells belonging to TX.pos by matlab builtin.
+    cell_idx = tsearchn(mesh.vertices, mesh.cell2vtx, TX.coo);
+    cell_idx_fail = isnan(cell_idx);
+    cell_idx_fail = find(cell_idx_fail);
+    n_cell_idx_fail = length(cell_idx_fail);
+    if n_cell_idx_fail ~= 0
+        warning('tsearchn failed to identify cells for some RX points.');
+    end
+   
+    for ii = 1:n_cell_idx_fail
+        % Use 'own' functionality to obtain cell index for corrupt points.
+        % Get point coordinates w.r.t. the reference simplex.
+        maps_fail = arrayfun(@(x) ...
+        {(Mesh.getAffineMap(x, mesh, TX(cell_idx_fail(ii),:)))}, ...
+        (1:fe.sizes.cell).');
+
+        % Check if point(s) is/are inside simplex.
+        tol = pick(2, 0, eps * 1e1);
+        cells_fit = cell2mat(cellfun(@(x) {(...
+            all(x.xy_ref > -tol, 2) & ...
+            all(x.xy_ref <= 1 + tol, 2) & ...
+            (sum(x.xy_ref, 2) - 1 < tol)).'}, ...
+            maps_fail));
+    
+        % Obtain cell indices w.r.t to each TX point.
+        % (For multiple hits just take the first cell)
+        cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
+        if isempty(cell_idx(cell_idx_fail(ii)))
+            error('No cell for observation point could be found.');
+        end
+    end
+    
+    % Get DOF index for respective cells.
+    cell_idx = num2cell(cell_idx);
+    cells2DOF = cell2mat(cellfun(@(x) {fe.DOF_maps.cell2DOF{x}.'}, cell_idx)).';
+    
+    % Get affine maps for all found cells w.r.t. the respective points.
+    maps = cellfun(@(x, y) {Mesh.getAffineMap(x, mesh, y)}, ...
+        cell_idx, mat2cell(TX.coo, ones(n_point, 1), 2));
+    
+    % Evaluate basis functions at TX point(s) and scale it.
+    cur_base = zeros(fe.sizes.DOF_loc, n_point);
+    for kk = 1:n_point
+        cur_x_ref = maps{kk}.xy_ref(1);
+        cur_y_ref = maps{kk}.xy_ref(2);
+        cur_base(:, kk) = TX.val(kk) * fe.base.Phi(cur_x_ref, cur_y_ref).';
+    end
+    
+    % Set up rhs vector for the linear combination of respective 
+    % basis functions.
+    n_DOF = fe.sizes.DOF;
+    n_DOF_loc = fe.sizes.DOF_loc;
+    i = cells2DOF(:);
+    j = ones(n_point * n_DOF_loc, 1);
+    s = cur_base(:);
+    b = sparse(i, j, s, n_DOF, 1);
+end
+
+function b = getFunctionRHS(fe, mesh, TX)
+    % The assembling of the rhs vector for a function-like rhs follows the 
+    % same procedure as assembling the mass matrix.
     % I.e. the numerical evaluation of an integral over the single
     % elements/cells is required, whereas the product of the basis
     % functions with a function (describing the source) forms the integral
@@ -92,8 +178,4 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     
     % Create sparse rhs vector.
     b = sparse(i, 1, s, n_DOF_glob, 1);
-    
-    if verbosity
-       fprintf('done.\n'); 
-    end
 end
