@@ -103,9 +103,6 @@ end
 for cur_ref = ref_steps
     
     mesh = Mesh.initMesh(mesh_type, [x, y], cur_ref, verbosity);
-    if verbosity
-       fprintf('... Mesh struct initialized.\n \n'); 
-    end
 
     %% Set up Parameter.
 
@@ -115,9 +112,6 @@ for cur_ref = ref_steps
     %% Set up FE structure.
 
     fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
-    if verbosity
-       fprintf('... FE struct initialized.\n \n'); 
-    end
 
     %% Set up reference solution quantities.
 
@@ -132,31 +126,14 @@ for cur_ref = ref_steps
 
     % Set up system matrix.
     % (for Poisson/Laplace, this only comprises the stiffness matrix)
-    if verbosity
-       fprintf('Assemble stiffness matrix ... '); 
-    end
-    sol.A = Fe.assembleStiff(fe, param);
-    if verbosity
-       fprintf('done.\n'); 
-    end
-
+    sol.A = Fe.assembleStiff(fe, param, verbosity);
+    
     % Set up rhs vector.
-    if verbosity
-       fprintf('Assemble rhs ... '); 
-    end
-    sol.b = Fe.assembleRHS(fe, mesh, TX);
-    if verbosity
-       fprintf('done.\n'); 
-    end
+    sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
     % Handle boundary conditions.
-    if verbosity
-       fprintf('Incorporate Dirichlet BC ... '); 
-    end
-    [sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd);
-    if verbosity
-       fprintf('done.\n'); 
-    end
+    [sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd, verbosity);
+
     if verbosity
        fprintf('... Linear system and BC set up.\n \n'); 
     end
@@ -165,9 +142,6 @@ for cur_ref = ref_steps
 
     % Get solution at DOF.
     u = Fe.solveFwd(sol, fe, verbosity);
-    if verbosity
-       fprintf('... FWP solved.\n \n'); 
-    end
 
     %% Plot solution.
 
@@ -240,10 +214,6 @@ if plotting
         ylim([ylim_min, ylim_max]);
         ylabel('abs. error');
         xlabel('profile length [m]');
-        
-    if verbosity
-       fprintf('... Solution visualized.\n'); 
-    end
 end
 
 if debug

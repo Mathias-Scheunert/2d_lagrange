@@ -1,8 +1,8 @@
-function sol = treatNeumann(fe, mesh, sol, bnd)
+function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     % Adapts the FE linear system to handle Neumann boundary conditions.
     %
     % SYNTAX
-    %   fe = treatNeumann(fe, mesh, sol, bnd)
+    %   fe = treatNeumann(fe, mesh, sol, bnd[, verbosity])
     %
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
@@ -13,6 +13,10 @@ function sol = treatNeumann(fe, mesh, sol, bnd)
     %            problem to be solved numerically, i.e. rhs vector, system 
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
+    %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if current status should be
+    %                 printed.
     %
     % OUTPUT PARAMETER
     %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
@@ -34,6 +38,12 @@ function sol = treatNeumann(fe, mesh, sol, bnd)
         'bnd - struct, containing the boundary condition information, expected.');
     assert(strcmp(bnd.type, 'dirichlet'), ...
         'bnd.type - only handling of Dirichlet values are supported here.');
+    if nargin < 5
+        verbosity = false;
+    else
+        assert(islogical(verbosity), ...
+            'verbosity - logical, denoting if status should be printed, expected');
+    end
         
     % Check for homogeneous N-BC.
     if all(bnd.val ~= 0)
@@ -46,10 +56,18 @@ function sol = treatNeumann(fe, mesh, sol, bnd)
     % TODO: implement further.
     
     %% Obtain all DOF, belonging to the boundaries.
+
+    if verbosity
+       fprintf('Incorporate Neumann BC ... '); 
+    end
     
     if isfield(bnd, 'bndFOF')
         bndDOF = bnd.bndDOF;
     else
         bndDOF = Fe.getBndDOF(fe, mesh);
+    end
+    
+    if verbosity
+       fprintf('done.\n'); 
     end
 end

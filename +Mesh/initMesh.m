@@ -85,7 +85,8 @@ function mesh = initMesh(var, bnd, ref, verbosity)
     end
     mesh = Mesh.refineMesh(mesh, ref);
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
+       fprintf('... Mesh struct initialized.\n \n'); 
     end
 end
 

@@ -106,9 +106,6 @@ end
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, [x, y], ref_steps, verbosity);
-if verbosity
-   fprintf('... Mesh struct initialized.\n \n'); 
-end
 
 %% Set up Parameter.
 
@@ -140,39 +137,18 @@ param(cell_dist) = dist;
 %% Set up FE structure.
 
 fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
-if verbosity
-   fprintf('... FE struct initialized.\n \n'); 
-end
 
 %% Set up FEM linear System.
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-if verbosity
-   fprintf('Assemble stiffness matrix ... '); 
-end
-sol.A = Fe.assembleStiff(fe, param);
-if verbosity
-   fprintf('done.\n'); 
-end
+sol.A = Fe.assembleStiff(fe, param, verbosity);
 
 % Set up rhs vector.
-if verbosity
-   fprintf('Assemble rhs ... '); 
-end
-sol.b = Fe.assembleRHS(fe, mesh, TX);
-if verbosity
-   fprintf('done.\n'); 
-end
+sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
 % Handle boundary conditions.
-if verbosity
-   fprintf('Incorporate Dirichlet BC ... '); 
-end
-[sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd);
-if verbosity
-   fprintf('done.\n'); 
-end
+[sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd, verbosity);
 if verbosity
    fprintf('... Linear system and BC set up.\n \n'); 
 end
@@ -181,9 +157,6 @@ end
 
 % Get solution at DOF.
 u = Fe.solveFwd(sol, fe, verbosity);
-if verbosity
-   fprintf('... FWP solved.\n \n'); 
-end
 
 %% Plot solution.
 
@@ -196,9 +169,6 @@ phi = fe.I * u;
 hold on
     plot3(RX(:,1), RX(:,2), phi, 'r', 'LineWidth', 2);
 hold off
-if verbosity
-   fprintf('... Solution visualized.\n'); 
-end
 if debug
     profile viewer
 end

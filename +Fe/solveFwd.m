@@ -51,11 +51,14 @@ function u = solveFwd(sol, fe, verbosity)
         u(sol.dirichlet.inner_DOF) = u_red;
         u(sol.dirichlet.bnd_DOF) = sol.dirichlet.val;
         if verbosity
-           fprintf('done.\n'); 
+           fprintf('done.\n');
         end
     end
     
     if isfield(sol, 'newmann')
        error('Not supported yet.');
+    end
+    if verbosity
+        fprintf('... FWP solved.\n \n');
     end
 end

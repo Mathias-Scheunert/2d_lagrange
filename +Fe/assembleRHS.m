@@ -1,14 +1,18 @@
-function b = assembleRHS(fe, mesh, TX)
+function b = assembleRHS(fe, mesh, TX, verbosity)
     % Assembles the rhs vector for different source types.
     %
     % SYNTAX
-    %   b = assembleRHS(fe, mesh, TX)
+    %   b = assembleRHS(fe, mesh, TX[, verbosity])
     %
     % INPUT PARAMETER
     %   fe ... Struct, including all information to set up Lagrange FE.
     %   mesh  ... Struct, containing mesh information, i.e. coordinates
     %             of vertices and its relation to the triangles and edges.
-    %   TX ... Struct, containing the source information. 
+    %   TX ... Struct, containing the source information.
+    %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if current status should be
+    %                 printed.
     %
     % OUTPUT PARAMETER
     %   b ... Vector, representing the given source w.r.t. the DOF.
@@ -21,8 +25,18 @@ function b = assembleRHS(fe, mesh, TX)
         'mesh - appended struct, containing cell2cord info, expected.');
     assert(isstruct(TX) && all(isfield(TX, {'ref_sol'})), ...
         'TX - struct, including source information, expected.');
+    if nargin < 4
+        verbosity = false;
+    else
+        assert(islogical(verbosity), ...
+            'verbosity - logical, denoting if status should be printed, expected');
+    end
     
     %% Assemble rhs vector.
+
+    if verbosity
+       fprintf('Assemble rhs ... '); 
+    end
     
     % The assembling of the rhs vector follows the same procedure as
     % assembling the mass matrix.
@@ -78,4 +92,8 @@ function b = assembleRHS(fe, mesh, TX)
     
     % Create sparse rhs vector.
     b = sparse(i, 1, s, n_DOF_glob, 1);
+    
+    if verbosity
+       fprintf('done.\n'); 
+    end
 end

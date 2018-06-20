@@ -87,6 +87,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     end
     fe.I = Fe.getInterpolation(fe, mesh, point);
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
+       fprintf('... FE struct initialized.\n \n');
     end
 end

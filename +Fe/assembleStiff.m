@@ -1,18 +1,22 @@
-function S = assembleStiff(fe, param)
+function S = assembleStiff(fe, param, verbosity)
     % Assembles the sparse stiffness matrix.
     %
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   S = assembleStiff(fe, param)
+    %   S = assembleStiff(fe, param[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
     %   param ... Vector, defining the cell piece-wise constant parameter.
     %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if current status should be
+    %                 printed.
+    %
     % OUTPUT PARAMETER
-    %   S ... Matrix, representing the stiffness part of the variational
-    %         formulation.
+    %   S ... Matrix, representing the stiffness part of the
+    %         variational formulation.
     %
     % TODO: implement tensor-based handling (e.g. from toolbox).
     
@@ -22,8 +26,18 @@ function S = assembleStiff(fe, param)
         'fe - struct, including Lagrange reference element info , expected.');
     assert(length(param) == fe.sizes.cell, ...
         'params - vector with length equal to the number of mesh cells expected.')
+    if nargin < 3
+        verbosity = false;
+    else
+        assert(islogical(verbosity), ...
+            'verbosity - logical, denoting if status should be printed, expected');
+    end
 
     %% Assemble stiffness matrix.
+
+    if verbosity
+       fprintf('Assemble stiffness matrix ... '); 
+    end
     
     % Get common sizes.
     n_cell = fe.sizes.cell;
@@ -83,4 +97,8 @@ function S = assembleStiff(fe, param)
     % Note, values belonging to the same index pair are automatically
     % summed up by sparse().
     S = sparse(i, j, s, n_DOF_glob, n_DOF_glob);
+    
+    if verbosity
+       fprintf('done.\n'); 
+    end
 end
