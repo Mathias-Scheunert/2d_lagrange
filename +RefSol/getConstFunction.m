@@ -1,4 +1,4 @@
-function Const = getConstFunction(val)
+function const_fun = getConstFunction(val)
     % Get information for constant "function".
     %
     % This function mainly aims to mimic the structure of the other, more
@@ -6,14 +6,14 @@ function Const = getConstFunction(val)
     %
     % SYNTAX
     %
-    %   Const = getConstFunction(val)
+    %   const_fun = getConstFunction(val)
     %
     % INPUT PARAMETER
     %   val ... Scalar, denoting the amplitude.
     %
     % OUTPUT PARAMETER
     %
-    %   Const ... Struct, containing function handle.
+    %   const_fun ... Struct, containing function handle.
     
     %% Check input
     
@@ -22,5 +22,5 @@ function Const = getConstFunction(val)
     
     %% Define const-fuction.
 
-    Const.f = @(x, y) val;
+    const_fun.f = @(x, y) val;
 end

@@ -1,20 +1,20 @@
-function Sin = getSinFunction()
+function sin_fun = getSinFunction()
     % Get information for 2D sin and polynomial function.
     %
     % Provides relevant information of an analytic sin-function:
     %   f(x,y) = −10x² + 10y² + 4sin(xy) − 2x + x⁴
     %
     % SYNTAX
-    %   Sin = getSinFunction()
+    %   sin_fun = getSinFunction()
     %
     % OUTPUT PARAMETER
-    %   Sin ... Struct, containing function handles of the sin function as 
-    %           well as its Jacobian and Hessian matrix.
+    %   sin_fun ... Struct, containing function handles of the sin function
+    %               as well as its Jacobian and Hessian matrix.
     
     %% Define fuction.
 
-    Sin.f = @(X, Y) -10 * X .^ 2 + 10 * Y .^ 2 + ...
-        4 * sin(X .* Y) - 2 * X + X.^ 4;
+    sin_fun.f = @(X, Y) -10 * X .^ 2 + 10 * Y .^ 2 + ...
+        4 * sin_fun(X .* Y) - 2 * X + X.^ 4;
 
     %% Define derivatives.
 
@@ -23,16 +23,16 @@ function Sin = getSinFunction()
     Jy = @(X, Y) 20 * Y + 4 * X .* cos(X .* Y);
 
     % Summarize Jacobian (row vector per definition).
-    Sin.J = @(X, Y) [Jx(X, Y), Jy(X, Y)];
+    sin_fun.J = @(X, Y) [Jx(X, Y), Jy(X, Y)];
 
     % Define Hessian terms.
-    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin(X .* Y) + 12 * X .^ 2; 
-    Hxy = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
-    Hyx = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
-    Hyy = @(X, Y) 20 - 4 * X .^ 2 .* sin(X .* Y);
+    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin_fun(X .* Y) + 12 * X .^ 2; 
+    Hxy = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin_fun(X .* Y);
+    Hyx = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin_fun(X .* Y);
+    Hyy = @(X, Y) 20 - 4 * X .^ 2 .* sin_fun(X .* Y);
 
     % Summarize Hessian matrix and -Laplace.
-    Sin.H = @(X, Y) [Hxx(X, Y), Hxy(X, Y); ...
+    sin_fun.H = @(X, Y) [Hxx(X, Y), Hxy(X, Y); ...
                      Hyx(X, Y), Hyy(X, Y)];
-    Sin.L = @(X, Y) -(Hxx(X, Y) + Hyy(X, Y));
+    sin_fun.L = @(X, Y) -(Hxx(X, Y) + Hyy(X, Y));
 end
