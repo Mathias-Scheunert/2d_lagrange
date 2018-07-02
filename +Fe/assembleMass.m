@@ -1,6 +1,15 @@
 function M = assembleMass(fe, param, verbosity)
     % Assembles the sparse mass matrix.
     %
+    % a(u,v) = \int_Omega param u * \param(x,y) v d(x,y) = ...
+    %   \sum_k param_k \abs(\det(B_k)) \sum_l ( w_l ...
+    %       \sum_i u_i B_k^(-1) \phi_i(x_l) * ...
+    %       \sum_j u_j B_k^(-1) \phi_j(x_l)
+    %                              )
+    % k   - num simplices
+    % l   - num quadrature nodes
+    % j,i - num basis functions  
+    %
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
@@ -44,7 +53,7 @@ function M = assembleMass(fe, param, verbosity)
     % Get common sizes.
     n_cell = fe.sizes.cell;
     n_DOF_glob = fe.sizes.DOF;
-    n_entry_loc = n_DOF_loc^2;
+    n_entry_loc = fe.sizes.DOF_loc^2;
     
     
     % Extract quadrature info from struct.
@@ -65,7 +74,7 @@ function M = assembleMass(fe, param, verbosity)
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions by itselfe
         % using the outer (tensor / dyadic) product the 
-        % n_DOF_loc x n_DOF_loc local stiffness matrix can be obtained in
+        % n_DOF_loc x n_DOF_loc local mass matrix can be obtained in
         % only one step.
         % (note: base_quad_eval is defined as row vector of gradients)
         quad_kern = cellfun(@(x, y) {y * (x.' * x)}, ...

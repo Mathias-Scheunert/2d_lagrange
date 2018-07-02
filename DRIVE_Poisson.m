@@ -1,15 +1,16 @@
 % Script for setting up the 2D Poisson problem.
 %
 % Problem:
-%   -nabla²(u) = [0,f] in Omega = ([-1,1] x [-1,1])
-%       u(x,y) = g     at d_Omega
+%   -\grad(\sigma\grad(u)) = ...
+%   -\sigma\nabla²(u) = [0,f] in Omega = ([-1,1] x [-1,1])
+%              u(x,y) = g     at d_Omega
 %
 % Variational problem:
-%   a(u,v) = int_Omega grad_u grad_v d(x,y)
-%   f(v)   = int_Omega f v           d(x,y)
+%   a(u,v) = \int_Omega \grad(u) * \sigma \grad(v) d(x,y)
+%   f(v)   = \int_Omega f v               d(x,y)
 %
 % Galerkin discretization:
-%   sum_{i = 1:num(DOF)} u_i int_Omega grad_u_i grad_v_j d(x,y) 
+%   \sum_i^num(DOF) u_i \int_Omega \grad(u_i) * \sigma(x,y) \grad(v_j) d(x,y) 
 % forall
 %   j = 1:num(DOF)
 
@@ -43,6 +44,10 @@ end
 % Define (geometry) scaling factor.
 scale = pick(1, 1, 50);
 
+% Define outermost grid boundaries.
+x = scale * [-1, 1];
+y = scale * [-1, 1];
+
 % Define observation points.
 RX = pick(1, ...
     [linspace(-0.9, 0.9, scale * 15).', ...
@@ -56,11 +61,9 @@ RX = scale * RX;
 TXp.type = 'point_exact';
 TXp.coo = scale * pick(2, [.1, .3], [0, 0]);
 TXp.val = 1;                  % discrete    Poisson problem (pole)
-TXp.ref_sol = RefSol.getPeakFunction(TXp.val, TXp.coo, 1e-5);
 TXd.type = 'point_exact';
-TXd.coo = scale * pick(2, [.1, .3; -0.2, -0.2], [-0.5, -0.5; 0.5,  0.5]);             
-TXd.val = [1, -1];            % discrete    Poisson problem (dipole)
-TXd.ref_sol = RefSol.getPeakFunction(TXd.val, TXd.coo, 1e-5);
+TXd.coo = scale * pick(1, [.8, .95; -0.02, -0.02], [-0.5, -0.5; 0.5,  0.5]);             
+TXd.val = [-1, 1];            % discrete    Poisson problem (dipole)
 TXq.type = 'point_approx';
 TXq.coo = scale * [0.5, 0.5; -0.5, -0.5; -0.5, 0.5; 0.5, -0.5];
 TXq.val = [1, 0.5, -1, -0.5]; % discrete    Poisson problem (quadrupole)
@@ -81,10 +84,6 @@ bnd.val = [.1,  .1,  .3,   .3    ].';
 bnd.val = pick(2, ...
     bnd.val * 0, ... %   homogeneous DRB
     bnd.val);        % inhomogeneous DRB
-
-% Define outermost grid boundaries.
-x = scale * [-1, 1];
-y = scale * [-1, 1];
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -156,7 +155,7 @@ sol.A = Fe.assembleStiff(fe, param, verbosity);
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
 % Handle boundary conditions.
-[sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd, verbosity);
+[sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
 if verbosity
    fprintf('... Linear system and BC set up.\n \n'); 
 end

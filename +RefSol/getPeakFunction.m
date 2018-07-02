@@ -51,5 +51,8 @@ function peak_fun = getPeakFunction(val, pos, eps_peak)
         peak_fun.f = @(x, y) peak_fun.f(x,y) +  ...
             val(ii) * (1/(2 * pi * det(C)) * ...
             exp(-(cord(x,y).' * CI * cord(x,y)) / 2));
-    end 
+    end
+    
+    % Set required quadrature order.
+    peak_fun.quad_ord = 3;
 end

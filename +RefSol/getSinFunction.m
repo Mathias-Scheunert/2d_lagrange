@@ -35,4 +35,7 @@ function sin_fun = getSinFunction()
     sin_fun.H = @(X, Y) [Hxx(X, Y), Hxy(X, Y); ...
                          Hyx(X, Y), Hyy(X, Y)];
     sin_fun.L = @(X, Y) -(Hxx(X, Y) + Hyy(X, Y));
+    
+    % Set required quadrature order.
+    sin_fun.quad_ord = 4;
 end

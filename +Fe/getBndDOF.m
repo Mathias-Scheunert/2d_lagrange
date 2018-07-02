@@ -17,8 +17,9 @@ function bnd = getBndDOF(fe, mesh)
     %   Note, that the corner points occur mutiply as each of them is 
     %   shared by two edges!
     %   See also: Fe.treatDirichlet, Fe.treatNeumann
-    %
     % TODO: it may be wise to fix that multiply occurence!
+    %   Note that obtaining the bnd DOF is only valid for rectangle domains
+    %   as provided by Mesh.createRhombMesh and Mesh.createUnitCubeMesh!
     
     %% Check input.
     
@@ -26,6 +27,8 @@ function bnd = getBndDOF(fe, mesh)
         'fe - struct, including all information of FE linear system, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
+    assert(any(strcmp(mesh.type, {'cube', 'rhomb'})), ...
+        'mesh.type is not supported. Bnd information has to obtained from external.');
     
     %% Obtain all DOF, belonging to the boundaries.
     

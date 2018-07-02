@@ -1,6 +1,15 @@
 function S = assembleStiff(fe, param, verbosity)
     % Assembles the sparse stiffness matrix.
     %
+    % a(u,v) = \int_Omega param \grad(u) * \param(x,y) \grad(v) d(x,y) = ...
+    %   \sum_k param_k \abs(\det(B_k)) \sum_l ( w_l ...
+    %       \sum_i u_i B_k^(-1) \grad(\phi_i(x_l)) * ...
+    %       \sum_j u_j B_k^(-1) \grad(\phi_j(x_l))
+    %                              )
+    % k   - num simplices
+    % l   - num quadrature nodes
+    % j,i - num basis functions    
+    %
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX

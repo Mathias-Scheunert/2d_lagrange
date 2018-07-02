@@ -1,8 +1,8 @@
-function mesh = refineMesh(mesh, ref_num)
-    % Refines mesh by splitting up a triangle into three triangles.
+function mesh = refineMeshUniform(mesh, ref_num)
+    % Refines mesh by splitting up one triangle into three triangles.
     % 
     % SYNTAX
-    %   mesh = refineMesh(mesh, ref_num)
+    %   mesh = refineMeshUniform(mesh, ref_num)
     %
     % INPUT PARAMETER
     %   mesh    ... Struct, containing mesh information, i.e. coordinates
@@ -12,6 +12,10 @@ function mesh = refineMesh(mesh, ref_num)
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, containing the refined mesh information.
+    %
+    % REMARKS
+    %   By splitting the triangles, the new nodes, triangles and edges are
+    %   placed inbetween the old ones!
 
     %% Check input.
     

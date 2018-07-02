@@ -23,4 +23,7 @@ function const_fun = getConstFunction(val)
     %% Define const-fuction.
 
     const_fun.f = @(x, y) val;
+    
+    % Set required quadrature order.
+    const_fun.quad_ord = 0;
 end
