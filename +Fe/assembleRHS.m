@@ -1,6 +1,11 @@
 function b = assembleRHS(fe, mesh, TX, verbosity)
     % Assembles the rhs vector for different source types.
     %
+    %  f(v) = \int_Omega f v d(x,y) = ...
+    %   \sum_k \abs(\det(B_k)) \sum_j w_j (\sum_i u_i \phi_i(x_j) v(x_j))
+    % k   - num simplices
+    % l   - num quadrature nodes
+    %
     % SYNTAX
     %   b = assembleRHS(fe, mesh, TX[, verbosity])
     %
@@ -23,7 +28,7 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
         'fe - struct, including all information to set up Lagrange FE, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord'})), ...
         'mesh - appended struct, containing cell2cord info, expected.');
-    assert(isstruct(TX) && all(isfield(TX, {'ref_sol'})), ...
+    assert(isstruct(TX), ...
         'TX - struct, including source information, expected.');
     if nargin < 4
         verbosity = false;
@@ -40,6 +45,8 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     
     switch TX.type
         case {'reference', 'point_approx'}
+            assert(all(isfield(TX, {'ref_sol'})), ...
+                'TX.ref_sol - function handle to ref. solution, expected.');
             getRHS = @getFunctionRHS;
             
         case 'point_exact'
