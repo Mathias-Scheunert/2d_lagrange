@@ -36,7 +36,7 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(sol) && all(isfield(sol, { 'A', 'b'})), ...
         'sol - struct, containing info about linear system to be solved, expected.');
-    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val'})), ...
+    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val', 'bndDOF'})), ...
         'bnd - struct, containing the boundary condition information, expected.');
     assert(strcmp(bnd.type, 'dirichlet'), ...
         'bnd.type - only handling of Dirichlet values are supported here.');
@@ -53,12 +53,6 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
        fprintf('Incorporate Dirichlet BC ... '); 
     end
     
-    if isfield(bnd, 'bndFOF')
-        bndDOF = bnd.bndDOF;
-    else
-        bndDOF = Fe.getBndDOF(fe, mesh);
-    end
-    
     %% Provide consistency for given bnd constraint.
     
     % Check input.
@@ -67,10 +61,10 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
     
     if any(bnd.val ~= 0)
         % Get sizes.
-        n_DOF_bot = length(bndDOF.DOF_bot);
-        n_DOF_top = length(bndDOF.DOF_top);
-        n_DOF_left = length(bndDOF.DOF_left);
-        n_DOF_right = length(bndDOF.DOF_right);
+        n_DOF_bot = length(bnd.bndDOF.DOF_bot);
+        n_DOF_top = length(bnd.bndDOF.DOF_top);
+        n_DOF_left = length(bnd.bndDOF.DOF_left);
+        n_DOF_right = length(bnd.bndDOF.DOF_right);
 
         % Handle supported bnd.val formats.
         if length(bnd.val) == 4
@@ -89,7 +83,7 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
             corner_lt = mean(bnd.val([2, 3]));
             corner_rt = mean(bnd.val([2, 4]));
 
-        elseif length(bnd.val) == length(bndDOF.bnd_DOF)
+        elseif length(bnd.val) == length(bnd.bndDOF.bnd_DOF)
             % Arbitrary Dirichlet constraints for each DOF per edge.
             bnd_val_split = mat2cell(bnd.val, ...
                 [n_DOF_bot, n_DOF_top, n_DOF_left, n_DOF_right], 1);
@@ -100,28 +94,28 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
 
             % Treat corner points which will be shared by two domain edges.
             warn_corn = false;
-            corner_lb = bnd.val(bndDOF.bnd_DOF == bndDOF.vtx_lb);
+            corner_lb = bnd.val(bnd.bndDOF.bnd_DOF == bnd.bndDOF.vtx_lb);
             if diff(corner_lb) < eps
                 corner_lb = corner_lb(1);
             else
                 warn_corn = true;
                 corner_lb = mean(corner_lb);
             end
-            corner_rb = bnd.val(bndDOF.bnd_DOF == bndDOF.vtx_rb);
+            corner_rb = bnd.val(bnd.bndDOF.bnd_DOF == bnd.bndDOF.vtx_rb);
             if diff(corner_rb) < eps
                 corner_rb = corner_rb(1);
             else
                 warn_corn = true;
                 corner_rb = mean(corner_rb);
             end
-            corner_lt = bnd.val(bndDOF.bnd_DOF == bndDOF.vtx_lt);
+            corner_lt = bnd.val(bnd.bndDOF.bnd_DOF == bnd.bndDOF.vtx_lt);
             if diff(corner_lt) < eps
                 corner_lt = corner_lt(1);
             else
                 warn_corn = true;
                 corner_lt = mean(corner_lt);
             end
-            corner_rt = bnd.val(bndDOF.bnd_DOF == bndDOF.vtx_rt);
+            corner_rt = bnd.val(bnd.bndDOF.bnd_DOF == bnd.bndDOF.vtx_rt);
             if diff(corner_rt) < eps
                 corner_rt = corner_rt(1);
             else
@@ -149,15 +143,15 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
         % the rhs needs to be modyfied.
         % Create a rhs vector which only includes Dirichlet values.
         % Pure edge DOF:
-        b_dirichlet(bndDOF.DOF_bot) = bot;
-        b_dirichlet(bndDOF.DOF_top) = top;
-        b_dirichlet(bndDOF.DOF_left) = left;
-        b_dirichlet(bndDOF.DOF_right) = right;
+        b_dirichlet(bnd.bndDOF.DOF_bot) = bot;
+        b_dirichlet(bnd.bndDOF.DOF_top) = top;
+        b_dirichlet(bnd.bndDOF.DOF_left) = left;
+        b_dirichlet(bnd.bndDOF.DOF_right) = right;
         % Corner DOF:
-        b_dirichlet(bndDOF.vtx_lb) = corner_lb;
-        b_dirichlet(bndDOF.vtx_rb) = corner_rb;
-        b_dirichlet(bndDOF.vtx_lt) = corner_lt;
-        b_dirichlet(bndDOF.vtx_rt) = corner_rt;
+        b_dirichlet(bnd.bndDOF.vtx_lb) = corner_lb;
+        b_dirichlet(bnd.bndDOF.vtx_rb) = corner_rb;
+        b_dirichlet(bnd.bndDOF.vtx_lt) = corner_lt;
+        b_dirichlet(bnd.bndDOF.vtx_rt) = corner_rt;
         % Map this vector with the full linear system.
         b_dirichlet_mod = sol.A * b_dirichlet;
         % Subtract the result from the original rhs vector
@@ -165,16 +159,15 @@ function [sol, bnd] = treatDirichlet(fe, mesh, sol, bnd, verbosity)
     end
     % Reduce.
     % RHS vector.
-    sol.b = sol.b(bndDOF.inner_DOF);
+    sol.b = sol.b(bnd.bndDOF.inner_DOF);
     % System matrix.
-    sol.A = sol.A(bndDOF.inner_DOF, bndDOF.inner_DOF);
+    sol.A = sol.A(bnd.bndDOF.inner_DOF, bnd.bndDOF.inner_DOF);
     
     %% Append Dirichlet bnd info.
     
-    bnd.bndDOF = bndDOF;
-    sol.dirichlet.val = b_dirichlet(bndDOF.bnd_DOF);
-    sol.dirichlet.inner_DOF = bndDOF.inner_DOF;
-    sol.dirichlet.bnd_DOF = bndDOF.bnd_DOF;
+    sol.dirichlet.val = b_dirichlet(bnd.bndDOF.bnd_DOF);
+    sol.dirichlet.inner_DOF = bnd.bndDOF.inner_DOF;
+    sol.dirichlet.bnd_DOF = bnd.bndDOF.bnd_DOF;
     
     if verbosity
        fprintf('done.\n'); 

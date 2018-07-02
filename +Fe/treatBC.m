@@ -1,8 +1,8 @@
-function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
-    % Adapts the FE linear system to handle Neumann boundary conditions.
+function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
+    % Handles the given BC.
     %
     % SYNTAX
-    %   fe = treatNeumann(fe, mesh, sol, bnd[, verbosity])
+    %   sol = treatBC(fe, mesh, sol, bnd[, verbosity])
     %
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
@@ -19,14 +19,20 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     %                 printed.
     %
     % OUTPUT PARAMETER
-    %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
+    %   sol ... Struct, adapted sol struct, depending on the BC the system
+    %           matrix and or the rhs-vector is appended or reduced,
+    %           respectively.
+    %   bnd ... Struct, containing the boundary condition information 
+    %           appended by bnd DOF information.
     %
     % REMARKS
-    %   The order of Neumann bnd values given in bnd.val (ONLY in case of
+    %   The order of Dirichlet bnd values given in bnd.val (ONLY in case of
     %   length(bnd.val) == 4) is:
     %   bnd.val = [bot; top; left; right]
-    
-    %% Check input.
+    %
+    % TODO: implement.
+
+    %% Check input
     
     assert(isstruct(fe) && all(isfield(fe, {'order', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
@@ -34,7 +40,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(sol) && all(isfield(sol, { 'A', 'b'})), ...
         'sol - struct, containing info about linear system to be solved, expected.');
-    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val', 'bndDOF'})), ...
+    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val'})), ...
         'bnd - struct, containing the boundary condition information, expected.');
     assert(strcmp(bnd.type, 'dirichlet'), ...
         'bnd.type - only handling of Dirichlet values are supported here.');
@@ -44,24 +50,20 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-        
-    % Check for homogeneous N-BC.
-    if all(bnd.val ~= 0)
-        % Nothing to do.
-        return;
+    
+    if ~isfield(bnd, 'bndDOF')
+        bnd.bndDOF = Fe.getBndDOF(fe, mesh);
     end
     
-    % Otherwise.
-    error('Not supported yet.');
-    % TODO: implement further.
+    %% Treat Dirichlet.
     
-    %% Obtain all DOF, belonging to the boundaries.
-
-    if verbosity
-       fprintf('Incorporate Neumann BC ... '); 
+    if strcmp(bnd.type, 'dirichlet')
+        [sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd, verbosity);
     end
     
-    if verbosity
-       fprintf('done.\n'); 
+    %% Treat Neumann.
+    
+    if strcmp(bnd.type, 'neumann')
+        [sol, ~] = Fe.treatNeumann(fe, mesh, sol, bnd, verbosity);
     end
 end

@@ -22,19 +22,26 @@ function mesh = appendBndInfo(mesh)
     
     assert(isstruct(mesh) && all(isfield(mesh, {'edge2cord'})), ...
         'mesh - appended struct expected as input paramerter.');
-    assert(any(strcmp(mesh.type, {'cube', 'rhomb'})), ...
-        ['Unknown basic mesh type - only for meshes, bounded by a ', ...
-        'rectangle the boundaries can be identified yet.']);
        
     %% Add bnd edge identifier.
     
-    bnd_bot = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
-    bnd_top = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
-    bnd_left = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
-    bnd_right = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);
-    mesh.bnd_edge = bnd_bot | bnd_top | bnd_left | bnd_right;
-    mesh.bnd_edge_bot = bnd_bot;
-    mesh.bnd_edge_top = bnd_top;
-    mesh.bnd_edge_left = bnd_left;
-    mesh.bnd_edge_right = bnd_right;
+    switch mesh.type
+        case {'cube', 'rhomb'}
+            bnd_bot = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
+            bnd_top = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
+            bnd_left = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
+            bnd_right = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);
+            mesh.bnd_edge = bnd_bot | bnd_top | bnd_left | bnd_right;
+            mesh.bnd_edge_bot = bnd_bot;
+            mesh.bnd_edge_top = bnd_top;
+            mesh.bnd_edge_left = bnd_left;
+            mesh.bnd_edge_right = bnd_right;
+            
+        otherwise
+            % Nothing can be done, just check, if required information was
+            % provided by the mesh source.
+            assert(isfield(mesh, 'bnd'), ...
+                ['For external meshes all boundary information need to ', ...
+                'be supplied in advance.']');
+    end
 end
