@@ -2,10 +2,13 @@
 %
 % Problem:
 %   given: 
-%       f(x), nabla²(f(x))
+%       f(x), \nabla²(f(x))
 %   solve:
-%   -nabla²(u) = -nabla²(f(x(DOF)))    in Omega
-%       u(x,y) = -nabla²(f(x(bndDOF))) at d_Omega
+%   -\nabla²(u) = -\nabla²(f(x(DOF)))    in Omega
+%        u(x,y) = -\nabla²(f(x(bndDOF))) at d_Omega
+% Variants:
+%   f(x) = \dirac(x_0)
+%   f(x) = -\nabla²(f(x(DOF))) 
 
 %% Set up script.
 
@@ -25,7 +28,7 @@ warning('on');
 debug = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
-convergence = pick(1, false, true); % iterate a sequence of refinements
+convergence = pick(2, false, true); % iterate a sequence of refinements
 if convergence
     [debug, verbosity, plotting] = deal(false);
 end
@@ -39,9 +42,42 @@ if verbosity
    fprintf('Test 2D Lagrange FE using a known analytic solution\n'); 
 end
 
+% Set up order of Lagrange elements.
+if convergence
+    order = [1, 2];
+else
+    order = pick(1, 1, 2);
+end
+
+% Define source.
+[TXp, TXr] = deal(struct());
+%
+TXr.type = 'reference';
+TXr.ref_sol_u = RefSol.getSinFunction();
+TXr.ref_sol.f = TXr.ref_sol_u.L;
+%
+TXp.type = 'point_exact';
+TXp.coo = pick(2, [0, 1], [0, 0]);
+TXp.val = 1;
+TXp.ref_sol_u.f = @(x, y) -1/(2*pi) * log(norm([x; y] - TXp.coo(:)));
+x_sym = sym('x', 'real');
+y_sym = sym('y', 'real');
+TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
+TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
+clear('x_sym', 'y_sym');
+TXp.ref_sol_u.quad_ord = 4;
+%
+TX = pick(2, TXr, TXp);
+
 % Define outermost grid boundaries.
-x = [-4, 4];
-y = [-4, 4];
+switch TX.type
+    case 'reference'
+        x = [-4, 4];
+        y = [-4, 4];
+    case 'point_exact'
+        x = [-1, 1];
+        y = [-1, 1];
+end
 
 % Define observation points.
 n_obs = pick(2, 11, 101);
@@ -54,12 +90,7 @@ if convergence
     RX = [];
 end
 
-% Define source.
-TX.type = 'reference';
-ref_sol = RefSol.getSinFunction();
-TX.ref_sol.f = ref_sol.L;
-
-% Define boundary conditions.
+% Define (inhomogeneous Dirichlet) boundary conditions.
 bnd = struct();
 bnd.type = 'dirichlet';
 bnd.val = [];
@@ -72,14 +103,11 @@ end
 
 % Set number of grid refinements.
 if convergence
-    ref_steps = 0:5;
-    [err_L2, err_num_DOF] = deal(zeros(length(ref_steps), 1));
+    ref_steps = 1:4;
+    [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
-    ref_steps = 2;
+    ref_steps = 3;
 end
-
-% Set up order of Lagrange elements.
-order = pick(2, 1, 2);
 
 % Print status.
 if verbosity
@@ -99,71 +127,113 @@ end
 
     %% Set up mesh.
 
-% Iterate (if required) over different uniform refinement steps.
-for cur_ref = ref_steps
-    
-    mesh = Mesh.initMesh(mesh_type, [x, y], cur_ref, verbosity);
-
-    %% Set up Parameter.
-
-    % Set const. background parameter for grid.
-    param = 1 + zeros(length(mesh.cell2vtx), 1);
-
-    %% Set up FE structure.
-
-    fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
-
-    %% Set up reference solution quantities.
-
-    % Treat inhomogeneous Dirichlet boundary values.
-    % Get DOF and it's coords at bnd.
-    bnd.bndDOF = Fe.getBndDOF(fe, mesh);
-    % Get desired reference function values at bnd.
-    bnd.val = arrayfun(@(x, y) ref_sol.f(x, y), ...
-        bnd.bndDOF.bnd_DOF_coo(:, 1), bnd.bndDOF.bnd_DOF_coo(:, 2));
-
-    %% Set up FEM linear System.
-
-    % Set up system matrix.
-    % (for Poisson/Laplace, this only comprises the stiffness matrix)
-    sol.A = Fe.assembleStiff(fe, param, verbosity);
-    
-    % Set up rhs vector.
-    sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
-
-    % Handle boundary conditions.
-    [sol, bnd] = Fe.treatDirichlet(fe, mesh, sol, bnd, verbosity);
-
-    if verbosity
-       fprintf('... Linear system and BC set up.\n \n'); 
-    end
-
-    %% Solve fwd problem.
-
-    % Get solution at DOF.
-    u = Fe.solveFwd(sol, fe, verbosity);
-
-    %% Plot solution.
-
-    % Get reference solution at all DOF.
-    u_ref = arrayfun(@(x, y) ref_sol.f(x, y), ...
-        fe.DOF_maps.DOF_coo(:, 1), fe.DOF_maps.DOF_coo(:, 2));
-
-    if convergence
-        if cur_ref == 0
-            fprintf(sprintf('Num DOF \t L2 error \n'));
+% Iterate (if required) over different Lagrange orders.
+for cur_order = order
+    % Preallocate variables.
+    [err_L2{cur_order}, err_H1{cur_order}, err_num_DOF{cur_order}] = ...
+        deal(zeros(length(ref_steps), 1));
+    % Iterate (if required) over different uniform refinement steps.
+    for cur_ref = ref_steps
+        % Print status.
+        if convergence
+            fprintf('Test "%d" order with "%d" refinements ...', ...
+                cur_order, cur_ref);
         end
-        err_L2(cur_ref + 1) = norm(u - u_ref, 2);
-        err_num_DOF(cur_ref + 1) = fe.sizes.DOF;  
-        fprintf(sprintf('%d \t %d \n', fe.sizes.DOF, norm(u - u_ref, 2)));
+        
+        % Init mesh.
+        mesh = Mesh.initMesh(mesh_type, [x, y], cur_ref, verbosity);
+
+        %% Set up Parameter.
+
+        % Set const. background parameter for grid.
+        param = 1 + zeros(length(mesh.cell2vtx), 1);
+
+        %% Set up FE structure.
+
+        fe = Fe.initFiniteElement(cur_order, mesh, RX, verbosity);
+
+        %% Set up reference solution quantities.
+
+        % Treat inhomogeneous Dirichlet boundary values.
+        % Get DOF and it's coords at bnd.
+        bnd.bndDOF = Fe.getBndDOF(fe, mesh);
+        % Get desired reference function values at bnd.
+        bnd.val = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
+            bnd.bndDOF.bnd_DOF_coo(:, 1), bnd.bndDOF.bnd_DOF_coo(:, 2));
+
+        %% Set up FEM linear System.
+
+        % Set up system matrix.
+        % (for Poisson/Laplace, this only comprises the stiffness matrix)
+        sol.A = Fe.assembleStiff(fe, param, verbosity);
+
+        % Set up rhs vector.
+        sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
+
+        % Handle boundary conditions.
+        [sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+
+        if verbosity
+           fprintf('... Linear system and BC set up.\n \n'); 
+        end
+
+        %% Solve fwd problem.
+
+        % Get solution at DOF.
+        u = Fe.solveFwd(sol, fe, verbosity);
+
+        %% Handle errors.
+
+        if convergence
+            cur_idx = cur_ref - ref_steps(1) + 1;
+            [err_L2{cur_order}(cur_idx), err_H1{cur_order}(cur_idx)] = ...
+                Fe.getError(mesh, fe, u, TX.ref_sol_u);
+            err_num_DOF{cur_order}(cur_idx) = fe.sizes.DOF;  
+        end
+        
+        if convergence
+            fprintf(' done. \n');
+        end
     end
 end
 
+%% Plot solution.
+
+if convergence
+    for kk = 1:length(order)
+        fprintf(sprintf('Order %d: \n Num DOF  L2 error \t H1 error \n', ...
+            order(kk)));
+        for ii = 1:length(ref_steps)
+            fprintf(sprintf('%d \t %d \t %d \n', ...
+                err_num_DOF{kk}(ii), err_L2{kk}(ii), err_H1{kk}(ii)));
+        end
+    end
+end
+    
+% Get reference solution at all DOF.
+u_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
+    fe.DOF_maps.DOF_coo(:, 1), fe.DOF_maps.DOF_coo(:, 2));
+
 if convergence
    figure(1);
-   loglog(err_num_DOF, err_L2/err_L2(1), 'x-', ...
-       err_num_DOF, flipud(err_num_DOF).^fe.order/err_num_DOF(end - 1).^fe.order);
-   legend('||u_{FE} - u_{ref}||_2', sprintf('O(h^%d)', fe.order));
+   for kk = 1:length(order)
+       subplot(2, 1, kk)
+           h_x = logspace(log10(err_num_DOF{kk}(1)), 5, 100);
+           h = fliplr(h_x);
+           loglog(err_num_DOF{kk}, err_L2{kk}/err_L2{kk}(1), 'x-', ...
+               err_num_DOF{kk}, err_H1{kk}/err_H1{kk}(1), 'o-', ...
+               h_x, ones(size(h)), '-b', ...
+               h_x, h/h(1), '-k' ...
+               );
+           ylim([1e-3, 1e1]);
+           title(sprintf('u_{FE} vs. u_{ref} w.r.t. DOF (%d. order Lagrange)', ...
+               order(kk)));
+           ylabel('error');
+           xlabel('DOF');
+           legend('||u_{FE} - u_{ref}||_{L2}', '||u_{FE} - u_{ref}||_{H1}', ...
+               'O(const)', 'O(h)', ...
+               'Location', 'EastOutside');
+   end
 end
 
 if plotting
@@ -173,16 +243,20 @@ if plotting
         title('Ref. sol.');
         drawnow();
     % Add profile.
-    phi_ref = arrayfun(@(x, y) ref_sol.f(x, y), RX(:, 1), RX(:, 2));
+    phi_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), RX(:, 1), RX(:, 2));
     hold on
         plot3(RX(:,1), RX(:,2), phi_ref, 'r', 'LineWidth', 2);
     hold off
     drawnow();
+    % Get z-axis limit.
+    cur_fig = gcf();
+    z_lim = cur_fig.CurrentAxes.ZLim;
 
     % Get approx. FE-solution.
     Plot.plotSolution(fe, mesh, u, param, verbosity);
         set(gcf, 'Units', 'normalized', 'Position', [0.5, 0.25, 0.45, 0.5]);
         title('FE sol.');
+        zlim(z_lim);
         drawnow();
     % Add profile.
     phi_FE = fe.I * u;
