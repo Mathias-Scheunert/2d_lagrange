@@ -53,11 +53,18 @@ function u = solveFwd(sol, fe, verbosity)
         if verbosity
            fprintf('done.\n');
         end
+        
+    else
+        % Obtain solution for the full system.
+        if verbosity
+           fprintf('Solve via ''\\'' ... ');
+        end
+        u = sol.A \ sol.b;
+        if verbosity
+           fprintf('done.\n'); 
+        end
     end
-    
-    if isfield(sol, 'newmann')
-       error('Not supported yet.');
-    end
+
     if verbosity
         fprintf('... FWP solved.\n \n');
     end
