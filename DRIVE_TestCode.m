@@ -46,7 +46,7 @@ end
 if convergence
     order = [1, 2];
 else
-    order = pick(1, 1, 2);
+    order = pick(2, 1, 2);
 end
 
 % Define source.
@@ -60,11 +60,15 @@ TXp.type = 'point_exact';
 TXp.coo = pick(2, [0, 1], [0, 0]);
 TXp.val = 1;
 TXp.ref_sol_u.f = @(x, y) -1/(2*pi) * log(norm([x; y] - TXp.coo(:)));
-x_sym = sym('x', 'real');
-y_sym = sym('y', 'real');
-TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
-TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
-clear('x_sym', 'y_sym');
+if license('test', 'symbolic_toolbox')
+    x_sym = sym('x', 'real');
+    y_sym = sym('y', 'real');
+    TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
+    TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
+    clear('x_sym', 'y_sym');
+else
+    % Skipt derivation.
+end
 TXp.ref_sol_u.quad_ord = 4;
 %
 TX = pick(2, TXr, TXp);
@@ -91,9 +95,10 @@ if convergence
 end
 
 % Define (inhomogeneous Dirichlet) boundary conditions.
+% Note: Detailed preparation follows after setting up the FE system.
 bnd = struct();
-bnd.type = 'dirichlet';
-bnd.val = [];
+bnd.type = {'dirichlet'};
+bnd.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -103,7 +108,7 @@ end
 
 % Set number of grid refinements.
 if convergence
-    ref_steps = 1:4;
+    ref_steps = 1:3;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
     ref_steps = 3;
@@ -114,10 +119,10 @@ if verbosity
    fprintf(sprintf('- use "%s" basic mesh\n', mesh_type));
    fprintf(sprintf('- use "%d" mesh refinements\n', ref_steps));
    fprintf(sprintf('- use "%s" source\n', TX.type));
-   if all(bnd.val) == 0
-       fprintf(sprintf('- use homogeneous "%s" boundary conditions\n', bnd.type));
+   if length(bnd.type) > 1
+       fprintf('- use mixed boundary conditions\n');
    else
-       fprintf(sprintf('- use inhomogeneous "%s" boundary conditions\n', bnd.type));
+       fprintf(sprintf('- use "%s" boundary conditions\n', bnd.type{1}));
    end
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
@@ -152,14 +157,9 @@ for cur_order = order
 
         fe = Fe.initFiniteElement(cur_order, mesh, RX, verbosity);
 
-        %% Set up reference solution quantities.
+        %% Set up BC.
 
-        % Treat inhomogeneous Dirichlet boundary values.
-        % Get DOF and it's coords at bnd.
-        bnd.bndDOF = Fe.getBndDOF(fe, mesh);
-        % Get desired reference function values at bnd.
-        bnd.val = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
-            bnd.bndDOF.bnd_DOF_coo(:, 1), bnd.bndDOF.bnd_DOF_coo(:, 2));
+        bnd = Fe.assignBC(bnd, fe, mesh);
 
         %% Set up FEM linear System.
 
@@ -267,27 +267,29 @@ if plotting
 
 
     % Visualize both w.r.t. profile path.
-    x = sqrt((RX(:,1) - RX(1,1)) .^2 + (RX(:,2) - RX(1,2)) .^2);
-    figure();
-    set(gcf, 'Units', 'normalized', 'Position', [0, 0, 1, 1]);
-    subplot(2, 1, 1)
-        plot(x, phi_FE, '-or', ...
-            x, phi_ref, '--xk');
-        xlim([0, x(end)]);
-        ylabel('sol. value');
-        legend('FE-sol', 'Ref-sol', 'Location', 'best');
-    % Show relative errors.
-    phi_abs = (phi_FE - phi_ref);
-    subplot(2, 1, 2)
-        semilogy(x, abs(phi_abs));
-        xlim([0, x(end)]);
-        [~, ~, ylim_min] = find(sort(abs(phi_abs)), 1, 'first');
-        ylim_min = 10^floor(log10(ylim_min));
-        ylim_max = max(abs(phi_abs));
-        ylim_max = 10^ceil(log10(ylim_max));
-        ylim([ylim_min, ylim_max]);
-        ylabel('abs. error');
-        xlabel('profile length [m]');
+    if ~isempty(RX)
+        x = sqrt((RX(:,1) - RX(1,1)) .^2 + (RX(:,2) - RX(1,2)) .^2);
+        figure();
+        set(gcf, 'Units', 'normalized', 'Position', [0, 0, 1, 1]);
+        subplot(2, 1, 1)
+            plot(x, phi_FE, '-or', ...
+                x, phi_ref, '--xk');
+            xlim([0, x(end)]);
+            ylabel('sol. value');
+            legend('FE-sol', 'Ref-sol', 'Location', 'best');
+        % Show relative errors.
+        phi_abs = (phi_FE - phi_ref);
+        subplot(2, 1, 2)
+            semilogy(x, abs(phi_abs));
+            xlim([0, x(end)]);
+            [~, ~, ylim_min] = find(sort(abs(phi_abs)), 1, 'first');
+            ylim_min = 10^floor(log10(ylim_min));
+            ylim_max = max(abs(phi_abs));
+            ylim_max = 10^ceil(log10(ylim_max));
+            ylim([ylim_min, ylim_max]);
+            ylabel('abs. error');
+            xlabel('profile length [m]');
+    end
 end
 
 if debug
