@@ -19,7 +19,10 @@ I used the codestyle, introduced at [(codestyle)](https://git.tu-freiberg.de/ng/
 
 The following driver files are available:
 - DRIVE_TestMesh: Visualization of the underlying unstructured grid and derived information.
-- DRIVE_TestCode: FE solution for an arbitrary polynomial function whose analytic derivative act as rhs of the problem.
+- DRIVE_TestCode: 
+    - FE solution for an arbitrary polynomial function whose analytic derivative act as rhs of the problem.
+    - FE solution for a point source
+    - L2 and H1 error convergence test
 - DRIVE_Poisson: FE solution of the Poission equation for homogeneous/point source and in-/homogeneous Dirichlet boundary conditions.
 
 Feel free to use this repo for:
@@ -39,7 +42,7 @@ Lagrange elements:
 
 Assembling of:
 - mass and stiffness matrix
-- rhs vector for single point source (approx. by a narrow normal distribution function)
+- rhs vector for single point source
 - rhs vector for reference function defined at every DOF
 - interpolation operator for observing solution at arbitrary points within the domain
 
