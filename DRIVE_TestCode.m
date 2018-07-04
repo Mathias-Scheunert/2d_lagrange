@@ -71,7 +71,7 @@ else
 end
 TXp.ref_sol_u.quad_ord = 4;
 %
-TX = pick(2, TXr, TXp);
+TX = pick(1, TXr, TXp);
 
 % Define outermost grid boundaries.
 switch TX.type
@@ -96,9 +96,9 @@ end
 
 % Define (inhomogeneous Dirichlet) boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
-bnd = struct();
-bnd.type = {'dirichlet'};
-bnd.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_basic = struct();
+bnd_basic.type = {'dirichlet'};
+bnd_basic.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -158,7 +158,8 @@ for cur_order = order
         fe = Fe.initFiniteElement(cur_order, mesh, RX, verbosity);
 
         %% Set up BC.
-
+        
+        bnd = bnd_basic;
         bnd = Fe.assignBC(bnd, fe, mesh);
 
         %% Set up FEM linear System.
@@ -182,7 +183,7 @@ for cur_order = order
         % Get solution at DOF.
         u = Fe.solveFwd(sol, fe, verbosity);
 
-        %% Handle errors.
+        %% Calculate errors.
 
         if convergence
             cur_idx = cur_ref - ref_steps(1) + 1;
@@ -197,7 +198,7 @@ for cur_order = order
     end
 end
 
-%% Plot solution.
+%% Print statistics.
 
 if convergence
     for kk = 1:length(order)
@@ -210,21 +211,23 @@ if convergence
     end
 end
     
-% Get reference solution at all DOF.
-u_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
-    fe.DOF_maps.DOF_coo(:, 1), fe.DOF_maps.DOF_coo(:, 2));
+%% Plot convergence.
 
 if convergence
    figure(1);
    for kk = 1:length(order)
        subplot(2, 1, kk)
-           h_x = logspace(log10(err_num_DOF{kk}(1)), 5, 100);
+           h_x = logspace(log10(err_num_DOF{kk}(1)), ref_steps(end), 100);
            h = fliplr(h_x);
            loglog(err_num_DOF{kk}, err_L2{kk}/err_L2{kk}(1), 'x-', ...
                err_num_DOF{kk}, err_H1{kk}/err_H1{kk}(1), 'o-', ...
                h_x, ones(size(h)), '-b', ...
                h_x, h/h(1), '-k' ...
                );
+           x_lim = vertcat(err_num_DOF{:});
+           x_lim = [10^(floor(log10(min(x_lim)))), ...
+               10^(ceil(log10(max(x_lim))))];
+           xlim(x_lim);
            ylim([1e-3, 1e1]);
            title(sprintf('u_{FE} vs. u_{ref} w.r.t. DOF (%d. order Lagrange)', ...
                order(kk)));
@@ -236,18 +239,25 @@ if convergence
    end
 end
 
+%% Plot against reference solution.
+
+% Get reference solution at all DOF.
+u_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
+    fe.DOF_maps.DOF_coo(:, 1), fe.DOF_maps.DOF_coo(:, 2));
+
 if plotting
-    % Plot reference solution.
     Plot.plotSolution(fe, mesh, u_ref, param, verbosity);
         set(gcf, 'Units', 'normalized', 'Position', [0.05, 0.25, 0.45, 0.5]);
         title('Ref. sol.');
         drawnow();
     % Add profile.
-    phi_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), RX(:, 1), RX(:, 2));
-    hold on
-        plot3(RX(:,1), RX(:,2), phi_ref, 'r', 'LineWidth', 2);
-    hold off
-    drawnow();
+    if ~isempty(RX)
+        phi_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), RX(:, 1), RX(:, 2));
+        hold on
+            plot3(RX(:,1), RX(:,2), phi_ref, 'r', 'LineWidth', 2);
+        hold off
+        drawnow();
+    end
     % Get z-axis limit.
     cur_fig = gcf();
     z_lim = cur_fig.CurrentAxes.ZLim;
@@ -259,11 +269,13 @@ if plotting
         zlim(z_lim);
         drawnow();
     % Add profile.
-    phi_FE = fe.I * u;
-    hold on
-        plot3(RX(:,1), RX(:,2), phi_FE, 'r', 'LineWidth', 2);
-    hold off
-    drawnow();
+    if ~isempty(RX)
+        phi_FE = fe.I * u;
+        hold on
+            plot3(RX(:,1), RX(:,2), phi_FE, 'r', 'LineWidth', 2);
+        hold off
+        drawnow();
+    end
 
 
     % Visualize both w.r.t. profile path.
@@ -291,6 +303,8 @@ if plotting
             xlabel('profile length [m]');
     end
 end
+
+%% Profile end.
 
 if debug
     profile viewer
