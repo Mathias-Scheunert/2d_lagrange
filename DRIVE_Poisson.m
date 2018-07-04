@@ -62,28 +62,31 @@ TXh.type = 'reference';
 TXh.val = 1;                  % homogeneous Poisson problem
 TXh.ref_sol = RefSol.getConstFunction(TXh.val);
 %              1    2    3    4
-TX = pick(1, TXp, TXd, TXq, TXh);
+TX = pick(2, TXp, TXd, TXq, TXh);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube', 'external');
 
 % Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
-[bnd_D, bnd_mix] = deal(struct());
+[bnd_N, bnd_D, bnd_mix] = deal(struct());
+%
+bnd_N.type = {'neumann'};
+%                   bot top left right
+bnd_N.val = {pick(1, {0;  0;   0;    0})};
 %
 bnd_D.type = {'dirichlet'};
 %                     bot top left right
-bnd_D.val = {pick(3, {  0;  0;   0;    0 }, ... %   homogeneous DRB
+bnd_D.val = {pick(1, {  0;  0;   0;    0 }, ... %   homogeneous DRB
                      {  3;  3;  10;   10 }, ... % inhomogeneous DRB
                      { 10;  0;   0;    0 })};   % inhomogeneous DRB
 %
-% bnd_mix.type = {'dirichlet', 'dirichlet'};
 bnd_mix.type = {'dirichlet', 'neumann'};
 %               bot top left right
-bnd_mix.val = {{ 10; []; [];    [] }, ... % for Dirichlet
-               { [];  0;  0;     0 }};    % for Neumann
+bnd_mix.val = {{ 10; [];  3;    [] }, ... % for Dirichlet
+               { [];  0; [];     0 }};    % for Neumann
 %                 1      2        3      
-bnd = pick(2, bnd_D, bnd_mix);
+bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Set number of grid refinements.
 ref_steps = 4;

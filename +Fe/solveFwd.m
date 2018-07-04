@@ -48,7 +48,7 @@ function u = solveFwd(sol, fe, verbosity)
            fprintf('Treat Dirichlet DOFs ... '); 
         end
         u = zeros(fe.sizes.DOF, 1);
-        u(sol.dirichlet.inner_DOF) = u_red;
+        u(sol.dirichlet.DOF_req) = u_red;
         u(sol.dirichlet.bnd_DOF) = sol.dirichlet.val;
         if verbosity
            fprintf('done.\n');
@@ -59,7 +59,7 @@ function u = solveFwd(sol, fe, verbosity)
         if verbosity
            fprintf('Solve via ''\\'' ... ');
         end
-        u = sol.A \ sol.b;
+        u = full(sol.A \ sol.b);
         if verbosity
            fprintf('done.\n'); 
         end

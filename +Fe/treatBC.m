@@ -62,8 +62,7 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
         % Initialize.
         obsolet_BC = cellfun(@isempty, bnd.val{idx_D});
         bnd_D = struct('val', vertcat(bnd.val{idx_D}{~obsolet_BC}), ...
-                       'DOF', vertcat(bnd.bndDOF.bnd_DOF{~obsolet_BC}), ...
-                       'inner_DOF', bnd.bndDOF.inner_DOF);
+                       'DOF', vertcat(bnd.bndDOF.bnd_DOF{~obsolet_BC}));
 
         % Treat.
         sol = treatDirichlet(fe, sol, bnd_D, verbosity);
@@ -126,16 +125,17 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
         % Subtract the result from the original rhs vector
         sol.b = sol.b - b_dirichlet_mod;        
     end
-    % Reduce.
+    % Reduce system.
+    DOF_req = ~ismember(1:fe.sizes.DOF, bnd.DOF).';
     % RHS vector.
-    sol.b = sol.b(bnd.inner_DOF);
+    sol.b = sol.b(DOF_req);
     % System matrix.
-    sol.A = sol.A(bnd.inner_DOF, bnd.inner_DOF);
+    sol.A = sol.A(DOF_req, DOF_req);
     
     %% Append Dirichlet bnd info.
     
     sol.dirichlet.val = b_dirichlet(bnd.DOF);
-    sol.dirichlet.inner_DOF = bnd.inner_DOF;
+    sol.dirichlet.DOF_req = DOF_req;
     sol.dirichlet.bnd_DOF = bnd.DOF;
     
     if verbosity
