@@ -26,6 +26,12 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
     %                         edge DOF
     %       function handle - the value is calculated from the @fun... for 
     %                         (the coordinate of) each edge DOF
+    %
+    % TODO: in case of inhomogeneous Neumann BC the current implementation
+    %       distributes values also for all bnd-vtx-DOFs which is somehowe
+    %       misleading as the values might be required at quadrature nodes
+    %       rather than at the DOF positions of an edge!
+    %       As the value along an edge is constant this is no issue.
 
     %% Check input.
     
@@ -81,6 +87,8 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
             check_BC = sum(check_BC, 2);
             assert(all(check_BC), ...
                 'Missing BC for domain boundaries. Please check DRIVE.');
+            assert(all(check_BC < 2), ...
+                'Some boundaries are assigned multiply - check DRIVE.');
             
             % Iterate over the different bnd types.
             for ii = 1:length(bnd.type)

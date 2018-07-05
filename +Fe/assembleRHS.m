@@ -2,7 +2,8 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     % Assembles the rhs vector for different source types.
     %
     %  f(v) = \int_Omega f v d(x,y) = ...
-    %   \sum_k \abs(\det(B_k)) \sum_j w_j (\sum_i u_i \phi_i(x_j) v(x_j))
+    %   \sum_k \abs(\det(B_k)) \sum_l w_l ( \sum_i u_i \phi_i({x,y}_l) ...
+    %                                           v({x,y}_l))
     % k   - num simplices
     % l   - num quadrature nodes
     %

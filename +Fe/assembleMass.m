@@ -3,8 +3,8 @@ function M = assembleMass(fe, param, verbosity)
     %
     % a(u,v) = \int_Omega param u * \param(x,y) v d(x,y) = ...
     %   \sum_k param_k \abs(\det(B_k)) \sum_l ( w_l ...
-    %       \sum_i u_i B_k^(-1) \phi_i(x_l) * ...
-    %       \sum_j u_j B_k^(-1) \phi_j(x_l)
+    %       \sum_i u_i B_k^(-1) \phi_i({x,y}_l) * ...
+    %       \sum_j u_j B_k^(-1) \phi_j({x,y}_l)
     %                              )
     % k   - num simplices
     % l   - num quadrature nodes
@@ -54,7 +54,6 @@ function M = assembleMass(fe, param, verbosity)
     n_cell = fe.sizes.cell;
     n_DOF_glob = fe.sizes.DOF;
     n_entry_loc = fe.sizes.DOF_loc^2;
-    
     
     % Extract quadrature info from struct.
     gauss_cords = fe.quad.nodes;

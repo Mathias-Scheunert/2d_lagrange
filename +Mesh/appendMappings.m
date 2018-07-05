@@ -35,6 +35,8 @@ function mesh = appendMappings(mesh)
     end
     
     % Mapping between edges and its coordinates.
+    % TODO: proof if this might be in conflict with external mesh info
+    % (e.g. field mesh.edge2vtx missing)
     edge_list = mat2cell(mesh.edge2vtx.', 2, ones(n_edge, 1)).';
     edge2cord = cellfun(@(x) [mesh.vertices(x, 1),  mesh.vertices(x, 2)], ...
         edge_list, 'UniformOutput', false);
