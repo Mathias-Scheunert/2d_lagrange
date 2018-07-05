@@ -73,7 +73,7 @@ mesh_type = pick(2, 'rhomb', 'cube', 'external');
 %
 bnd_N.type = {'neumann'};
 %                   bot top left right
-bnd_N.val = {pick(1, {0;  0;   0;    0})};
+bnd_N.val = {pick(1, {0;  0;  10; -10})};
 %
 bnd_D.type = {'dirichlet'};
 %                     bot top left right
@@ -86,7 +86,7 @@ bnd_mix.type = {'dirichlet', 'neumann'};
 bnd_mix.val = {{ 10; [];  3;    [] }, ... % for Dirichlet
                { [];  0; [];     0 }};    % for Neumann
 %                 1      2        3      
-bnd = pick(3, bnd_N, bnd_D, bnd_mix);
+bnd = pick(1, bnd_N, bnd_D, bnd_mix);
 
 % Set number of grid refinements.
 ref_steps = 4;
@@ -149,7 +149,7 @@ fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
 
 %% Set up BC.
 
-bnd = Fe.assignBC(bnd, fe, mesh);
+bnd = Fe.assignBC(bnd, fe, mesh, param);
 
 %% Set up FEM linear System.
 

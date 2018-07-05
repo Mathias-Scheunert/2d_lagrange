@@ -1,8 +1,8 @@
-function bnd = assignBC(bnd, fe, mesh, verbosity)
+function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     % Assigns (or loads) the values to each boundary DOF.
     %
     % SYNTAX
-    %   bnd = assignBC(bnd, fe, mesh, verbosity)
+    %   bnd = assignBC(bnd, fe, mesh, param[, verbosity])
     %
     % INPUT PARAMETER
     %   bnd  ... Struct, containing the preset of the BC types.
@@ -41,7 +41,9 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val'})), ...
         'bnd - struct, containing basic boundary condition information, expected.');
-    if nargin < 4
+    assert(isvector(param) && length(param) == fe.sizes.cell, ...
+        'param - vector of parameters for each cell, expected.');
+    if nargin < 5
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -132,6 +134,12 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
         case {'external'}
             % TODO: implement.
     end
+    
+    % Add parameter info (required in case of inhomogeneous Neumann BC).
+    if any(strcmp(bnd.type, 'neumann'))
+       bnd.param = param; 
+    end
+    
     if verbosity
        fprintf('done.\n'); 
     end

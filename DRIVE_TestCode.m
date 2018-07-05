@@ -150,7 +150,7 @@ for cur_order = order
         %% Set up BC.
         
         bnd = bnd_basic;
-        bnd = Fe.assignBC(bnd, fe, mesh);
+        bnd = Fe.assignBC(bnd, fe, mesh, param);
 
         %% Set up FEM linear System.
 
