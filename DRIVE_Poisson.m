@@ -72,6 +72,9 @@ mesh_type = pick(2, 'rhomb', 'cube', 'external');
 [bnd_N, bnd_D, bnd_mix] = deal(struct());
 %
 bnd_N.type = {'neumann'};
+% Note:
+% x (left -> right)
+% y (bottom -> top)
 %                   bot top left right
 bnd_N.val = {pick(1, {0;  0;  10; -10})};
 %

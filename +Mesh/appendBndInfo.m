@@ -17,6 +17,11 @@ function mesh = appendBndInfo(mesh)
     %   Note, that this procedure will only work for grids which doesn't
     %   contain any cutting areas and which is bordered by a strict
     %   rectangular shape.
+    %
+    %   x_min = left
+    %   x_max = right
+    %   y_min = bottom
+    %   y_max = top
 
     %% Check input.
     

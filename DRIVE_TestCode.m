@@ -88,6 +88,10 @@ end
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_basic = struct();
 bnd_basic.type = {'dirichlet'};
+% Note:
+% x (left -> right)
+% y (bottom -> top)
+%                        bottom              top            left           right                        
 bnd_basic.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 
 % Choose basic grid type.
