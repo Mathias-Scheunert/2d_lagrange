@@ -17,6 +17,8 @@ function M = assembleMass(fe, param, verbosity)
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
+    %   mesh  ... Struct, containing mesh information, i.e. coordinates
+    %             of vertices and its relation to the triangles and edges.
     %   param ... Vector, defining the cell piece-wise constant parameter.
     %
     % OPTIONAL PARAMETER
@@ -35,6 +37,8 @@ function M = assembleMass(fe, param, verbosity)
     
     assert(isstruct(fe) && all(isfield(fe, {'base'})), ...
         'fe - struct, including Lagrange reference element info , expected.');
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
+        'mesh - appended struct, containing cell2cord info, expected.');
     assert(length(param) == fe.sizes.cell, ...
         'params - vector with length equal to the number of mesh cells expected.');
     if nargin < 3
@@ -83,7 +87,7 @@ function M = assembleMass(fe, param, verbosity)
         % current simplex (quadrature summation).
         % As integral is referred to the reference simplex, the
         % Jacobi-determinat has to be incorporated.
-        m_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
+        m_loc = param(ii) * abs(mesh.maps{ii}.detB) * ...
             sum(cat(3, quad_kern{:}), 3);
                   
         % Fill up index and value vectors.

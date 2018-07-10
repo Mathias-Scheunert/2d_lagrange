@@ -50,15 +50,6 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('done.\n'); 
     end
-
-    % Get affine mappings.
-    if verbosity
-       fprintf('Obtain affine maps ... '); 
-    end
-    fe.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, num2cell(1:length(mesh.cell2vtx)).');
-    if verbosity
-       fprintf('done.\n'); 
-    end
     
     % Get Lagrange basis functions and its gradients.
     if verbosity

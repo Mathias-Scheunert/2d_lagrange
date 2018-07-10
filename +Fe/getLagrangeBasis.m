@@ -1,11 +1,14 @@
 function base = getLagrangeBasis(order) 
     % Provide Lagrange basis coefficients using Vandermonde matrix.
     %
-    % Point coordinates are referred to the two barycentric coordinates.
-    % I.e. the kartesian coordinates of the 2D reference triangle /
-    % simplex with 
-    %   x_hat = [0, 1], y_hat = [0, 1] 
-    % and the respective vertices 
+    % Point coordinates are referred to the two barycentric coordinates 
+    % (x,y)_hat. 
+    % The third one is linked to those by
+    % z_hat = 1 - x_hat - y_hat.
+    % I.e. the first two can be treated as the kartesian coordinates of the 
+    % 2D reference triangle / simplex with coordinate directions
+    %   x_hat = [1, 0,( 0)], y_hat = [0, 1,( 0)] 
+    % and the respective vertices (in "local kartesian coordinates") 
     %   p1 = (0,0), p2 = (1,0), p3 = (0,1).
     %
     % For the Vandermonde matrix V and a polynomial basis functions it 
@@ -67,12 +70,7 @@ function base = getLagrangeBasis(order)
         
             % Get local DOF coordinates for the basis functions.
             base.DOF = V1(:,2:3);
-            
-            % Therefore derive the association between the index of the
-            % local/reference simplex vertices to the global/mapped ones.
-            % (See Mesh.getAffineMap for the definitions of Bk and bk.)
-            base.DOF_loc2DOF_glo = [3, 1, 2];
-             
+                         
         case 2
             % Second order Vandermonde matrix.
             V2 = [1 0   0   0    0    0;
@@ -106,23 +104,5 @@ function base = getLagrangeBasis(order)
             
             % Get local DOF coordinates for the basis functions.
             base.DOF = V2(:,2:3);
-            
-            % Therefore derive the association between the index of the
-            % local/reference simplex vertices to the global/mapped ones.
-            % See: 
-            % Mesh.getAffineMap for the definitions of Bk and bk, referring
-            %   to the nodes-DOF
-            % Mesh.appendElementInfo for derivation of the edge index from
-            %   the nodes
-            % As the edge midpoints are not represented in the original
-            % mesh structure, the edge index is used for that 
-            % (See: Fe.getDOFMap).
-            % Hence, the local DOF does not count from 1:6 but is rather
-            % splitted in two counts from 1:3.
-            % As the both, ordering of basis functions on local/reference 
-            % simplex and ordering of edges on arbitrary triangle in mesh
-            % follows the same principle, both vectors coincide.
-            %              ind_node, ind_edge
-            base.DOF_loc2DOF_glo = [[3, 1, 2], [3, 1, 2]];
     end
 end
