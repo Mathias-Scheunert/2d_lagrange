@@ -15,17 +15,17 @@
 % Clean up, set verbosity and script.
 kill();
 warning('on');
-debug = pick(1, false, true);
+debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
 convergence = pick(2, false, true); % iterate a sequence of refinements
 if convergence
-    [debug, verbosity, plotting] = deal(false);
+    [debuging, verbosity, plotting] = deal(false);
 end
 
 %% Set up disctrete Laplace fwd problem.
 
-if debug
+if debuging
     profile on
 end
 if verbosity
@@ -113,10 +113,10 @@ if verbosity
    fprintf(sprintf('- use "%s" basic mesh\n', mesh_type));
    fprintf(sprintf('- use "%d" mesh refinements\n', ref_steps));
    fprintf(sprintf('- use "%s" source\n', TX.type));
-   if length(bnd.type) > 1
+   if length(bnd_basic.type) > 1
        fprintf('- use mixed boundary conditions\n');
    else
-       fprintf(sprintf('- use "%s" boundary conditions\n', bnd.type{1}));
+       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_basic.type{1}));
    end
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
@@ -160,7 +160,7 @@ for cur_order = order
 
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = Fe.assembleStiff(fe, param, verbosity);
+        sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
 
         % Set up rhs vector.
         sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
@@ -300,6 +300,6 @@ end
 
 %% Profile end.
 
-if debug
+if debuging
     profile viewer
 end

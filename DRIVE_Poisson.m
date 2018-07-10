@@ -19,12 +19,12 @@
 % Clean up and set verbosity.
 kill();
 warning('on');
-debug = pick(1, false, true);
+debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 
 %% Set up disctrete Laplace fwd problem.
 
-if debug
+if debuging
     profile on
 end
 if verbosity
@@ -49,7 +49,8 @@ RX = scale * RX;
 % Define source point and strength.
 [TXp, TXd, TXq, TXh] = deal(struct());
 TXp.type = 'point_exact';
-TXp.coo = scale * pick(1, [0, 1], [0, 0]);
+TXp.coo = scale * pick(2, [0, 1], [0, 0]); 
+% Note: source AT bnd only reasonable with h. N-BC
 TXp.val = 1;                  % discrete    Poisson problem (pole)
 TXd.type = 'point_exact';
 TXd.coo = scale * pick(1, [.8, .95; -0.02, -0.02], [-0.5, -0.5; 0.5,  0.5]);             
@@ -76,7 +77,7 @@ bnd_N.type = {'neumann'};
 % x (left -> right)
 % y (bottom -> top)
 %                   bot top left right
-bnd_N.val = {pick(1, {0;  0;  0; 0})};
+bnd_N.val = {pick(1, {0;  0;  0;  0}, {0;  0;  1;  -1})};
 %
 bnd_D.type = {'dirichlet'};
 %                     bot top left right
@@ -91,10 +92,10 @@ bnd_mix.val = pick(2,{{ 10; [];  3;    [] }, ...  % 1 for Dirichlet
                      {{ 10; 10;  [];    [] }, ...  % 2 for Dirichlet
                       { [];  []; 1e-2; 1e-2 }}); ...% 2 for Neumann
 %                 1      2        3      
-bnd = pick(3, bnd_N, bnd_D, bnd_mix);
+bnd = pick(2, bnd_N, bnd_D, bnd_mix);
 
 % Set number of grid refinements.
-ref_steps = 4;
+ref_steps = 0;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);
@@ -160,7 +161,7 @@ bnd = Fe.assignBC(bnd, fe, mesh, param);
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-sol.A = Fe.assembleStiff(fe, param, verbosity);
+sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
 
 % Set up rhs vector.
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
@@ -187,6 +188,6 @@ phi = fe.I * u;
 hold on
     plot3(RX(:,1), RX(:,2), phi, 'r', 'LineWidth', 2);
 hold off
-if debug
+if debuging
     profile viewer
 end
