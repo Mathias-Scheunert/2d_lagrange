@@ -26,12 +26,6 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     %                         edge DOF
     %       function handle - the value is calculated from the @fun... for 
     %                         (the coordinate of) each edge DOF
-    %
-    % TODO: in case of inhomogeneous Neumann BC the current implementation
-    %       distributes values also for all bnd-vtx-DOFs which is somehowe
-    %       misleading as the values might be required at quadrature nodes
-    %       rather than at the DOF positions of an edge!
-    %       As the value along an edge is constant this is no issue.
 
     %% Check input.
     
@@ -94,40 +88,55 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
             
             % Iterate over the different bnd types.
             for ii = 1:length(bnd.type)
-                % Notice empty info.
-                empty_BC = cellfun(@isempty, bnd.val{ii});
-                
-                % Notice info, given in basic (i.e. scalar form).
-                basic_BC = cellfun(@(x) ...
-                    isscalar(x) && ~isa(x, 'function_handle'), ...
-                    bnd.val{ii});
-                
-                % Notice info, given as function handle.
-                fun_BC = cellfun(@(x) isa(x, 'function_handle'), ...
-                    bnd.val{ii});
+                switch bnd.type{ii}
+                    case 'dirichlet'
+                    % Notice empty info.
+                    empty_BC = cellfun(@isempty, bnd.val{ii});
 
-                % Calculate Dirichlet values from given function handle.
-                if any(fun_BC)
-                    bnd.val{ii}(fun_BC) = cellfun(@(f, coo) ...
-                        {arrayfun(@(x, y) f(x, y), coo(:, 1), coo(:, 2))}, ...
-                        bnd.val{ii}, bnd.bndDOF.bnd_DOF_coo);
-                end
-                                
-                % Replace basic info with bndDOF related values.
-                if any(basic_BC)
-                    bnd.val{ii}(basic_BC) = cellfun(@(x, y) {x + zeros(size(y))}, ...
-                        {bnd.val{ii}{basic_BC}}, {bnd.bndDOF.bnd_DOF{basic_BC}});
-                end
-                
-                % Check, if given bndDOF related values have correct size.
-                DOF_related_BC = ~empty_BC & ~basic_BC & ~fun_BC;
-                if any(DOF_related_BC)
-                    consistent_BC = cellfun(@(x, y) length(x) == length(y), ...
-                        {bnd.val{ii}{DOF_related_BC}}, ...
-                        {bnd.bndDOF.bnd_DOF{DOF_related_BC}}).';
-                    assert(isempty(consistent_BC) || all(consistent_BC), ...
-                        ['Number of given DOF related BC values do not ', ...
-                        'match the bnd_DOF.']);
+                    % Notice info, given in basic (i.e. scalar form).
+                    basic_BC = cellfun(@(x) ...
+                        isscalar(x) && ~isa(x, 'function_handle'), ...
+                        bnd.val{ii});
+
+                    % Notice info, given as function handle.
+                    fun_BC = cellfun(@(x) isa(x, 'function_handle'), ...
+                        bnd.val{ii});
+
+                    % Calculate Dirichlet values from given function handle.
+                    if any(fun_BC)
+                        bnd.val{ii}(fun_BC) = cellfun(@(f, coo) ...
+                            {arrayfun(@(x, y) ...
+                                f(x, y), coo(:, 1), coo(:, 2))}, ...
+                            {bnd.val{ii}{fun_BC}}, ...
+                            {bnd.bndDOF.bnd_DOF_coo{fun_BC}});
+                    end
+
+                    % Replace basic info with bndDOF related values.
+                    if any(basic_BC)
+                        bnd.val{ii}(basic_BC) = cellfun(@(x, y) ...
+                            {x + zeros(size(y))}, ...
+                                {bnd.val{ii}{basic_BC}}, ...
+                                {bnd.bndDOF.bnd_DOF{basic_BC}});
+                    end
+
+                    % Check, if given bndDOF related values have correct size.
+                    DOF_related_BC = ~empty_BC & ~basic_BC & ~fun_BC;
+                    if any(DOF_related_BC)
+                        consistent_BC = cellfun(@(x, y) length(x) == length(y), ...
+                            {bnd.val{ii}{DOF_related_BC}}, ...
+                            {bnd.bndDOF.bnd_DOF{DOF_related_BC}}).';
+                        assert(isempty(consistent_BC) || all(consistent_BC), ...
+                            ['Number of given DOF related BC values do not ', ...
+                            'match the bnd_DOF.']);
+                    end
+                    
+                    case 'neumann'
+                        % As Neumann values needs to be evaluated at
+                        % quadrature nodes leave everything untouched.
+                        % See Fe.treatBC.m for its handling.
+                        
+                    otherwise
+                        error('Bnd type: "%s" not supported yet.', bnd.type{ii});
                 end
             end
             
