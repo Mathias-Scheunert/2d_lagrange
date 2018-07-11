@@ -56,8 +56,6 @@ function [x, w] = Quad1D(n)
     %   n ... Positive scalar integer that denotes the number of desired
     %         nodes. The returned quadrature is exact for polynomials of
     %         degree 2 * n - 1 or less.
-    %         % TODO: As the code is currently designed for 1D and 2D only
-    %         this number corrensponds to the dim of the problem.
     
     % Set lower and upper bound w.r.t. the edge of the reference simplex.
     bnd_lo = 0;

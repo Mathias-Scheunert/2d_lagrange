@@ -202,7 +202,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % Get quadrature rule for 1D and reshape coordinates such that they
         % can be applied on the basis functions (defined on a 2D reference
         % simplex).
-        [gauss_cords, gauss_weights] = Quad.getQuadratureRule(fe.order, 1);
+        % TODO: get quadrature order from function handle!
+        [gauss_cords, gauss_weights] = Quad.getQuadratureRule(4, 1);
         gauss_cords = [gauss_cords, 0 * gauss_cords].';
         gauss_weights = num2cell(gauss_weights).';
         
