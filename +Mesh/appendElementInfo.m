@@ -10,6 +10,17 @@ function mesh = appendElementInfo(mesh)
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the edge information.
+    %
+    % REMARKS
+    %  Edge numbering (and orientation) w.r.t. to global vertex numbers:
+    %         point2
+    %        /      \
+    %       /        \
+    %      1^         2v
+    %     /            \
+    %    /_ _ _ 3>_ _ _ \
+    % point1          point 3
+    %
 
     %% Check input.
     

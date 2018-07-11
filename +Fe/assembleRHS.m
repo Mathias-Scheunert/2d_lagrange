@@ -25,9 +25,9 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     
     %% Check input.
     
-    assert(isstruct(fe) && all(isfield(fe, {'base', 'maps', 'DOF_maps'})), ...
+    assert(isstruct(fe) && all(isfield(fe, {'base', 'DOF_maps'})), ...
         'fe - struct, including all information to set up Lagrange FE, expected.');
-    assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
         'mesh - appended struct, containing cell2cord info, expected.');
     assert(isstruct(TX), ...
         'TX - struct, including source information, expected.');
@@ -162,7 +162,7 @@ function b = getFunctionRHS(fe, mesh, TX)
         
         % Get reference/source function for all quadrature nodes in simplex
         % w.r.t. to the global coordinate system.
-        coord_ref = bsxfun(@plus, fe.maps{ii}.B * gauss_cords.', fe.maps{ii}.b);
+        coord_ref = bsxfun(@plus, mesh.maps{ii}.B * gauss_cords.', mesh.maps{ii}.b);
         fun_eval = arrayfun(@(x, y) {TX.ref_sol.f(x, y)}, ...
                 coord_ref(1,:), coord_ref(2,:));
             
@@ -174,7 +174,7 @@ function b = getFunctionRHS(fe, mesh, TX)
         
         % Evaluate numerical integration and incorporate Jacobi-determinat 
         % due to mapping back from reference simplex to global coordinates.
-        m_loc = abs(fe.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
+        m_loc = abs(mesh.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
                   
         % Fill up index and value vectors.
         i_loc = fe.DOF_maps.cell2DOF{ii};

@@ -15,17 +15,17 @@
 % Clean up, set verbosity and script.
 kill();
 warning('on');
-debug = pick(1, false, true);
+debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
 convergence = pick(2, false, true); % iterate a sequence of refinements
 if convergence
-    [debug, verbosity, plotting] = deal(false);
+    [debuging, verbosity, plotting] = deal(false);
 end
 
 %% Set up disctrete Laplace fwd problem.
 
-if debug
+if debuging
     profile on
 end
 if verbosity
@@ -86,9 +86,26 @@ end
 
 % Define (inhomogeneous Dirichlet) boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
-bnd_basic = struct();
-bnd_basic.type = {'dirichlet'};
-bnd_basic.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_D = struct();
+bnd_D.type = {'dirichlet'};
+% Note:
+% x (left -> right)
+% y (bottom -> top)
+%                        bottom              top            left           right                        
+bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+%
+bnd_N = struct();
+bnd_N.type = {'neumann'};
+%                     bottom             top            left           right                        
+bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
+%
+bnd_mix = struct();
+bnd_mix.type = {'neumann', 'dirichlet'};
+%                     bottom             top            left           right                        
+bnd_mix.val = {{TX.ref_sol_u.J; [];         [];            []}, ...
+               {[];             TX.ref_sol_u.f;  TX.ref_sol_u.f; TX.ref_sol_u.f}};
+%
+bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -101,7 +118,7 @@ if convergence
     ref_steps = 1:3;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
-    ref_steps = 3;
+    ref_steps = 0;
 end
 
 % Print status.
@@ -109,10 +126,10 @@ if verbosity
    fprintf(sprintf('- use "%s" basic mesh\n', mesh_type));
    fprintf(sprintf('- use "%d" mesh refinements\n', ref_steps));
    fprintf(sprintf('- use "%s" source\n', TX.type));
-   if length(bnd.type) > 1
+   if length(bnd_D.type) > 1
        fprintf('- use mixed boundary conditions\n');
    else
-       fprintf(sprintf('- use "%s" boundary conditions\n', bnd.type{1}));
+       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_D.type{1}));
    end
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
@@ -150,13 +167,13 @@ for cur_order = order
         %% Set up BC.
         
         bnd = bnd_basic;
-        bnd = Fe.assignBC(bnd, fe, mesh);
+        bnd = Fe.assignBC(bnd, fe, mesh, param);
 
         %% Set up FEM linear System.
 
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = Fe.assembleStiff(fe, param, verbosity);
+        sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
 
         % Set up rhs vector.
         sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
@@ -296,6 +313,6 @@ end
 
 %% Profile end.
 
-if debug
+if debuging
     profile viewer
 end

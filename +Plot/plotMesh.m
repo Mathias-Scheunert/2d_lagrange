@@ -80,14 +80,49 @@ function [] = plotMesh(mesh, params, debug)
     %% Add edge orientation.
     
     if isfield(mesh, 'edge2cord') && debug
-        hold on
+        % Midpoints of the edges.
         pos = cell2mat(cellfun(@(x) {x(1,:) + diff(x, 1) / 2}, mesh.edge2cord));
+        % Components of vector length to be plotted in x and y direction.
         len = cell2mat(cellfun(@(x) {diff(x, 1)}, mesh.edge2cord));
         scale = 1/3;
+        hold on
         quiver(pos(:,1), pos(:,2), len(:,1), len(:,2), scale, ...
             'Color', 'green', ...
             'LineWidth', 2, ...
             'MaxHeadSize', 1 / norm(len));
         hold off
     end
+    
+    %% Add boundary edge normal.
+        
+    % Plot normal vectors.
+    if isfield(mesh, 'edge2cord') && debug
+
+        % In the 
+        
+        % Get bnd edge indices and its normal vectors.
+        bnd_edge_idx = find(mesh.bnd_edge);
+
+        % Get edges normal(s).
+        bnd_edge_n = Mesh.getEdgeNormal(mesh, bnd_edge_idx);
+        bnd_edge_num = cellfun(@(x) size(x, 1), bnd_edge_n, 'UniformOutput', false);
+
+        % Get edges midpoint.
+        bnd_pos = cellfun(@(x) {x(1,:) + diff(x, 1) / 2}, ...
+            mesh.edge2cord(bnd_edge_idx));
+        bnd_pos = cellfun(@(x, y) {repmat(x, y, 1)}, bnd_pos, bnd_edge_num);
+
+        % Transform expressions to matrix form.
+        bnd_edge_n = vertcat(bnd_edge_n{:});
+        bnd_edge_n = cell2mat(bnd_edge_n);
+        bnd_pos = cell2mat(bnd_pos);
+        
+        hold on
+        quiver(bnd_pos(:,1), bnd_pos(:,2), bnd_edge_n(:,1), bnd_edge_n(:,2), ...
+            'Color', 'red', ...
+            'LineWidth', 2, ...
+            'MaxHeadSize', 1 / 2);
+        hold off
+    end
+    axis tight
 end

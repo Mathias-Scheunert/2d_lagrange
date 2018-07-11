@@ -90,6 +90,8 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
         tri = delaunay(x, y);
         trisurf(tri, x, y, u, ...
             'edgecolor', 'none');
+        xlabel('x (left - right)');
+        ylabel('y (bottom - top)');
     hold off
     view(3);
     colorbar();

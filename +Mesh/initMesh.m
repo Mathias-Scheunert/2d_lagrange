@@ -88,5 +88,28 @@ function mesh = initMesh(var, bnd, ref, verbosity)
        fprintf('done.\n');
        fprintf('... Mesh struct initialized.\n \n'); 
     end
+    
+    %% Get affine mappings.
+    
+    if verbosity
+       fprintf('Obtain affine maps ... '); 
+    end
+    % Get maps.
+    mesh.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, ...
+                    num2cell(1:length(mesh.cell2vtx)).');
+                
+    % Check consistency.
+	maps = [mesh.maps{:}].';
+    maps = reshape([maps(:).loc2glo], ...
+        size(maps(1).loc2glo, 2), size(maps, 1)).';
+    all((maps(:,1) == maps(:,:)));
+    assert(size(unique(maps, 'rows'), 1) == 1, ...
+        'Affine maps have different local to global vertex relations.');
+    
+    % Exclude vertex relations.
+    mesh.loc2glo = maps(1,:);
+    if verbosity
+       fprintf('done.\n'); 
+    end
 end
 

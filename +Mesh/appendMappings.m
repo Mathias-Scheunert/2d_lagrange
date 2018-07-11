@@ -11,6 +11,16 @@ function mesh = appendMappings(mesh)
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the mappings between
     %            the vertices coordinates and the edges and triangles.
+    %
+    % REMARKS
+    %              
+    %   cell2cord: n * [3 x 2]
+    %   edge2cord: k * [2 x 2]
+    %   
+    %   n = number of cells
+    %   k = number of edges
+    %   rows   = index of vertex
+    %   colums = first x, second y coord
 
     %% Check input.
     

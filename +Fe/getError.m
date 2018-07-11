@@ -75,8 +75,8 @@ function [err_L2, err_H1] = getError(mesh, fe, u, ref)
     for ii = 1:n_cell     
        
         % Get global quadrature points.
-        global_quad_points = (fe.maps{ii}.B * loc_quad_points.' ...
-                                + fe.maps{ii}.b).';
+        global_quad_points = (mesh.maps{ii}.B * loc_quad_points.' ...
+                                + mesh.maps{ii}.b).';
 
         % Get reference solution at all quadrature nodes in global 
         % coordinates.
@@ -98,7 +98,7 @@ function [err_L2, err_H1] = getError(mesh, fe, u, ref)
         % j - num quadrature nodes
         % i - num basis functions
         term1 = u_fe - u_ref;
-        err_L2_loc = abs(fe.maps{ii}.detB) * (weights .* term1).' * term1;
+        err_L2_loc = abs(mesh.maps{ii}.detB) * (weights .* term1).' * term1;
         
         % Add up all simplices.
         err_L2 = err_L2 + err_L2_loc;
@@ -126,7 +126,7 @@ function [err_L2, err_H1] = getError(mesh, fe, u, ref)
             % Get FE solution gradient at all quadrature nodes in 
             % barycentric coordinates.
             grad_u_fe = cellfun(@(x) {...
-                fe.maps{ii}.BinvT * x * u(fe.DOF_maps.cell2DOF{ii})}, ...
+                mesh.maps{ii}.BinvT * x * u(fe.DOF_maps.cell2DOF{ii})}, ...
                 grad_phi_quad);
 
             % Calculate local error term.
@@ -136,7 +136,7 @@ function [err_L2, err_H1] = getError(mesh, fe, u, ref)
                 'UniformOutput', false);
             term1 = cellfun(@(x, y) {x .* y}, term1, sqrt_weights);
             term1 = sum(cat(3, term1{:}), 3);
-            err_H1_loc = abs(fe.maps{ii}.detB) * (term1.' * term1);
+            err_H1_loc = abs(mesh.maps{ii}.detB) * (term1.' * term1);
             
             % Add up all simplices.
             err_H1_semi = err_H1_semi + err_H1_loc;

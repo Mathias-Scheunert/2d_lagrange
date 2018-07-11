@@ -1,4 +1,4 @@
-function S = assembleStiff(fe, param, verbosity)
+function S = assembleStiff(fe, mesh, param, verbosity)
     % Assembles the sparse stiffness matrix.
     %
     % a(u,v) = \int_Omega param \grad(u) * \param(x,y) \grad(v) d(x,y) = ...
@@ -13,10 +13,12 @@ function S = assembleStiff(fe, param, verbosity)
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   S = assembleStiff(fe, param[, verbosity])
+    %   S = assembleStiff(fe, mesh, param[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
+    %   mesh  ... Struct, containing mesh information, i.e. coordinates
+    %             of vertices and its relation to the triangles and edges.
     %   param ... Vector, defining the cell piece-wise constant parameter.
     %
     % OPTIONAL PARAMETER
@@ -33,6 +35,8 @@ function S = assembleStiff(fe, param, verbosity)
     
     assert(isstruct(fe) && all(isfield(fe, {'base'})), ...
         'fe - struct, including Lagrange reference element info , expected.');
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
+        'mesh - appended struct, containing cell2cord info, expected.');
     assert(length(param) == fe.sizes.cell, ...
         'params - vector with length equal to the number of mesh cells expected.')
     if nargin < 3
@@ -72,7 +76,7 @@ function S = assembleStiff(fe, param, verbosity)
     % Iterate over all simplices.
     for ii = 1:n_cell
         % Incorporate inverse of mapping 
-        term1 = kron(eye(n_quad_point, n_quad_point), fe.maps{ii}.BinvT);
+        term1 = kron(eye(n_quad_point, n_quad_point), mesh.maps{ii}.BinvT);
         prod = term1 * term2;
         grad_quad_eval = mat2cell(prod, 2 + zeros(n_quad_point, 1), n_DOF_loc);
 
@@ -89,7 +93,7 @@ function S = assembleStiff(fe, param, verbosity)
         % current simplex (quadrature summation).
         % As integral is referred to the reference simplex, the
         % Jacobi-determinat has to be incorporated.
-        s_loc = param(ii) * abs(fe.maps{ii}.detB) * ...
+        s_loc = param(ii) * abs(mesh.maps{ii}.detB) * ...
             sum(cat(3, quad_kern{:}), 3);
                
         % Fill up index and value vectors.

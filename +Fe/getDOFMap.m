@@ -49,18 +49,30 @@ function DOF_map = getDOFMap(mesh, fe)
     end
     
     %% Reshape map.
-    
+        
     cell2DOF = cell(n_cell, 1);
     switch fe.order
         case 1
             for ii = 1:n_cell
-                glob_vtx = cell2DOF_glo(ii, fe.base.DOF_loc2DOF_glo(1:3));
+                % Vertex relations.
+                glob_vtx = cell2DOF_glo(ii, mesh.loc2glo);
                 cell2DOF{ii} = glob_vtx(:);
             end
         case 2
             for ii = 1:n_cell
-                glob_vtx = cell2DOF_glo(ii, fe.base.DOF_loc2DOF_glo(1:3));
-                glob_edg = cell2DOF_glo(n_cell + ii, fe.base.DOF_loc2DOF_glo(4:end));
+                % Vertex relations.
+                glob_vtx = cell2DOF_glo(ii, mesh.loc2glo);
+                % Edge relations.
+                %
+                % As the edge midpoints are not represented in the original
+                % mesh structure, the edge index itself is used for that.
+                % As the both, ordering of basis functions on local/reference 
+                % simplex and ordering of edges on arbitrary triangle in mesh
+                % follows the same principle, both vectors coincide.
+                % (See Mesh.appendElementInfo for derivation of the edge 
+                % index and definititions in Mesh.getAffineMap.m)
+                %                          ind_node, ind_edge
+                glob_edg = cell2DOF_glo(n_cell + ii, mesh.loc2glo);
                 cell2DOF{ii} = [glob_vtx(:); glob_edg(:)];                
             end
     end
