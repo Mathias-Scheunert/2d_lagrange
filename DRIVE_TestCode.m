@@ -55,13 +55,14 @@ if license('test', 'symbolic_toolbox')
     y_sym = sym('y', 'real');
     TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
     TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
+    TXp.ref_sol_u.J = TXp.ref_sol_u.grad;
     clear('x_sym', 'y_sym');
 else
     % Skipt derivation.
 end
 TXp.ref_sol_u.quad_ord = 4;
 %
-TX = pick(1, TXr, TXp);
+TX = pick(2, TXr, TXp);
 
 % Define outermost grid boundaries.
 switch TX.type
@@ -98,12 +99,14 @@ bnd_N = struct();
 bnd_N.type = {'neumann'};
 %                     bottom             top            left           right                        
 bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
+bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
 %                     bottom             top            left           right                        
 bnd_mix.val = {{TX.ref_sol_u.J; [];         [];            []}, ...
                {[];             TX.ref_sol_u.f;  TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
 

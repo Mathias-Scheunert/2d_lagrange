@@ -57,6 +57,12 @@ function [x, w] = Quad1D(n)
     %         nodes. The returned quadrature is exact for polynomials of
     %         degree 2 * n - 1 or less.
     
+    % Check input
+    if n < 1
+        warning('Quadratur order > 0 expected. Set n = 1.');
+        n = 1;
+    end
+    
     % Set lower and upper bound w.r.t. the edge of the reference simplex.
     bnd_lo = 0;
     bnd_up = 1;

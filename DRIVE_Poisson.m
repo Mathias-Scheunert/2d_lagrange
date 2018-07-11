@@ -63,7 +63,7 @@ TXh.type = 'reference';
 TXh.val = 1;                  % homogeneous Poisson problem
 TXh.ref_sol = RefSol.getConstFunction(TXh.val);
 %              1    2    3    4
-TX = pick(1, TXp, TXd, TXq, TXh);
+TX = pick(2, TXp, TXd, TXq, TXh);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube', 'external');
@@ -78,6 +78,7 @@ bnd_N.type = {'neumann'};
 % y (bottom -> top)
 %                   bot top left right
 bnd_N.val = {pick(2, {0;  0;  0;  0}, {0;  0;  1;  -1})};
+bnd_N.quad_ord = 1;
 %
 bnd_D.type = {'dirichlet'};
 %                     bot top left right
@@ -89,13 +90,14 @@ bnd_mix.type = {'dirichlet', 'neumann'};
 %                       bot top left right
 bnd_mix.val = pick(2,{{ 10; [];  3;    [] }, ...  % 1 for Dirichlet
                       { [];  0; [];     0 }}, ... % 1 for Neumann
-                     {{ 10; 10;  [];    [] }, ...  % 2 for Dirichlet
-                      { [];  []; 1e-2; 1e-2 }}); ...% 2 for Neumann
+                     {{ 10; [];  [];    5 }, ...  % 2 for Dirichlet
+                      { [];  0; 1e-2; [] }}); ...% 2 for Neumann
+bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(1, bnd_N, bnd_D, bnd_mix);
+bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Set number of grid refinements.
-ref_steps = 0;
+ref_steps = 3;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);

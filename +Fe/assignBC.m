@@ -143,6 +143,9 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
             
         case {'external'}
             % TODO: implement.
+                assert(isfield(bnd, 'quad_ord'), ...
+                    ['field "quad_ord" - Quadrature order for bnd ', ...
+                    'integral evaluation required.']);
     end
     
     % Add parameter info (required in case of inhomogeneous Neumann BC).

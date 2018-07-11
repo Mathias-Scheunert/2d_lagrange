@@ -66,7 +66,8 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
         obsolet_BC = cellfun(@isempty, bnd.val{idx_N});
         bnd_N = struct('val', {{bnd.val{idx_N}{~obsolet_BC}}}, ...
                        'DOF', {{bnd.bndDOF.bnd_DOF{~obsolet_BC}}}, ...
-                       'param', bnd.param);
+                       'param', bnd.param, ...
+                       'quad_ord', bnd.quad_ord);
 
         % Process.
         sol = treatNeumann(fe, mesh, sol, bnd_N, verbosity);
@@ -203,7 +204,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % can be applied on the basis functions (defined on a 2D reference
         % simplex).
         % TODO: get quadrature order from function handle!
-        [gauss_cords, gauss_weights] = Quad.getQuadratureRule(4, 1);
+        [gauss_cords, gauss_weights] = Quad.getQuadratureRule(bnd.quad_ord, 1);
         gauss_cords = [gauss_cords, 0 * gauss_cords].';
         gauss_weights = num2cell(gauss_weights).';
         
