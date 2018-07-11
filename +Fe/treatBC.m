@@ -271,8 +271,9 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 cur_DOF_map = fe.DOF_maps.cell2DOF{cur_cell};
 
                 % Get affine maps for current edge (represents a 1D barycentric
-                % coordinate system for 2D space).
-                Bk = diff(bnd_edge_coo{ii}, 1, 2);
+                % coordinate system for 2D space).                
+                Bk = [bnd_edge_coo{ii}(1,1) - bnd_edge_coo{ii}(2,1);
+                      bnd_edge_coo{ii}(1,2) - bnd_edge_coo{ii}(2,2)];
                 bk = bnd_edge_coo{ii}(2, :).';
                 detBk = sqrt(abs(Bk.' * Bk));
 
@@ -283,6 +284,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 % Set Neumann BC at the quadrature nodes.
                 if gradient
                     % If required, obtain normal derivative.
+                    % Note:[2x1] or [1x2] vector-shaped output is expected!
                     neum_eval = num2cell(arrayfun(@(x, y) ...
                         dot(bnd_val(x, y), bnd_edge_n{ii}), ...
                         gauss_cords_global(1,:), gauss_cords_global(2,:))).';

@@ -103,6 +103,7 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
                         bnd.val{ii});
 
                     % Calculate Dirichlet values from given function handle.
+                    % Note: a scalar output is expected here!
                     if any(fun_BC)
                         bnd.val{ii}(fun_BC) = cellfun(@(f, coo) ...
                             {arrayfun(@(x, y) ...
