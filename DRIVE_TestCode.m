@@ -86,13 +86,26 @@ end
 
 % Define (inhomogeneous Dirichlet) boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
-bnd_basic = struct();
-bnd_basic.type = {'dirichlet'};
+bnd_D = struct();
+bnd_D.type = {'dirichlet'};
 % Note:
 % x (left -> right)
 % y (bottom -> top)
 %                        bottom              top            left           right                        
-bnd_basic.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+%
+bnd_N = struct();
+bnd_N.type = {'neumann'};
+%                     bottom             top            left           right                        
+bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
+%
+bnd_mix = struct();
+bnd_mix.type = {'neumann', 'dirichlet'};
+%                     bottom             top            left           right                        
+bnd_mix.val = {{TX.ref_sol_u.J; [];         [];            []}, ...
+               {[];             TX.ref_sol_u.f;  TX.ref_sol_u.f; TX.ref_sol_u.f}};
+%
+bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -105,7 +118,7 @@ if convergence
     ref_steps = 1:3;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
-    ref_steps = 3;
+    ref_steps = 0;
 end
 
 % Print status.
@@ -113,10 +126,10 @@ if verbosity
    fprintf(sprintf('- use "%s" basic mesh\n', mesh_type));
    fprintf(sprintf('- use "%d" mesh refinements\n', ref_steps));
    fprintf(sprintf('- use "%s" source\n', TX.type));
-   if length(bnd_basic.type) > 1
+   if length(bnd_D.type) > 1
        fprintf('- use mixed boundary conditions\n');
    else
-       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_basic.type{1}));
+       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_D.type{1}));
    end
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end

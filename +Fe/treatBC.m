@@ -64,10 +64,11 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
     if any(idx_N)
         % Initialize.
         obsolet_BC = cellfun(@isempty, bnd.val{idx_N});
-        bnd_N = struct('val', vertcat(bnd.val{idx_N}{~obsolet_BC}), ...
-                       'DOF', vertcat(bnd.bndDOF.bnd_DOF{~obsolet_BC}));
+        bnd_N = struct('val', {{bnd.val{idx_N}{~obsolet_BC}}}, ...
+                       'DOF', {{bnd.bndDOF.bnd_DOF{~obsolet_BC}}}, ...
+                       'param', bnd.param);
 
-        % Treat.
+        % Process.
         sol = treatNeumann(fe, mesh, sol, bnd_N, verbosity);
     end
     
@@ -79,7 +80,7 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
         bnd_D = struct('val', vertcat(bnd.val{idx_D}{~obsolet_BC}), ...
                        'DOF', vertcat(bnd.bndDOF.bnd_DOF{~obsolet_BC}));
 
-        % Treat.
+        % Process.
         sol = treatDirichlet(fe, sol, bnd_D, verbosity);
     end
 end
@@ -161,6 +162,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     %            problem to be solved numerically, i.e. rhs vector, system 
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
+    %            In case of a function handle, this handle needs to
+    %            evaluate the function gradient!
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -170,15 +173,14 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
     %           Depending of 'type' nothing is changed (homogenous case) or
     %           the rhs vector is expanded (inhomogenoues case).
-    %
-    % TODO: fix first order elements.
     
     if verbosity
        fprintf('Incorporate Neumann BC ... '); 
     end
     
     % Check for homogeneous N-BC.
-    if all(bnd.val == 0)
+    if ~any(cellfun(@(x) isa(x, 'function_handle'), bnd.val)) ...
+            && all(cellfun(@(x) x == 0, bnd.val))
         % Nothing to do.
     else
        
@@ -191,10 +193,12 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % \int param(x,y) g(x,y) = \sum_k param_k ...
         %           \sum_j w_j g(x_j,y_j) \sum_i \phi_i(x_j, y_j)
         %
-        % k - number of edges (== number of cells related to those)
+        % k - number of edges (== number of simplices related to those)
         % j - number of quadrature nodes
         % i - number of basis functions
-                
+
+        %% Set up quadrature rule.
+        
         % Get quadrature rule for 1D and reshape coordinates such that they
         % can be applied on the basis functions (defined on a 2D reference
         % simplex).
@@ -202,29 +206,6 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         gauss_cords = [gauss_cords, 0 * gauss_cords].';
         gauss_weights = num2cell(gauss_weights).';
         
-        % Get only bndDOF indices for the edges where inhomogeneous Neumann
-        % BC are set.
-        % Note that Fe.assignBC distributes bnd values for every DOF at an
-        % bnd (including vertices).
-        edge_idx_map = bnd.val & bnd.DOF > fe.sizes.vtx;
-        
-        % Reduce given bnd quantities and get respective edge index.
-        bnd_DOF = bnd.DOF(edge_idx_map);
-        edge_idx = bnd_DOF - fe.sizes.vtx;
-        n_edge = length(edge_idx);
-        
-        % Get edge coordinates.
-        bnd_edge_coo = mesh.edge2cord(edge_idx);
-        
-        % Get indices of all cells which belong to those edges.
-        [~, cell_2_edge_idx_map] = ismember(mesh.cell2edg, edge_idx);
-        cell_2_edge_idx_map_merge = sum(cell_2_edge_idx_map, 2);
-
-        % Initialize index and value vector for sparse vector assembling.
-        n_DOF_loc = fe.sizes.DOF_loc;
-        [i, j, s] = deal(zeros(n_edge * n_DOF_loc, 1));
-        j = j + 1;  % (as this variable is const. 1 for vector assembing)
-
         % Set up recurring quantity:
         % Evaluate basis functions for all quadrature nodes referred to
         % the reference simplex at an arbitrary edge (as each edge has got 
@@ -233,55 +214,108 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % edge for that).
         basis_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords(1,:), gauss_cords(2,:)).';
+                
+        % Iterate over all different Neumann boundaries.
+        for kk = 1:length(bnd.val)
         
-        % Set up bnd val.
-        % TODO: fix at Fe.assignBC.m
-        bnd_val = arrayfun(@(x) {RefSol.getConstFunction(x)}, ...
-            bnd.val(edge_idx_map));
-        
-        % Iterate over all edges.
-        for ii = 1:n_edge
+            %% Set up assembling by obtaining required indices and coords.
+            
+            % Get only bnd vertices.
+            bnd_vtx = bnd.DOF{kk}(bnd.DOF{kk} <= fe.sizes.vtx);
+            
+            % Get edge index corresponding to given DOFs at Neumann boundary.
+            % Note: n_edge + 1 = length(bnd_vtx)
+            edge_idx_map = sum(ismember(mesh.edge2vtx, bnd_vtx), 2) > 1;
+            edge_idx = find(edge_idx_map);
+            n_edge = length(edge_idx);
 
-            % Get affine maps for current edge (represents a 1D barycentric
-            % coordinate system for 2D space).
-            Bk = diff(bnd_edge_coo{ii}, 1, 2);
-            bk = bnd_edge_coo{ii}(2, :).';
-            detBk = sqrt(abs(Bk.' * Bk));
+            % Get indicex of simplex which belong to current edge.
+            [~, cell_2_edge_idx_map] = ismember(mesh.cell2edg, edge_idx);
             
-            % Get quadrature nodes position in general form (here gauss 
-            % coords in 1D edge related coordinates are required).
-            gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1, :)) + bk;
+            % Get edge coordinates.
+            bnd_edge_coo = mesh.edge2cord(edge_idx);
+
+            % Get edge normal vectors.
+            % (Reshape output, as only one normal direction can be obtained
+            % for bnd edges).
+            bnd_edge_n = Mesh.getEdgeNormal(mesh, edge_idx);
+            bnd_edge_n = vertcat(bnd_edge_n{:});
+            assert(length(bnd_edge_n) == n_edge, ...
+                ['Some considered edges are no boundary edge ', ...
+                '(multiple normals obtained).']);
             
-            % Evaluate Neumann BC at these quadrature nodes.
-            neum_eval = num2cell(arrayfun(@(x, y) bnd_val{ii}.f(x, y), ...
-                gauss_cords_global(:,1), gauss_cords_global(:,2)));
+            %% Assemble Neumann rhs vector.
+
+            % Initialize index and value vector for sparse vector assembling.
+            n_DOF_loc = fe.sizes.DOF_loc;
+            [i, j, s] = deal(zeros(n_edge * n_DOF_loc, 1));
+            j = j + 1;  % (as this variable is const. 1 for vector assembing)
+
+            % Set up bnd val: 
+            if ~isa(bnd.val{kk}, 'function_handle')
+                % If not already given as function handle, 
+                % transform constant values to this shape.
+                fun_hand = RefSol.getConstFunction(bnd.val{kk});
+                bnd_val = fun_hand.f;
+                gradient = false;
+            else
+                bnd_val = bnd.val{kk};
+                gradient = true;
+            end
             
-            % Set up integral kernel.
-            kern = cellfun(@(x, y, z) {(x * y) .* z}, ...
-                gauss_weights, neum_eval, basis_eval);
-            
-            % Evaluate quadrature by summing each basis function w.r.t.
-            % quadrature nodes and apply Jacobi-determinat for backtrafo
-            % of 1D reference coords.
-            kern_eval = sum(vertcat(kern{:})) .* detBk;
-            
-            % Obtain respective cell DOF.
-            cur_cell = find(cell_2_edge_idx_map_merge == ii, 1, 'first');
-            cur_DOF_map = fe.DOF_maps.cell2DOF{cur_cell};
-            
-            % Create index vectors.
-            glob_idx_start = ((ii-1) * n_DOF_loc) + 1;
-            glob_idx_end = glob_idx_start + n_DOF_loc - 1;
-            s(glob_idx_start:glob_idx_end) = kern_eval(:);
-            i(glob_idx_start:glob_idx_end) = cur_DOF_map(:);
+            % Iterate over all edges.
+            for ii = 1:n_edge
+                                
+                % Obtain respective simplex DOFs.
+                [cur_cell, ~] = find(cell_2_edge_idx_map == ii);
+                cur_DOF_map = fe.DOF_maps.cell2DOF{cur_cell};
+
+                % Get affine maps for current edge (represents a 1D barycentric
+                % coordinate system for 2D space).
+                Bk = diff(bnd_edge_coo{ii}, 1, 2);
+                bk = bnd_edge_coo{ii}(2, :).';
+                detBk = sqrt(abs(Bk.' * Bk));
+
+                % Get quadrature nodes position in general form (here gauss 
+                % coords in 1D edge related coordinates are required).
+                gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;               
+                
+                % Set Neumann BC at the quadrature nodes.
+                if gradient
+                    % If required, obtain normal derivative.
+                    neum_eval = num2cell(arrayfun(@(x, y) ...
+                        dot(bnd_val(x, y), bnd_edge_n{ii}), ...
+                        gauss_cords_global(1,:), gauss_cords_global(2,:))).';
+                else
+                    neum_eval = num2cell(arrayfun(@(x, y) ...
+                        bnd_val(x, y), ...
+                        gauss_cords_global(1,:), gauss_cords_global(2,:))).';
+                end
+                
+                % Set up integral kernel.
+                kern = cellfun(@(x, y, z) {(x * y) .* z}, ...
+                    gauss_weights, neum_eval, basis_eval);
+
+                % Evaluate quadrature by summing each basis function w.r.t.
+                % quadrature nodes and apply Jacobi-determinat for backtrafo
+                % of 1D reference coords.
+                % Finally incorporate current simplex parameter value.
+                kern_eval = bnd.param(cur_cell) * sum(vertcat(kern{:})) .* detBk;
+
+                % Create index vectors.
+                glob_idx_start = ((ii-1) * n_DOF_loc) + 1;
+                glob_idx_end = glob_idx_start + n_DOF_loc - 1;
+                s(glob_idx_start:glob_idx_end) = kern_eval(:);
+                i(glob_idx_start:glob_idx_end) = cur_DOF_map(:);
+            end
+
+            % Create sparse Neumann-BC rhs vector.
+            n_DOF = fe.sizes.DOF;
+            b_N = sparse(i, j, s, n_DOF, 1);
+
+            % Summarize original rhs vector and Neumann BC vector.
+            sol.b = sol.b + b_N;
         end
-        
-        % Create sparse Neumann-BC rhs vector.
-        n_DOF = fe.sizes.DOF;
-        b_N = sparse(i, j, s, n_DOF, 1);
-        
-        % Summarize original rhs vector and Neumann BC vector.
-        sol.b = sol.b + b_N;
     end
     
     if verbosity

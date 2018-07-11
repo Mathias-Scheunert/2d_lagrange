@@ -77,7 +77,7 @@ bnd_N.type = {'neumann'};
 % x (left -> right)
 % y (bottom -> top)
 %                   bot top left right
-bnd_N.val = {pick(1, {0;  0;  0;  0}, {0;  0;  1;  -1})};
+bnd_N.val = {pick(2, {0;  0;  0;  0}, {0;  0;  1;  -1})};
 %
 bnd_D.type = {'dirichlet'};
 %                     bot top left right
@@ -92,7 +92,7 @@ bnd_mix.val = pick(2,{{ 10; [];  3;    [] }, ...  % 1 for Dirichlet
                      {{ 10; 10;  [];    [] }, ...  % 2 for Dirichlet
                       { [];  []; 1e-2; 1e-2 }}); ...% 2 for Neumann
 %                 1      2        3      
-bnd = pick(2, bnd_N, bnd_D, bnd_mix);
+bnd = pick(1, bnd_N, bnd_D, bnd_mix);
 
 % Set number of grid refinements.
 ref_steps = 0;
