@@ -60,6 +60,8 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
         case {'external'}
             error('Not implemented yet.');
             % TODO: if mesh is given, load information at this stage.
+            % Make shure that these fit to the information-style of
+            % internal meshes.
             
         otherwise
             error('BC handling only supported for kown mesh type.');
@@ -74,78 +76,71 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
        fprintf('Assign or load bnd DOF values ... '); 
     end
     
-    switch mesh.type
-        case {'cube', 'rhomb'}
-            
-            % Check if every domain boundary will be handled.
-            check_BC = cell2mat(cellfun(@(cur_val) ...
-                {cellfun(@(x) ~isempty(x), cur_val)}, bnd.val));
-            check_BC = sum(check_BC, 2);
-            assert(all(check_BC), ...
-                'Missing BC for domain boundaries. Please check DRIVE.');
-            assert(all(check_BC < 2), ...
-                'Some boundaries are assigned multiply - check DRIVE.');
-            
-            % Iterate over the different bnd types.
-            for ii = 1:length(bnd.type)
-                switch bnd.type{ii}
-                    case 'dirichlet'
-                    % Notice empty info.
-                    empty_BC = cellfun(@isempty, bnd.val{ii});
+    % Check if every domain boundary will be handled.
+    check_BC = cell2mat(cellfun(@(cur_val) ...
+        {cellfun(@(x) ~isempty(x), cur_val)}, bnd.val));
+    check_BC = sum(check_BC, 2);
+    assert(all(check_BC), ...
+        'Missing BC for domain boundaries. Please check DRIVE.');
+    assert(all(check_BC < 2), ...
+        'Some boundaries are assigned multiply - check DRIVE.');
 
-                    % Notice info, given in basic (i.e. scalar form).
-                    basic_BC = cellfun(@(x) ...
-                        isscalar(x) && ~isa(x, 'function_handle'), ...
-                        bnd.val{ii});
+    % Iterate over the different bnd types.
+    for ii = 1:length(bnd.type)
+        switch bnd.type{ii}
+            case 'dirichlet'
+            % Notice empty info.
+            empty_BC = cellfun(@isempty, bnd.val{ii});
 
-                    % Notice info, given as function handle.
-                    fun_BC = cellfun(@(x) isa(x, 'function_handle'), ...
-                        bnd.val{ii});
+            % Notice info, given in basic (i.e. scalar form).
+            basic_BC = cellfun(@(x) ...
+                isscalar(x) && ~isa(x, 'function_handle'), ...
+                bnd.val{ii});
 
-                    % Calculate Dirichlet values from given function handle.
-                    % Note: a scalar output is expected here!
-                    if any(fun_BC)
-                        bnd.val{ii}(fun_BC) = cellfun(@(f, coo) ...
-                            {arrayfun(@(x, y) ...
-                                f(x, y), coo(:, 1), coo(:, 2))}, ...
-                            {bnd.val{ii}{fun_BC}}, ...
-                            {bnd.bndDOF.bnd_DOF_coo{fun_BC}});
-                    end
+            % Notice info, given as function handle.
+            fun_BC = cellfun(@(x) isa(x, 'function_handle'), ...
+                bnd.val{ii});
 
-                    % Replace basic info with bndDOF related values.
-                    if any(basic_BC)
-                        bnd.val{ii}(basic_BC) = cellfun(@(x, y) ...
-                            {x + zeros(size(y))}, ...
-                                {bnd.val{ii}{basic_BC}}, ...
-                                {bnd.bndDOF.bnd_DOF{basic_BC}});
-                    end
-
-                    % Check, if given bndDOF related values have correct size.
-                    DOF_related_BC = ~empty_BC & ~basic_BC & ~fun_BC;
-                    if any(DOF_related_BC)
-                        consistent_BC = cellfun(@(x, y) length(x) == length(y), ...
-                            {bnd.val{ii}{DOF_related_BC}}, ...
-                            {bnd.bndDOF.bnd_DOF{DOF_related_BC}}).';
-                        assert(isempty(consistent_BC) || all(consistent_BC), ...
-                            ['Number of given DOF related BC values do not ', ...
-                            'match the bnd_DOF.']);
-                    end
-                    
-                    case 'neumann'
-                        % As Neumann values needs to be evaluated at
-                        % quadrature nodes leave everything untouched.
-                        % See Fe.treatBC.m for its handling.
-                        
-                    otherwise
-                        error('Bnd type: "%s" not supported yet.', bnd.type{ii});
-                end
+            % Calculate Dirichlet values from given function handle.
+            % Note: a scalar output is expected here!
+            if any(fun_BC)
+                bnd.val{ii}(fun_BC) = cellfun(@(f, coo) ...
+                    {arrayfun(@(x, y) ...
+                        f(x, y), coo(:, 1), coo(:, 2))}, ...
+                    {bnd.val{ii}{fun_BC}}, ...
+                    {bnd.bndDOF.bnd_DOF_coo{fun_BC}});
             end
-            
-        case {'external'}
-            % TODO: implement.
+
+            % Replace basic info with bndDOF related values.
+            if any(basic_BC)
+                bnd.val{ii}(basic_BC) = cellfun(@(x, y) ...
+                    {x + zeros(size(y))}, ...
+                        {bnd.val{ii}{basic_BC}}, ...
+                        {bnd.bndDOF.bnd_DOF{basic_BC}});
+            end
+
+            % Check, if given bndDOF related values have correct size.
+            DOF_related_BC = ~empty_BC & ~basic_BC & ~fun_BC;
+            if any(DOF_related_BC)
+                consistent_BC = cellfun(@(x, y) length(x) == length(y), ...
+                    {bnd.val{ii}{DOF_related_BC}}, ...
+                    {bnd.bndDOF.bnd_DOF{DOF_related_BC}}).';
+                assert(isempty(consistent_BC) || all(consistent_BC), ...
+                    ['Number of given DOF related BC values do not ', ...
+                    'match the bnd_DOF.']);
+            end
+
+            case 'neumann'
+                % As Neumann values needs to be evaluated at
+                % quadrature nodes leave everything untouched.
+                % See Fe.treatBC.m for its handling.
                 assert(isfield(bnd, 'quad_ord'), ...
                     ['field "quad_ord" - Quadrature order for bnd ', ...
                     'integral evaluation required.']);
+
+            otherwise
+                error('Bnd type: "%s" not supported yet.', bnd.type{ii});
+        end
     end
     
     % Add parameter info (required in case of inhomogeneous Neumann BC).
