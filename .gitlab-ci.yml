@@ -1,0 +1,14 @@
+test_current:
+  stage: test
+  tags:
+  - matlab
+  script:
+  - matlab -nodisplay -r run_tests
+
+test_2017b:
+  stage: test
+  tags:
+  - matlab
+  script:
+  - export PATH="/opt/MATLAB/R2017b/bin:$PATH"
+  - matlab -nodisplay -r run_tests
