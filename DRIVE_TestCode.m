@@ -84,10 +84,11 @@ end
 
 % Define observation points.
 n_obs = pick(2, 11, 101);
-RX = pick(1, ...
+RX = pick(3, ...
     [linspace(x(1), x(end), n_obs).', ...
         linspace(y(end), y(1), n_obs).'], ...               % diagonal profile
-    [zeros(n_obs, 1), linspace(x(1), x(end), n_obs).'], ... % axis parallel profile
+    [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
+    [linspace(x(1), x(end), n_obs).', -4 + zeros(n_obs, 1)], ... % profile on axis
     []);                                                    % none
 if convergence
     RX = [];
