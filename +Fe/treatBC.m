@@ -203,20 +203,23 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % Get quadrature rule for 1D and reshape coordinates such that they
         % can be applied on the basis functions (defined on a 2D reference
         % simplex).
-        % TODO: get quadrature order from function handle!
         [gauss_cords, gauss_weights] = Quad.getQuadratureRule(bnd.quad_ord, 1);
         gauss_cords = [gauss_cords, 0 * gauss_cords].';
         gauss_weights = num2cell(gauss_weights).';
         
         % Set up recurring quantity:
+        basis_eval_all = cell(3, 1);        
         % Evaluate basis functions for all quadrature nodes referred to
-        % the reference simplex at an arbitrary edge (as each edge has got 
-        % unit length and all basis functions behave similar w.r.t. the
-        % barycentric coordinates it is not required to get the appropriate
-        % edge for that).
-        basis_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
+        % the reference simplex edges (see Mesh.affineMap for relations).
+        basis_eval_all{1} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords(1,:), gauss_cords(2,:)).';
-                
+        gauss_cords_2 = [1 - gauss_cords(1,:); gauss_cords(1,:)];
+        basis_eval_all{2} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
+            gauss_cords_2(1,:), gauss_cords_2(2,:)).';
+        gauss_cords_3 = flipud(gauss_cords);
+        basis_eval_all{3} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
+            gauss_cords_3(1,:), gauss_cords_3(2,:)).';
+        
         % Iterate over all different Neumann boundaries.
         for kk = 1:length(bnd.val)
         
@@ -225,7 +228,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             % Get only bnd vertices.
             bnd_vtx = bnd.DOF{kk}(bnd.DOF{kk} <= fe.sizes.vtx);
             
-            % Get edge index corresponding to given DOFs at Neumann boundary.
+            % Get edge index corresponding to given DOFs at Neumann 
+            % boundary.
             % Note: n_edge + 1 = length(bnd_vtx)
             edge_idx_map = sum(ismember(mesh.edge2vtx, bnd_vtx), 2) > 1;
             edge_idx = find(edge_idx_map);
@@ -267,10 +271,18 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             
             % Iterate over all edges.
             for ii = 1:n_edge
-                                
-                % Obtain respective simplex DOFs.
-                [cur_cell, ~] = find(cell_2_edge_idx_map == ii);
+                                                
+                % Obtain respective simplex DOFs and current edge index.
+                [cur_cell, cur_cell_glob_edge] = ...
+                    find(cell_2_edge_idx_map == ii);
                 cur_DOF_map = fe.DOF_maps.cell2DOF{cur_cell};
+                
+                % Get the local edge index for the current edge.
+                cur_cell_loc_edge = mesh.loc2glo == cur_cell_glob_edge;
+                
+                % Get the basis function evaluation for the current edge in
+                % local coordinates.
+                basis_eval = basis_eval_all{cur_cell_loc_edge};
 
                 % Get affine maps for current edge (represents a 1D barycentric
                 % coordinate system for 2D space).                
