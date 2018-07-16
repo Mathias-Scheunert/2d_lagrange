@@ -18,7 +18,7 @@ warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
-convergence = pick(2, false, true); % iterate a sequence of refinements
+convergence = pick(1, false, true); % iterate a sequence of refinements
 if convergence
     [debuging, verbosity, plotting] = deal(false);
 end
@@ -37,6 +37,14 @@ if convergence
     order = [1, 2];
 else
     order = pick(2, 1, 2);
+end
+
+% Set number of grid refinements.
+if convergence
+    ref_steps = 1:4;
+    [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
+else
+    ref_steps = 3;
 end
 
 % Define source.
@@ -62,7 +70,7 @@ else
 end
 TXp.ref_sol_u.quad_ord = 6;
 %
-TX = pick(2, TXr, TXp);
+TX = pick(1, TXr, TXp);
 
 % Define outermost grid boundaries.
 switch TX.type
@@ -104,8 +112,8 @@ bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
 %                     bottom             top            left           right                        
-bnd_mix.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J;              [];             []}, ...
-               {[];             [];  TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_mix.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J;             []}, ...
+               {[];             [];             [];             TX.ref_sol_u.f}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
@@ -114,14 +122,6 @@ bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
 mesh_type = pick(2, 'rhomb', 'cube');
 if convergence
     mesh_type = 'cube';
-end
-
-% Set number of grid refinements.
-if convergence
-    ref_steps = 1:4;
-    [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
-else
-    ref_steps = 3;
 end
 
 % Print status.
