@@ -88,10 +88,10 @@ bnd_D.val = {pick(1, {  0;  0;   0;    0 }, ... %   homogeneous DRB
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
 %                       bot top left right
-bnd_mix.val = pick(2,{{ 10; [];  3;    [] }, ...  % 1 for Dirichlet
-                      { [];  0; [];     0 }}, ... % 1 for Neumann
-                     {{ 10; [];  [];    5 }, ...  % 2 for Dirichlet
-                      { [];  0; 1e-2; [] }}); ...% 2 for Neumann
+bnd_mix.val = pick(2,{{ 10; [];    3; [] }, ...   % 1 for Dirichlet
+                      { [];  0;   []; 0 }}, ...   % 1 for Neumann
+                     {{ 10; [];   []; 5 }, ...    % 2 for Dirichlet
+                      { [];  0; 1e-2; [] }}); ... % 2 for Neumann
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);

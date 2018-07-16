@@ -60,7 +60,7 @@ if license('test', 'symbolic_toolbox')
 else
     % Skipt derivation.
 end
-TXp.ref_sol_u.quad_ord = 4;
+TXp.ref_sol_u.quad_ord = 6;
 %
 TX = pick(2, TXr, TXp);
 
@@ -104,8 +104,8 @@ bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
 %                     bottom             top            left           right                        
-bnd_mix.val = {{TX.ref_sol_u.J; [];         [];            []}, ...
-               {[];             TX.ref_sol_u.f;  TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_mix.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J;              [];             []}, ...
+               {[];             [];  TX.ref_sol_u.f; TX.ref_sol_u.f}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
@@ -121,7 +121,7 @@ if convergence
     ref_steps = 1:3;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
-    ref_steps = 0;
+    ref_steps = 3;
 end
 
 % Print status.
@@ -227,7 +227,7 @@ if convergence
    figure(1);
    for kk = 1:length(order)
        subplot(2, 1, kk)
-           h_x = logspace(log10(err_num_DOF{kk}(1)), ref_steps(end), 100);
+           h_x = logspace(log10(err_num_DOF{kk}(1)), ref_steps(end) + 1, 100);
            h = fliplr(h_x);
            loglog(err_num_DOF{kk}, err_L2{kk}/err_L2{kk}(1), 'x-', ...
                err_num_DOF{kk}, err_H1{kk}/err_H1{kk}(1), 'o-', ...
@@ -244,7 +244,7 @@ if convergence
            ylabel('error');
            xlabel('DOF');
            legend('||u_{FE} - u_{ref}||_{L2}', '||u_{FE} - u_{ref}||_{H1}', ...
-               'O(const)', 'O(h)', ...
+               'const', 'O(h)', ...
                'Location', 'EastOutside');
    end
 end
