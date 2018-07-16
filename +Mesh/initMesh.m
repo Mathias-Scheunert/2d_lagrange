@@ -54,7 +54,7 @@ function mesh = initMesh(var, bnd, ref, verbosity)
     if verbosity
        fprintf('Append edge info ... '); 
     end
-    mesh = Mesh.appendElementInfo(mesh);
+    mesh = Mesh.appendEdgeInfo(mesh);
     if verbosity
        fprintf('done.\n'); 
     end
@@ -63,7 +63,7 @@ function mesh = initMesh(var, bnd, ref, verbosity)
     if verbosity
        fprintf('Append Coo map ... '); 
     end
-    mesh = Mesh.appendMappings(mesh);
+    mesh = Mesh.appendCoordInfo(mesh);
     if verbosity
        fprintf('done.\n'); 
     end

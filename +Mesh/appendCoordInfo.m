@@ -1,8 +1,8 @@
-function mesh = appendMappings(mesh)
+function mesh = appendCoordInfo(mesh)
     % Append mappings between mesh infos and its coordinates.
     % 
     % SYNTAX
-    %   mesh = appendMappings(mesh)
+    %   mesh = appendCoordInfo(mesh)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing mesh information, i.e. coordinates of

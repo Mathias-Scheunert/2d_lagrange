@@ -1,8 +1,8 @@
-function mesh = appendElementInfo(mesh)
+function mesh = appendEdgeInfo(mesh)
     % Append element-edge relation.
     % 
     % SYNTAX
-    %   mesh = appendElementInfo(mesh)
+    %   mesh = appendEdgeInfo(mesh)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing mesh information, i.e. coordinates of
@@ -51,7 +51,7 @@ function mesh = appendElementInfo(mesh)
     %% Reduce edge list in order to comprise only unique edges.
     
     % Remove multiply occuring edges.
-    [edge_list, full2red, red2full] = unique(edge_list_full, ...
+    [edge_list, ~, red2full] = unique(edge_list_full, ...
         'rows', 'first');
     
     %% Summarize information.

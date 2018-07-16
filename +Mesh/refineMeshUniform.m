@@ -89,7 +89,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
 
         % Generate 'global' vertex list.
         vert_list_local = cell2mat(vert_list_local);
-        [vert_list, ind_loc2glob, ind_glob2loc] = unique(vert_list_local, ...
+        [vert_list, ~, ind_glob2loc] = unique(vert_list_local, ...
             'rows', 'stable');
 
         % Define 'local' cell list.
@@ -119,7 +119,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
     
     %% Expand grid information.
 
-    mesh = Mesh.appendElementInfo(mesh);
-    mesh = Mesh.appendMappings(mesh);
+    mesh = Mesh.appendEdgeInfo(mesh);
+    mesh = Mesh.appendCoordInfo(mesh);
     mesh = Mesh.appendBndInfo(mesh);
 end

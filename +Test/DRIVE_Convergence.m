@@ -86,18 +86,18 @@ end
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_D = struct();
 bnd_D.type = {'dirichlet'};
-%                     xmin              xmax            ymin        ymax
+%                       xmin            xmax            ymin            ymax
 bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 %
 bnd_N = struct();
 bnd_N.type = {'neumann'};
-%                     xmin              xmax            ymin        ymax                        
+%                       xmin            xmax            ymin            ymax                        
 bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
 bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
-%                     xmin              xmax            ymin        ymax                            
+%                         xmin            xmax            ymin            ymax                            
 bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J}, ...
                {[];             TX.ref_sol_u.f;             [];             []}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
@@ -196,7 +196,7 @@ for cur_order = order
         if convergence
             cur_idx = cur_ref - ref_steps(1) + 1;
             [err_L2{cur_order}(cur_idx), err_H1{cur_order}(cur_idx)] = ...
-                Fe.getError(mesh, fe, u, TX.ref_sol_u);
+                Test.getError(mesh, fe, u, TX.ref_sol_u);
             err_num_DOF{cur_order}(cur_idx) = fe.sizes.DOF;  
         end
         
