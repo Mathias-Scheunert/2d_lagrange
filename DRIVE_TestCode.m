@@ -118,7 +118,7 @@ end
 
 % Set number of grid refinements.
 if convergence
-    ref_steps = 1:3;
+    ref_steps = 1:4;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
     ref_steps = 3;
@@ -219,6 +219,8 @@ if convergence
                 err_num_DOF{kk}(ii), err_L2{kk}(ii), err_H1{kk}(ii)));
         end
     end
+   Test.getConvRates('L2', err_num_DOF, err_L2, true);
+   Test.getConvRates('H1', err_num_DOF, err_H1, true);
 end
     
 %% Plot convergence.
