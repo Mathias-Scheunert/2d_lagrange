@@ -86,11 +86,18 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
        fprintf('Print solution ... '); 
     end
     hold on
-        % Display the solution for all DOF at an adapted triangulation.
-        % TODO: fix for external meshes (internal boundries not preserved!)
-        tri = delaunay(x, y);
-        trisurf(tri, x, y, u, ...
-            'edgecolor', 'none');
+        % Display the solution for all DOF (at an adapted triangulation).
+        switch fe.order
+            case 1
+                trisurf(mesh.cell2vtx, x, y, u, 'edgecolor', 'none');
+            case 2
+                mesh_ref = Mesh.refineMeshUniform(mesh, 1);
+                [~, DOF2vtx_map] = ismember(mesh_ref.vertices, ...
+                    fe.DOF_maps.DOF_coo, 'rows');
+                trisurf(mesh_ref.cell2vtx, ...
+                    x(DOF2vtx_map), y(DOF2vtx_map), u(DOF2vtx_map), ...
+                    'edgecolor', 'none');
+        end
         xlabel('x');
         ylabel('y');
     hold off
