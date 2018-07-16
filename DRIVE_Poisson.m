@@ -86,9 +86,7 @@ bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
 bnd_mix.type = {'dirichlet', 'neumann'};
 %                      xmin xmax ymin ymax
 bnd_mix.val = pick(2,{{   3;  [];  10;  []}, ...   % 1 for Dirichlet
-                      {  [];   0;  [];  0}}, ...   % 1 for Neumann
-                     {{  [];   5;  10;  []}, ...   % 2 for Dirichlet
-                      {1e-2;  [];  [];  0}}); ...  % 2 for Neumann
+                      {  [];   0;  [];  0}}); ...  % 2 for Neumann
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);
