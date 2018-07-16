@@ -73,25 +73,22 @@ mesh_type = pick(2, 'rhomb', 'cube', 'external');
 [bnd_N, bnd_D, bnd_mix] = deal(struct());
 %
 bnd_N.type = {'neumann'};
-% Note:
-% x (left -> right)
-% y (bottom -> top)
-%                   bot top left right
-bnd_N.val = {pick(2, {0;  0;  0;  0}, {0;  0;  1;  -1})};
+%                   xmin xmax ymin ymax
+bnd_N.val = {pick(2, { 0;   0;   0;   0}, {0;  0;  1;  -1})};
 bnd_N.quad_ord = 1;
 %
 bnd_D.type = {'dirichlet'};
-%                     bot top left right
-bnd_D.val = {pick(1, {  0;  0;   0;    0 }, ... %   homogeneous DRB
-                     {  3;  3;  10;   10 }, ... % inhomogeneous DRB
-                     { 10;  0;   0;    0 })};   % inhomogeneous DRB
+%                    xmin xmax ymin ymax
+bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
+                     { 10;  10;   3;   3}, ... % inhomogeneous DRB
+                     {  0;   0;  10;   0})};   % inhomogeneous DRB
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
-%                       bot top left right
-bnd_mix.val = pick(2,{{ 10; [];    3; [] }, ...   % 1 for Dirichlet
-                      { [];  0;   []; 0 }}, ...   % 1 for Neumann
-                     {{ 10; [];   []; 5 }, ...    % 2 for Dirichlet
-                      { [];  0; 1e-2; [] }}); ... % 2 for Neumann
+%                      xmin xmax ymin ymax
+bnd_mix.val = pick(2,{{   3;  [];  10;  []}, ...   % 1 for Dirichlet
+                      {  [];   0;  [];  0}}, ...   % 1 for Neumann
+                     {{  [];   5;  10;  []}, ...   % 2 for Dirichlet
+                      {1e-2;  [];  [];  0}}); ...  % 2 for Neumann
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);

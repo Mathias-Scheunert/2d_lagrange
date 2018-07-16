@@ -87,11 +87,12 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
     end
     hold on
         % Display the solution for all DOF at an adapted triangulation.
+        % TODO: fix for external meshes (internal boundries not preserved!)
         tri = delaunay(x, y);
         trisurf(tri, x, y, u, ...
             'edgecolor', 'none');
-        xlabel('x (left - right)');
-        ylabel('y (bottom - top)');
+        xlabel('x');
+        ylabel('y');
     hold off
     view(3);
     colorbar();

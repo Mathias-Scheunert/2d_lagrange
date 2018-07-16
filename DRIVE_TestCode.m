@@ -98,23 +98,20 @@ end
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_D = struct();
 bnd_D.type = {'dirichlet'};
-% Note:
-% x (left -> right)
-% y (bottom -> top)
-%                        bottom              top            left           right                        
+%                     xmin              xmax            ymin        ymax
 bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 %
 bnd_N = struct();
 bnd_N.type = {'neumann'};
-%                     bottom             top            left           right                        
+%                     xmin              xmax            ymin        ymax                        
 bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
 bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
-%                     bottom             top            left           right                        
-bnd_mix.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J;             []}, ...
-               {[];             [];             [];             TX.ref_sol_u.f}};
+%                     xmin              xmax            ymin        ymax                            
+bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J}, ...
+               {[];             TX.ref_sol_u.f;             [];             []}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
 bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);

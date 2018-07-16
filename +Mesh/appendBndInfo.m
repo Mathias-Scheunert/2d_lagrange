@@ -17,11 +17,6 @@ function mesh = appendBndInfo(mesh)
     %   Note, that this procedure will only work for grids which doesn't
     %   contain any cutting areas and which is bordered by a strict
     %   rectangular shape.
-    %
-    %   x_min = left
-    %   x_max = right
-    %   y_min = bottom
-    %   y_max = top
 
     %% Check input.
     
@@ -32,15 +27,15 @@ function mesh = appendBndInfo(mesh)
     
     switch mesh.type
         case {'cube', 'rhomb'}
-            bnd_bot = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
-            bnd_top = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
-            bnd_left = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
-            bnd_right = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);
-            mesh.bnd_edge = bnd_bot | bnd_top | bnd_left | bnd_right;
-            mesh.bnd_edge_bot = bnd_bot;
-            mesh.bnd_edge_top = bnd_top;
-            mesh.bnd_edge_left = bnd_left;
-            mesh.bnd_edge_right = bnd_right;
+            bnd_xmin = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
+            bnd_xmax = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);
+            bnd_ymin = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
+            bnd_ymax = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
+            mesh.bnd_edge = bnd_ymin | bnd_ymax | bnd_xmin | bnd_xmax;
+            mesh.bnd_edge_xmin = bnd_xmin;
+            mesh.bnd_edge_xmax = bnd_xmax;
+            mesh.bnd_edge_ymin = bnd_ymin;
+            mesh.bnd_edge_ymax = bnd_ymax;
             
         otherwise
             % Nothing can be done, just check, if required information was
