@@ -44,7 +44,7 @@ if convergence
     ref_steps = 1:4;
     [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
 else
-    ref_steps = 3;
+    ref_steps = 2;
 end
 
 % Define source.
@@ -82,18 +82,6 @@ switch TX.type
         y = [-1, 1];
 end
 
-% Define observation points.
-n_obs = pick(2, 11, 101);
-RX = pick(3, ...
-    [linspace(x(1), x(end), n_obs).', ...
-        linspace(y(end), y(1), n_obs).'], ...               % diagonal profile
-    [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
-    [linspace(x(1), x(end), n_obs).', -4 + zeros(n_obs, 1)], ... % profile on axis
-    []);                                                    % none
-if convergence
-    RX = [];
-end
-
 % Define (inhomogeneous Dirichlet) boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_D = struct();
@@ -114,7 +102,19 @@ bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J},
                {[];             TX.ref_sol_u.f;             [];             []}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
-bnd_basic = pick(3, bnd_D, bnd_N, bnd_mix);
+bnd_basic = pick(1, bnd_D, bnd_N, bnd_mix);
+
+% Define observation points.
+n_obs = pick(2, 11, 101);
+RX = pick(3, ...
+    [linspace(x(1), x(end), n_obs).', ...
+        linspace(y(end), y(1), n_obs).'], ...               % diagonal profile
+    [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
+    [linspace(x(1), x(end), n_obs).', -4 + zeros(n_obs, 1)], ... % profile on axis
+    []);                                                    % none
+if convergence
+    RX = [];
+end
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
