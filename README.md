@@ -42,14 +42,14 @@ Lagrange elements:
 
 Assembling of:
 - mass and stiffness matrix
-- rhs vector for single point source
-- rhs vector for reference function defined at every DOF
+- rhs vector for point source(es)
+- rhs vector for given reference function
 - interpolation operator for observing solution at arbitrary points within the domain
 
 Boundary conditions:
 - homogeneous and inhomogeneous Dirichlet
-- homogeneous Neumann
+- homogeneous and inhomogeneous Neumann
 
 Visualization:
-- mesh with parameter and edge orientations
+- mesh with parameter and edge orientations and normals
 - FE solution within domain and observations
