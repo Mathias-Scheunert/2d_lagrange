@@ -51,12 +51,13 @@ end
 [TXp, TXr] = deal(struct());
 %
 TXr.type = 'reference';
-TXr.ref_sol_u = RefSol.getSinFunction();
+TXr.ref_sol_u = RefSol.getSin();
 TXr.ref_sol.f = TXr.ref_sol_u.L;
 %
 TXp.type = 'point_exact';
 TXp.coo = pick(2, [0, 1], [0, 0]);
 TXp.val = 1;
+% Analytic solution of poisson equation in 2D: -ln(|r|)/(2 \pi)
 TXp.ref_sol_u.f = @(x, y) -1/(2*pi) * log(norm([x; y] - TXp.coo(:)));
 if license('test', 'symbolic_toolbox')
     x_sym = sym('x', 'real');

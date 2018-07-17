@@ -49,7 +49,7 @@ RX = scale * RX;
 % Define source point and strength.
 [TXp, TXd, TXq, TXh] = deal(struct());
 TXp.type = 'point_exact';
-TXp.coo = scale * pick(2, [0, 1], [0, 0]); 
+TXp.coo = scale * pick(1, [0, -1], [0, 0]); 
 % Note: source AT bnd only reasonable with h. N-BC
 TXp.val = 1;                  % discrete    Poisson problem (pole)
 TXd.type = 'point_exact';
@@ -58,12 +58,12 @@ TXd.val = [-1, 1];            % discrete    Poisson problem (dipole)
 TXq.type = 'point_approx';
 TXq.coo = scale * [0.5, 0.5; -0.5, -0.5; -0.5, 0.5; 0.5, -0.5];
 TXq.val = [1, 0.5, -1, -0.5]; % discrete    Poisson problem (quadrupole)
-TXq.ref_sol = RefSol.getPeakFunction(TXq.val, TXq.coo, 1e-5);
+TXq.ref_sol = RefSol.getPeak(TXq.val, TXq.coo, 1e-5);
 TXh.type = 'reference';
 TXh.val = 1;                  % homogeneous Poisson problem
-TXh.ref_sol = RefSol.getConstFunction(TXh.val);
+TXh.ref_sol = RefSol.getConst(TXh.val);
 %              1    2    3    4
-TX = pick(2, TXp, TXd, TXq, TXh);
+TX = pick(1, TXp, TXd, TXq, TXh);
 
 % Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
@@ -82,17 +82,17 @@ bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
 %               xmin xmax ymin ymax
-bnd_mix.val = {{   3;  [];  10;  []}, ...   % 1 for Dirichlet
-               {  [];   0;  [];  0}}; ...  % 2 for Neumann
+bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
+               {  [];  [];  0; []}}; ...  % 2 for Neumann
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(1, bnd_N, bnd_D, bnd_mix);
+bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube', 'external');
 
 % Set number of grid refinements.
-ref_steps = 3;
+ref_steps = 4;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);

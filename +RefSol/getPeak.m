@@ -1,4 +1,4 @@
-function peak_fun = getPeakFunction(val, pos, eps_peak)
+function peak_fun = getPeak(val, pos, eps_peak)
     % Get information for 2D peak function which simulates Dirac.
     %
     % Arbitrarily modify shape of the peak.
@@ -6,7 +6,7 @@ function peak_fun = getPeakFunction(val, pos, eps_peak)
     %
     % SYNTAX
     %
-    %   peak_fun = getPeakFunction(eps_peak)
+    %   peak_fun = getPeak(eps_peak)
     %
     % INPUT PARAMETER
     %   val      ... Scalar [or vector] scaling factor[s], denoting source 

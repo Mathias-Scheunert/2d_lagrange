@@ -261,7 +261,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             if ~isa(bnd.val{kk}, 'function_handle')
                 % If not already given as function handle, 
                 % transform constant values to this shape.
-                fun_hand = RefSol.getConstFunction(bnd.val{kk});
+                fun_hand = RefSol.getConst(bnd.val{kk});
                 bnd_val = fun_hand.f;
                 gradient = false;
             else

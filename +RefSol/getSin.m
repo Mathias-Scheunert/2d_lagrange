@@ -1,11 +1,11 @@
-function sin_fun = getSinFunction()
+function sin_fun = getSin()
     % Get information for 2D sin and polynomial function.
     %
     % Provides relevant information of an analytic sin-function:
     %   f(x,y) = −10x² + 10y² + 4sin(xy) − 2x + x⁴
     %
     % SYNTAX
-    %   sin_fun = getSinFunction()
+    %   sin_fun = getSin()
     %
     % OUTPUT PARAMETER
     %   sin_fun ... Struct, containing function handles of the sin function

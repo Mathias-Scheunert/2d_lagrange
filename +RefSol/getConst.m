@@ -1,4 +1,4 @@
-function const_fun = getConstFunction(val)
+function const_fun = getConst(val)
     % Get information for constant "function".
     %
     % This function mainly aims to mimic the structure of the other, more
@@ -6,7 +6,7 @@ function const_fun = getConstFunction(val)
     %
     % SYNTAX
     %
-    %   const_fun = getConstFunction(val)
+    %   const_fun = getConst(val)
     %
     % INPUT PARAMETER
     %   val ... Scalar, denoting the amplitude.
