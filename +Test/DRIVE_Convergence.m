@@ -6,7 +6,7 @@
 %   solve:
 %   -\nabla²(u) = -\nabla²(f(x(DOF)))    in Omega
 %        u(x,y) = -\nabla²(f(x(bndDOF))) at d_Omega
-% Variants:
+% Variants for rhs:
 %   f(x) = \dirac(x_0)
 %   f(x) = -\nabla²(f(x(DOF))) 
 
@@ -66,7 +66,7 @@ if license('test', 'symbolic_toolbox')
     TXp.ref_sol_u.J = TXp.ref_sol_u.grad;
     clear('x_sym', 'y_sym');
 else
-    % Skipt derivation.
+    % Skip derivation.
 end
 TXp.ref_sol_u.quad_ord = 6;
 %
@@ -89,12 +89,6 @@ bnd_D.type = {'dirichlet'};
 %                       xmin            xmax            ymin            ymax
 bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
 %
-bnd_N = struct();
-bnd_N.type = {'neumann'};
-%                       xmin            xmax            ymin            ymax                        
-bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
-bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
-%
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
 %                         xmin            xmax            ymin            ymax                            
@@ -102,7 +96,7 @@ bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J},
                {[];             TX.ref_sol_u.f;             [];             []}};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
-bnd_basic = pick(1, bnd_D, bnd_N, bnd_mix);
+bnd_basic = pick(1, bnd_D, bnd_mix);
 
 % Define observation points.
 n_obs = pick(2, 11, 101);

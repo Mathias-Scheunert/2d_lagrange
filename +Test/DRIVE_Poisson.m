@@ -65,16 +65,13 @@ TXh.ref_sol = RefSol.getConstFunction(TXh.val);
 %              1    2    3    4
 TX = pick(2, TXp, TXd, TXq, TXh);
 
-% Choose basic grid type.
-mesh_type = pick(2, 'rhomb', 'cube', 'external');
-
 % Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
 [bnd_N, bnd_D, bnd_mix] = deal(struct());
 %
 bnd_N.type = {'neumann'};
-%                   xmin xmax ymin ymax
-bnd_N.val = {pick(2, { 0;   0;   0;   0}, {0;  0;  1;  -1})};
+%           xmin xmax ymin ymax
+bnd_N.val = {{ 0;   0;   0;   0}};
 bnd_N.quad_ord = 1;
 %
 bnd_D.type = {'dirichlet'};
@@ -84,12 +81,15 @@ bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
                      {  0;   0;  10;   0})};   % inhomogeneous DRB
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
-%                      xmin xmax ymin ymax
-bnd_mix.val = pick(2,{{   3;  [];  10;  []}, ...   % 1 for Dirichlet
-                      {  [];   0;  [];  0}}); ...  % 2 for Neumann
+%               xmin xmax ymin ymax
+bnd_mix.val = {{   3;  [];  10;  []}, ...   % 1 for Dirichlet
+               {  [];   0;  [];  0}}; ...  % 2 for Neumann
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(3, bnd_N, bnd_D, bnd_mix);
+bnd = pick(1, bnd_N, bnd_D, bnd_mix);
+
+% Choose basic grid type.
+mesh_type = pick(2, 'rhomb', 'cube', 'external');
 
 % Set number of grid refinements.
 ref_steps = 3;
