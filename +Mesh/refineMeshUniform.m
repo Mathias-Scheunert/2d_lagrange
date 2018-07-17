@@ -1,5 +1,5 @@
 function mesh = refineMeshUniform(mesh, ref_num)
-    % Refines mesh by splitting up one triangle into three triangles.
+    % Refines mesh by splitting up one triangle into four triangles.
     % 
     % SYNTAX
     %   mesh = refineMeshUniform(mesh, ref_num)
