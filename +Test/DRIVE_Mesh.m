@@ -39,7 +39,7 @@ end
 %% Refine grid.
 
 % Apply refinement.
-mesh = Mesh.refineMesh(mesh, 2);
+mesh = Mesh.refineMeshUniform(mesh, 1);
 n_cells = length(mesh.cell2vtx);
 
 % Plot grid.

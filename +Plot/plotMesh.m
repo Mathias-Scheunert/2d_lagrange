@@ -32,16 +32,10 @@ function [] = plotMesh(mesh, params, debug)
     
     figure();
     axis('equal');
-    set(gca, 'Ydir', 'reverse')
+    set(gca, 'Ydir', 'reverse') % As y should point downwards.
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
-    % TODO: why was this implemented?
-%     if all(~isnan(params)) && length(unique(params)) ~= 1
-%         col_range = [min(params), max(params)] / max(params);
-%         caxis(col_range);
-%     else
-        caxis('auto');
-%     end
+    caxis('auto');
     if debug
         drawnow();
     end
