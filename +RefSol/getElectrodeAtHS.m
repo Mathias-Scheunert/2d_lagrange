@@ -27,8 +27,7 @@ function eleHS_fun = getElectrodeAtHS(rho, I, TX)
     
     %% Define function.
     
-    r = @(X, Y) norm([X; Y] - TX(:));
-    eleHS_fun.f = @(X, Y) (rho * I) / (2 * pi * r(X, Y));
+    eleHS_fun.f = @(X, Y) (rho * I) / (2 * pi * norm([X; Y] - TX(:)));
 
     %% Define gradient.
     

@@ -26,9 +26,8 @@ function eleVS_fun = getElectrodeAtVS(rho, I, TX)
         'TX - Vector [2 x 1], denoting source position, expected.');
     
     %% Define function.
-    
-    r = @(X, Y) norm([X; Y] - TX(:));
-    eleVS_fun.f = @(X, Y) (rho * I) / (4 * pi * r(X, Y));
+
+    eleVS_fun.f = @(X, Y) (rho * I) / (4 * pi * norm([X; Y] - TX(:)));
 
     %% Define gradient.
     
