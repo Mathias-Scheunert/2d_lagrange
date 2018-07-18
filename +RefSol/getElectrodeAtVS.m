@@ -1,4 +1,4 @@
-function eleHS_fun = getElectrodeAtVS(rho, I, TX)
+function eleVS_fun = getElectrodeAtVS(rho, I, TX)
     % Get information for an point source in a homogeneous full-space.
     %
     % Provides relevant information of the potential of a point source 
@@ -6,35 +6,44 @@ function eleHS_fun = getElectrodeAtVS(rho, I, TX)
     %   \Phi(r) = (\rho I) / (4 \pi \abs(r - r'))
     %         r = observation point = \sqrt(x^2 + y^2 + z^2)
     %         r'= source position
-    %         I = source current
-    %      \rho = resistivity of the half-space
     %
     % SYNTAX
-    %   eleHS_fun = getElectrodeAtHS()
+    %   eleVS_fun = getElectrodeAtVS(rho, I, TX)
+    %
+    % INPUT PARAMETER
+    %   rho ... Scalar, denoting the VS resistivity. 
+    %   I   ... Scalar, denoting the source current.
+    %   TX  ... Vector [2, x 1], denoting the source position.
     %
     % OUTPUT PARAMETER
-    %   eleHS_fun ... Struct, containing function handles of the sin function
-    %                 as well as its Jacobian and Hessian matrix.
+    %   eleVS_fun ... Struct, containing function and gradient handles.
     
-    %% Define fuction.
+    %% Check input.
+    
+    assert(isscalar(rho), 'rho - Scalar denoting resistivity, expected.');
+    assert(isscalar(I), 'I - Scalar denoting source current, expected.');
+    assert(isvector(TX) && length(TX) == 2, ...
+        'TX - Vector [2 x 1], denoting source position, expected.');
+    
+    %% Define function.
     
     pi = 3.141592653589793;
     r = @(X, Y) norm([X; Y] - TX(:));
-    eleHS_fun.f = @(X, Y) (rho * I) / (4 * pi * r(X, Y));
+    eleVS_fun.f = @(X, Y) (rho * I) / (4 * pi * r(X, Y));
 
     %% Define gradient.
     
     if license('test', 'symbolic_toolbox')
         x_sym = sym('x', 'real');
         y_sym = sym('y', 'real');
-        eleHS_fun.grad = [diff(eleHS_fun.f, x_sym); diff(eleHS_fun.f, y_sym)];
-        eleHS_fun.grad = matlabFunction(eleHS_fun.grad, 'Vars', {'x', 'y'});
-        eleHS_fun.J = eleHS_fun.grad;
+        eleVS_fun.grad = [diff(eleVS_fun.f, x_sym); diff(eleVS_fun.f, y_sym)];
+        eleVS_fun.grad = matlabFunction(eleVS_fun.grad, 'Vars', {'x', 'y'});
+        eleVS_fun.J = eleVS_fun.grad;
         clear('x_sym', 'y_sym');
     else
         % Skip derivation.
     end
 
     % Set required quadrature order.
-    eleHS_fun.quad_ord = 4;
+    eleVS_fun.quad_ord = 4;
 end

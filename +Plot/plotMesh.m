@@ -35,12 +35,13 @@ function [] = plotMesh(mesh, params, debug)
     set(gca, 'Ydir', 'reverse')
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
-    if all(~isnan(params)) && length(unique(params)) ~= 1
-        col_range = [min(params), max(params)] / max(params);
-        caxis(col_range);
-    else
+    % TODO: why was this implemented?
+%     if all(~isnan(params)) && length(unique(params)) ~= 1
+%         col_range = [min(params), max(params)] / max(params);
+%         caxis(col_range);
+%     else
         caxis('auto');
-    end
+%     end
     if debug
         drawnow();
     end

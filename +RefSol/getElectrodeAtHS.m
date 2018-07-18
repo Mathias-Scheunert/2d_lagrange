@@ -6,17 +6,26 @@ function eleHS_fun = getElectrodeAtHS(rho, I, TX)
     %   \Phi(r) = (\rho I) / (2 \pi \abs(r - r'))
     %         r = observation point = \sqrt(x^2 + y^2 + z^2)
     %         r'= source position
-    %         I = source current
-    %      \rho = resistivity of the half-space
     %
     % SYNTAX
-    %   eleHS_fun = getElectrodeAtHS()
+    %   eleHS_fun = getElectrodeAtHS(rho, I, TX)
+    %
+    % INPUT PARAMETER
+    %   rho ... Scalar, denoting the HS resistivity. 
+    %   I   ... Scalar, denoting the source current.
+    %   TX  ... Vector [2, x 1], denoting the source position.
     %
     % OUTPUT PARAMETER
-    %   eleHS_fun ... Struct, containing function handles of the sin function
-    %                 as well as its Jacobian and Hessian matrix.
+    %   eleHS_fun ...  Struct, containing function and gradient handles.
     
-    %% Define fuction.
+    %% Check input.
+    
+    assert(isscalar(rho), 'rho - Scalar denoting resistivity, expected.');
+    assert(isscalar(I), 'I - Scalar denoting source current, expected.');
+    assert(isvector(TX) && length(TX) == 2, ...
+        'TX - Vector [2 x 1], denoting source position, expected.');
+    
+    %% Define function.
     
     pi = 3.141592653589793;
     r = @(X, Y) norm([X; Y] - TX(:));
