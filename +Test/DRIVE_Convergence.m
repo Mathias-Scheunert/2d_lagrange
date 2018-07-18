@@ -1,14 +1,22 @@
 % Script for testing the FE-Code w.r.t. an analytic test function.
 %
-% Problem:
+% Problem 1 'reference':
 %   given: 
 %       f(x), \nabla²(f(x))
 %   solve:
-%   -\nabla²(u) = -\nabla²(f(x(DOF)))    in Omega
-%        u(x,y) = -\nabla²(f(x(bndDOF))) at d_Omega
-% Variants for rhs:
-%   f(x) = \dirac(x_0)
-%   f(x) = -\nabla²(f(x(DOF))) 
+%   -\nabla²(u) + u = -\nabla²(f(x(DOF)))                   in Omega
+%              u(x) = -\nabla²(f(x(bndDOF))) + f(x(bndDOF)) at d_Omega_1
+%   optional:
+%           d_u/d_n = \grad(f(x))) * n                      at d_Omega_2
+%
+% Problem 1 'poisson':
+%   given: 
+%       p(x)
+%   solve:
+%   -\nabla²(u) = \dirac(x_0)      in Omega
+%          u(x) = p(x)             at d_Omega_1
+%   optional:
+%       d_u/d_n = \grad(p(x))) * n at d_Omega_2
 
 %% Set up script.
 
@@ -57,21 +65,9 @@ TXr.ref_sol.f = @(X, Y) TXr.ref_sol_u.L(X, Y) + TXr.ref_sol_u.f(X, Y);
 TXp.type = 'point_exact';
 TXp.coo = pick(2, [0, 1], [0, 0]);
 TXp.val = 1;
-% Analytic solution of poisson equation in 2D: -ln(|r|)/(2 \pi)
-TXp.ref_sol_u.f = @(x, y) -1/(2*pi) * log(norm([x; y] - TXp.coo(:)));
-if license('test', 'symbolic_toolbox')
-    x_sym = sym('x', 'real');
-    y_sym = sym('y', 'real');
-    TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
-    TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
-    TXp.ref_sol_u.J = TXp.ref_sol_u.grad;
-    clear('x_sym', 'y_sym');
-else
-    % Skip derivation.
-end
-TXp.ref_sol_u.quad_ord = 6;
+TXp.ref_sol_u = RefSol.getPoisson2D(TXp.coo);
 %
-TX = pick(1, TXr, TXp);
+TX = pick(2, TXr, TXp);
 
 % Define outermost grid boundaries.
 switch TX.type
@@ -133,7 +129,7 @@ if verbosity
    fprintf('... FE-FWP set up.\n \n'); 
 end
 
-    %% Set up mesh.
+%% Set up mesh.
 
 % Iterate (if required) over different Lagrange orders.
 for cur_order = order

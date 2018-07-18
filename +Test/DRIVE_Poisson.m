@@ -119,8 +119,6 @@ mesh = Mesh.initMesh(mesh_type, [x, y], ref_steps, verbosity);
 
 %% Set up Parameter.
 
-% TODO: if external mesh is provided, also these info has to be given.
-
 % Set disturbed area (equals vertical dike).
 x_dist = scale * [0, 1];
 y_dist = scale * [0.25, 0.35];

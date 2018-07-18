@@ -27,7 +27,6 @@ function eleVS_fun = getElectrodeAtVS(rho, I, TX)
     
     %% Define function.
     
-    pi = 3.141592653589793;
     r = @(X, Y) norm([X; Y] - TX(:));
     eleVS_fun.f = @(X, Y) (rho * I) / (4 * pi * r(X, Y));
 
@@ -36,14 +35,17 @@ function eleVS_fun = getElectrodeAtVS(rho, I, TX)
     if license('test', 'symbolic_toolbox')
         x_sym = sym('x', 'real');
         y_sym = sym('y', 'real');
-        eleVS_fun.grad = [diff(eleVS_fun.f, x_sym); diff(eleVS_fun.f, y_sym)];
-        eleVS_fun.grad = matlabFunction(eleVS_fun.grad, 'Vars', {'x', 'y'});
+        eleVS_fun.grad = [diff(eleVS_fun.f, x_sym); ...
+                          diff(eleVS_fun.f, y_sym)];
+        eleVS_fun.grad = matlabFunction(eleVS_fun.grad, ...
+                            'Vars', {'x', 'y'});
         eleVS_fun.J = eleVS_fun.grad;
         clear('x_sym', 'y_sym');
     else
         % Skip derivation.
     end
 
-    % Set required quadrature order.
+    %% Set required quadrature order.
+    
     eleVS_fun.quad_ord = 4;
 end

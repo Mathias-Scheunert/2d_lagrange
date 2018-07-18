@@ -24,6 +24,7 @@ function const_fun = getConst(val)
 
     const_fun.f = @(x, y) val;
     
-    % Set required quadrature order.
-    const_fun.quad_ord = 0;
+    %% Set required quadrature order.
+    
+    const_fun.quad_ord = 1;
 end

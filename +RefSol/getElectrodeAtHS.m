@@ -16,7 +16,7 @@ function eleHS_fun = getElectrodeAtHS(rho, I, TX)
     %   TX  ... Vector [2, x 1], denoting the source position.
     %
     % OUTPUT PARAMETER
-    %   eleHS_fun ...  Struct, containing function and gradient handles.
+    %   eleHS_fun ... Struct, containing function and gradient handles.
     
     %% Check input.
     
@@ -27,7 +27,6 @@ function eleHS_fun = getElectrodeAtHS(rho, I, TX)
     
     %% Define function.
     
-    pi = 3.141592653589793;
     r = @(X, Y) norm([X; Y] - TX(:));
     eleHS_fun.f = @(X, Y) (rho * I) / (2 * pi * r(X, Y));
 
@@ -36,14 +35,17 @@ function eleHS_fun = getElectrodeAtHS(rho, I, TX)
     if license('test', 'symbolic_toolbox')
         x_sym = sym('x', 'real');
         y_sym = sym('y', 'real');
-        eleHS_fun.grad = [diff(eleHS_fun.f, x_sym); diff(eleHS_fun.f, y_sym)];
-        eleHS_fun.grad = matlabFunction(eleHS_fun.grad, 'Vars', {'x', 'y'});
+        eleHS_fun.grad = [diff(eleHS_fun.f, x_sym); ...
+                          diff(eleHS_fun.f, y_sym)];
+        eleHS_fun.grad = matlabFunction(eleHS_fun.grad, ...
+                            'Vars', {'x', 'y'});
         eleHS_fun.J = eleHS_fun.grad;
         clear('x_sym', 'y_sym');
     else
         % Skip derivation.
     end
 
-    % Set required quadrature order.
+    %% Set required quadrature order.
+    
     eleHS_fun.quad_ord = 4;
 end

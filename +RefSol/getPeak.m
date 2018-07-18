@@ -53,6 +53,7 @@ function peak_fun = getPeak(val, pos, eps_peak)
             exp(-(cord(x,y).' * CI * cord(x,y)) / 2));
     end
     
-    % Set required quadrature order.
+    %% Set required quadrature order.
+    
     peak_fun.quad_ord = 3;
 end
