@@ -52,7 +52,7 @@ end
 %
 TXr.type = 'reference';
 TXr.ref_sol_u = RefSol.getSin();
-TXr.ref_sol.f = TXr.ref_sol_u.L;
+TXr.ref_sol.f = @(X, Y) TXr.ref_sol_u.L(X, Y) + TXr.ref_sol_u.f(X, Y);
 %
 TXp.type = 'point_exact';
 TXp.coo = pick(2, [0, 1], [0, 0]);
@@ -170,6 +170,9 @@ for cur_order = order
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
         sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+        if strcmp(TX.type, 'reference')
+            sol.A = sol.A + Fe.assembleMass(fe, mesh, param, verbosity);
+        end
 
         % Set up rhs vector.
         sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);

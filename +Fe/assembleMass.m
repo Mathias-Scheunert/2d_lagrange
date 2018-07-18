@@ -1,4 +1,4 @@
-function M = assembleMass(fe, param, verbosity)
+function M = assembleMass(fe, mesh, param, verbosity)
     % Assembles the sparse mass matrix.
     %
     % a(u,v) = \int_Omega param u * \param(x,y) v d(x,y) = ...
@@ -13,7 +13,7 @@ function M = assembleMass(fe, param, verbosity)
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   S = assembleMass(fe, param[, verbosity])
+    %   S = assembleMass(fe, mesh, param[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
@@ -30,8 +30,6 @@ function M = assembleMass(fe, param, verbosity)
     %         formulation.
     %
     % TODO: implement tensor-based handling (e.g. from toolbox).
-    
-    warning('Function not tested, yet.');
     
     %% Check input.
     
@@ -70,7 +68,7 @@ function M = assembleMass(fe, param, verbosity)
     % Get basis functions for all quadrature nodes referred to
     % the reference simplex.
     quad_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
-        gauss_cords(:,1), gauss_cords(:,2)).';      
+        gauss_cords(:,1), gauss_cords(:,2));      
         
     % Iterate over all simplices.
     for ii = 1:n_cell                   
