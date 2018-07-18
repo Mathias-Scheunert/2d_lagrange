@@ -162,7 +162,7 @@ sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
 % Handle boundary conditions.
-[sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
 if verbosity
    fprintf('... Linear system and BC set up.\n \n'); 
 end

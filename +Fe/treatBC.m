@@ -1,4 +1,4 @@
-function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
+function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     % Handles the given BC.
     %
     % SYNTAX
@@ -22,8 +22,6 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
     %   sol ... Struct, adapted sol struct, depending on the BC the system
     %           matrix and or the rhs-vector is appended or reduced,
     %           respectively.
-    %   bnd ... Struct, containing the boundary condition information 
-    %           appended by bnd DOF information.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be

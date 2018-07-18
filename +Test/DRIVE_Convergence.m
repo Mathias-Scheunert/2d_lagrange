@@ -101,7 +101,7 @@ RX = pick(3, ...
     [linspace(x(1), x(end), n_obs).', ...
         linspace(y(end), y(1), n_obs).'], ...               % diagonal profile
     [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
-    [linspace(x(1), x(end), n_obs).', -4 + zeros(n_obs, 1)], ... % profile on axis
+    [linspace(x(1), x(end), n_obs).', min(y) + zeros(n_obs, 1)], ... % profile on axis
     []);                                                    % none
 if convergence
     RX = [];
@@ -174,7 +174,7 @@ for cur_order = order
         sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
         % Handle boundary conditions.
-        [sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+        sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
 
         if verbosity
            fprintf('... Linear system and BC set up.\n \n'); 
