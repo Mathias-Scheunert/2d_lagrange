@@ -69,16 +69,16 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
 
-    if verbosity
-       fprintf('Print mesh ... '); 
-    end
-    cell_coo_all = cell2mat(mesh.cell2cord);
-    cell_coo_x = reshape(cell_coo_all(:,1), [3, fe.sizes.cell]);
-    cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
-    patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
-    if verbosity
-       fprintf('done.\n'); 
-    end
+%     if verbosity
+%        fprintf('Print mesh ... '); 
+%     end
+%     cell_coo_all = cell2mat(mesh.cell2cord);
+%     cell_coo_x = reshape(cell_coo_all(:,1), [3, fe.sizes.cell]);
+%     cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
+%     patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
+%     if verbosity
+%        fprintf('done.\n'); 
+%     end
     
     %% Add solution.
     

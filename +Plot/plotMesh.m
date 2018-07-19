@@ -42,11 +42,11 @@ function [] = plotMesh(mesh, params, debug)
     
     %% Add simplices.
     
-    cell_coo_all = cell2mat(mesh.cell2cord);
-    cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
-    cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
     hold on
-    if debug
+    if debug && isfield(mesh, 'cell2cord')
+        cell_coo_all = cell2mat(mesh.cell2cord);
+        cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
+        cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
         pause_time = 5/n_cells;
         for kk = 1:n_cells
             patch(cell_coo_x(:,kk), cell_coo_y(:,kk), params(kk));
@@ -54,7 +54,9 @@ function [] = plotMesh(mesh, params, debug)
             pause(pause_time);
         end
     else
-        patch(cell_coo_x, cell_coo_y, params);
+        patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
+            'FaceVertexCData', params(:), ...
+            'FaceColor', 'flat')
     end
     hold off
     drawnow();
