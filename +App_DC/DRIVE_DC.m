@@ -67,17 +67,16 @@ verbosity = pick(2, false, true);
 FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
 
 % Set up domain boundaries.
-x = [-100, 100];
-y = [0, 100];
+x = [-400, 400];
+y = [0, 50];
 
 % Define source and receiver locations at earth's surface.
 TX.type = 'point_exact';
 TX.coo = [0, 0];
 TX.val = 1;
 %
-% RX.coo = [linspace(-40, 40, 17).', zeros(17, 1)];
-% RX.coo(ismember(RX.coo, TX.coo, 'rows'),:) = [];
-RX.coo = [linspace(1, 100, 100).', zeros(100, 1)];
+RX.coo = [linspace(-40, 40, 17).', zeros(17, 1)];
+RX.coo(ismember(RX.coo, TX.coo, 'rows'),:) = [];
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
@@ -154,15 +153,6 @@ phi_FE = fe.I * u_FE;
 %% Compare with analytic point source at top of homogeneous half-space.
 
 if debugging
-    % Get asymptotics.
-    r_TX2RX = sqrt((TX.coo(1) - RX.coo(:,1)).^2 + (TX.coo(2) - RX.coo(:,2)).^2);
-    phi_ref_2D = cell(FT_info.n, 1);
-    for jj = 1:(FT_info.n)
-        phi_ref_2D{jj} = arrayfun(@(r) besselk(0, FT_info.k(jj) * r), r_TX2RX);
-    end
-end
-
-if debugging
     % Get reference solution in 3D.
     ref_3D = RefSol.getElectrodeAtHS(1/sig_anomaly, TX.val, TX.coo);
     u_ref = arrayfun(@(x, y) ref_3D.f(x, y), ...
@@ -176,10 +166,10 @@ if debugging
     for i=1:size(RX.coo, 1)
         r = abs(RX.coo(i,1) - TX.coo(1,1));
         switch FT_type
-            case 'Boerner'
+            case {'Boerner', 'Xu'}
                 phi_asy(i) = (2 / pi) * sum(FT_info.w .* besselk(0, FT_info.k * r));
-            case 'Xu'
-                phi_asy(i) = sum(FT_info.w .* besselk(0, FT_info.k * r));
+            case 'Bing'
+                % Not known.
         end
     end
 
@@ -206,10 +196,30 @@ if debugging
         ylabel('rel. error');
         xlabel('profile length');       
 end
+
 return;
+
 %% Compare some solutions within the wavenumber domain.
 
-figure()
-cur_k = round(length(FT_info.k) / 2);
-plot(x_plot, fe.I * u{cur_k}, 'r', x_plot, phi_ref_2D{cur_k}, '-ob');
-legend('\phi_{FE}', '\phi_{bessel}');
+if debugging
+    % Get asymptotics in 2D.
+    r_TX2RX = sqrt((TX.coo(1) - RX.coo(:,1)).^2 + (TX.coo(2) - RX.coo(:,2)).^2);
+    phi_ref_2D = cell(FT_info.n, 1);
+    for jj = 1:(FT_info.n)
+        phi_ref_2D{jj} = arrayfun(@(r) besselk(0, FT_info.k(jj) * r), r_TX2RX);
+    end
+
+    % Compare to 2D FE solutions.
+    figure()
+    subplot(2, 1, 1)
+        cur_k_idx = pick(1, 30, round(length(FT_info.k) / 2));
+        u_cur = Fe.solveFwd(sol{cur_k_idx}, fe);
+        phi_FE_2D = fe.I * u_cur;
+        plot(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, '-ob');
+        legend('\phi_{FE}', '\phi_{bessel}');
+    subplot(2, 1, 2)
+        rel_err_2D = (1 - (phi_FE_2D ./ phi_ref_2D{cur_k_idx})) * 100;
+        plot(x_plot, rel_err_2D);
+        ylabel('rel. error');
+        xlabel('profile length');
+end

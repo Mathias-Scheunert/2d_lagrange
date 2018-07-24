@@ -55,7 +55,7 @@ function u = solveDC25D(fe, sol, FT, verbosity)
         fprintf('Apply integration over wavenumber domain ... '); 
     end
     switch FT.type
-        case 'Boerner'
+        case {'Boerner', 'Xu'}
             % Add quadrature weights.
             u = cellfun(@(x, y) {x * y}, u_2D, num2cell(FT.w));
 
@@ -76,13 +76,6 @@ function u = solveDC25D(fe, sol, FT, verbosity)
             u_exp = ((2 * u_2D{end}) * (FT.k(end) - FT.k(end - 1))) ./ ...
                 (pi * log(u_2D{end - 1} ./ u_2D{end}));
             u = u_rect + u_log + u_exp;
-            
-        case 'Xu'
-            % Add quadrature weights.
-            u = cellfun(@(x, y) {x * y}, u_2D, num2cell(FT.w));
-
-            % Sum up solutions (apply quadrature).
-            u = sum(cat(3, u{:}), 3);
         otherwise
             error('Unknown type.');
     end

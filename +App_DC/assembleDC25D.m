@@ -57,12 +57,6 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %% Treat 2.5D wavenumber domain handling and set up DC-FE system.
 
     % Set up invariant rhs vector.
-%     switch FT_type 
-%         case {'Boerner', 'Bing'}
-%             TX.val = TX.val * 2 / pi;
-%         case 'Xu'
-%             % Nothing to adapt.
-%     end
     rhs = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
