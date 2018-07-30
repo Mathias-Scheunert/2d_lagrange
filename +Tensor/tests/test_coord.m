@@ -21,7 +21,7 @@ M_nnz = cellfun(@(X_sz) floor(M_density * prod(X_sz)), M_sz);
 % Create tensor and matrices.
 T_index = arrayfun(@(x) {rs.randi(x, T_nnz, 1)}, T_sz);
 T_value = pick(val_choice, rs.rand(T_nnz, 1), ones(T_nnz, 1));
-T = Tensor3Coord(T_sz, cell2mat(T_index), T_value);
+T = Tensor.Tensor3Coord(T_sz, cell2mat(T_index), T_value);
 T_full = full(T);
 M = cell(1, 3);
 for i = 1:3

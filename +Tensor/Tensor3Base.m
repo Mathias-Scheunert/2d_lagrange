@@ -1,7 +1,7 @@
 classdef Tensor3Base ...
-        < behavior.NoConcatenation ...
-        & behavior.NoReshaping ...
-        & behavior.ManagedSize
+        < Tensor.behavior.NoConcatenation ...
+        & Tensor.behavior.NoReshaping ...
+        & Tensor.behavior.ManagedSize
     % Common interface and functionality of sparse rank-3 tensors.
     %
     % Sparse rank-3 tensors are not natively supported by MATLAB, but often
@@ -33,7 +33,7 @@ classdef Tensor3Base ...
     % be 1, 2, or 3 and denotes the dimension along which to multiply the
     % given tensor.
     %
-    % See also Tensor3Coord, Tensor3Diag, Tensor3Base/ttm, Tensor3Base/ttv.
+    % See also Tensor3Coord, Tensor3Base/ttm, Tensor3Base/ttv.
     %
     % COPYRIGHT
     %   The class was developed and implemented by Martin Afanasjew.
@@ -256,7 +256,7 @@ classdef Tensor3Base ...
             %   existing implementations for details on how to use this.
             
             % Convert from a compatible class, if sole argument.
-            if nargin == 1 && isa(sz, 'Tensor3Base')
+            if nargin == 1 && isa(sz, 'Tensor.Tensor3Base')
                 [sz1, sz2, sz3] = size(sz);
                 [i, v] = find(sz);
                 empty = isempty(i) && isempty(v);

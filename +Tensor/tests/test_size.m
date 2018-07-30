@@ -1,7 +1,7 @@
 % Tests size-related queries for sparse tensor classes.
 
 % Tensor class.
-ten_class = pick(1, @Tensor3Diag, @Tensor3Coord);
+ten_class = @Tensor.Tensor3Coord;
 
 % Create all-zero tensor.
 t = ten_class([5, 5, 2])

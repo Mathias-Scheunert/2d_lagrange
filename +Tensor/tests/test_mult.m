@@ -1,7 +1,7 @@
 % Tests multiplication of sparse tensor classes.
 
 % Tensor class.
-ten_class = pick(2, @Tensor3Diag, @Tensor3Coord);
+ten_class = @Tensor.Tensor3Coord;
 
 % Specify size.
 n = 3;

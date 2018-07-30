@@ -1,4 +1,4 @@
-classdef (Sealed) Tensor3Coord < Tensor3Base
+classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
     % Sparse rank-3 tensor in coordinate representation.
     %
     % Implements a sparse rank-3 tensor with arbitrary size and nonzero
@@ -6,7 +6,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
     % arranging the element mass or stiffness matrices of a finite element
     % discretization in separate slices of the tensor.
     %
-    % See also Tensor3Base, Tensor3Coord/Tensor3Coord.
+    % See also Tensor3Base, Tensor3Coord.
     
     properties (Access = private)
         size_;
@@ -30,8 +30,8 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             %
             % SYNTAX
             %
-            %   val = Tensor3Coord.empty([m[, n[, p[, ...]]]])
-            %   val = Tensor3Coord.empty(sz)
+            %   val = Tensor.Tensor3Coord.empty([m[, n[, p[, ...]]]])
+            %   val = Tensor.Tensor3Coord.empty(sz)
             %
             % INPUT/OUTPUT PARAMETERS
             %
@@ -52,7 +52,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             %           trailing dimensions need to be one.
             %   val ... Empty sparse tensor of the specified size.
 
-            val = Tensor3Coord(Tensor3Base.preEmpty(varargin{:}));
+            val = Tensor.Tensor3Coord(Tensor.Tensor3Base.preEmpty(varargin{:}));
         end
     end
     
@@ -92,7 +92,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             end
             
             % Process arguments.
-            [empty, sz, i, v] = Tensor3Base.preConstruct(sz, varargin{:});
+            [empty, sz, i, v] = Tensor.Tensor3Base.preConstruct(sz, varargin{:});
             
             % Process indices and values.
             if ~empty
@@ -199,7 +199,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             % See also Tensor3Base/ttm.
             
             % Validate tensor and matrix arguments.
-            assert(isa(ten, 'Tensor3Coord'), ...
+            assert(isa(ten, 'Tensor.Tensor3Coord'), ...
                 'Expected first argument to be a tensor.');
             assert(isnumeric(mat) && ismatrix(mat), ...
                 'Expected second argument to be a matrix.');
@@ -236,20 +236,20 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             % Result size.
             res_sz = [sz(1:dim - 1), mat_sz(2), sz(dim + 1:3)];
             if size(mat_i, 1) == 0
-                res = Tensor3Coord(res_sz);
+                res = Tensor.Tensor3Coord(res_sz);
                 return
             end
             
             % Walk index vectors to determine number of nonzeros.
-            num_nnz = ttmCoordCount(...
+            num_nnz = Tensor.ttmCoordCount(...
                 ten_i, ten_m, mat_i, mat_m, dim);
             
             % Walk index vectors again to populate result.
-            [res_i, res_v] = ttmCoordApply(...
+            [res_i, res_v] = Tensor.ttmCoordApply(...
                 ten_i, ten_m, ten_v, mat_i, mat_j, mat_m, mat_v, dim, num_nnz);
 
             % Construct sparse tensor eliminating duplicate indices.
-            res = Tensor3Coord(res_sz, res_i, res_v);
+            res = Tensor.Tensor3Coord(res_sz, res_i, res_v);
         end
         
         function res = ttv(ten, vec, dim)
@@ -262,7 +262,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
             % See also Tensor3Base/ttv.
             
             % Validate tensor and vector arguments.
-            assert(isa(ten, 'Tensor3Coord'), ...
+            assert(isa(ten, 'Tensor.Tensor3Coord'), ...
                 'Expected first argument to be a tensor.');
             assert(isnumeric(vec) && iscolumn(vec), ...
                 'Expected second argument to be a column vector.');
@@ -311,7 +311,7 @@ classdef (Sealed) Tensor3Coord < Tensor3Base
                 else
                     % FIXME: Add support for this less common case.
                     % -> ten_idx(ten_ptr(x) + 1:ten_ptr(x + 1))
-                    error('toolbox:Tensor3Coord:ttv:SpSingleNonzeroOnly', [...
+                    error('Tensor3Coord:ttv:SpSingleNonzeroOnly', [...
                         'Sparse vectors with multiple nonzeros ', ...
                         'are not supported yet.']);
                 end
