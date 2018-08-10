@@ -22,7 +22,7 @@ refinement = pick(1, 0, 1, 2);
 %% Set up grid.
 
 % Construct triangular grid for a rectangular domain.
-mesh = Mesh.initMesh(grid_type, [x, y], 0);
+mesh = Mesh.initMesh(grid_type, [x, y]);
 n_cells = length(mesh.cell2vtx);
 
 % Plot grid.

@@ -115,7 +115,8 @@ end
 
 %% Set up mesh.
 
-mesh = Mesh.initMesh(mesh_type, [x, y], ref_steps, verbosity);
+mesh = Mesh.initMesh(mesh_type, [x, y], ...
+    'ref', ref_steps, 'verbosity', verbosity);
 
 %% Set up Parameter.
 

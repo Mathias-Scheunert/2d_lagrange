@@ -26,7 +26,7 @@ function mesh = appendCoordInfo(mesh)
     
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, including edge information, expected.');
-       
+    
     %% Add mappings.
     
     % Get sizes.
@@ -38,15 +38,7 @@ function mesh = appendCoordInfo(mesh)
     cell2cord = cellfun(@(x) [mesh.vertices(x, 1),  mesh.vertices(x, 2)], ...
         cell_list, 'UniformOutput', false);
     
-    % Check consistency (for refinement).
-    if isfield(mesh, 'cell2cord')
-        assert(isequal(mesh.cell2cord, cell2cord), ...
-            'Refinement produced inconsistent grid.');
-    end
-    
     % Mapping between edges and its coordinates.
-    % TODO: proof if this might be in conflict with external mesh info
-    % (e.g. field mesh.edge2vtx missing)
     edge_list = mat2cell(mesh.edge2vtx.', 2, ones(n_edge, 1)).';
     edge2cord = cellfun(@(x) [mesh.vertices(x, 1),  mesh.vertices(x, 2)], ...
         edge_list, 'UniformOutput', false);

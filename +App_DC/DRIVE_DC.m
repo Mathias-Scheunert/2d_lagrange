@@ -64,19 +64,40 @@ verbosity = pick(2, false, true);
 %% Set up disctrete DC fwd problem.
 
 % Define type of numerical integration approach.
-FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
+FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
 
 % Set up domain boundaries.
 x = [-400, 400];
 y = [0, 50];
+topo_min = -2;
+topo_max = 3;
 
 % Define source and receiver locations at earth's surface.
+% (With an arbitrary topography)
 TX.type = 'point_exact';
 TX.coo = [0, 0];
 TX.val = 1;
 %
-RX.coo = [linspace(-40, 40, 17).', zeros(17, 1)];
-RX.coo(ismember(RX.coo, TX.coo, 'rows'),:) = [];
+RX.coo = pick(2, ...
+            [linspace(-40, 40, 17).', ...
+            topo_min + (topo_max - topo_min) .* rand(17, 1)], ...
+            [linspace(-40, 40, 17).', ...
+            TX.coo(2) + zeros(17, 1)] ...
+         );
+RX.coo(ismember(RX.coo(:,1), TX.coo(:,1)),:) = [];
+RX.coo = round(RX.coo .* 10) ./ 10;
+
+% Add some arbitrary topography.
+% (Including the TX RY positions)
+topo = [TX.coo(1:2); RX.coo];
+topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]; ...
+        topo;
+        [linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]
+       ];
+topo = round(topo .* 10) ./ 10;
+
+% Define mesh.
+mesh_type = pick(3, 'cube', 'rhomb', 'gmsh_create', 'gmsh_load');
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
@@ -89,7 +110,7 @@ bnd.quad_ord = 1;
 %% Set up FEM.
 
 % Define number of grid refinements.
-refinement = 5;
+refinement = 2;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
@@ -104,13 +125,19 @@ fwd_params.FE_order = FE_order;
 
 %% Set up mesh.
 
-mesh = Mesh.initMesh('cube', [x, y], refinement, verbosity);
+mesh = Mesh.initMesh(mesh_type, [x, y], ...
+    'ref', refinement, 'verbosity', verbosity, ...
+    'topo', topo, 'TX', TX.coo, 'RX', RX.coo);
+% mesh = Mesh.initMesh(mesh_type, [x, y], ...
+%     'ref', refinement, 'verbosity', verbosity, ...
+%     'TX', TX.coo, 'RX', RX.coo);
+
 
 %% Set up conductivity distribution.
 
 % Set disturbed area (equals vertical dike).
-x_dist = [-15, -8];
-y_dist = [5, 25];
+x_dist = [-80, -10];
+y_dist = [10, 80];
 
 % Define parameter of conductivity (conductor within resistor).
 if debugging
@@ -138,6 +165,9 @@ param = sig_background + zeros(length(mesh.cell2vtx), 1);
 
 % Set parameter for disturbed area.
 param(cell_dist) = sig_anomaly;
+
+% Update parameter domain vector.
+mesh.parameter_domains(cell_dist) = mesh.parameter_domains(cell_dist) + 1;
 
 %% Assemble 2.5D DC problem.
 

@@ -2,11 +2,11 @@ function mesh = appendEdgeInfo(mesh)
     % Append element-edge relation.
     % 
     % SYNTAX
-    %   mesh = appendEdgeInfo(mesh)
+    %   mesh = appendEdgeInfo(mesh[, refine])
     %
     % INPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and it's relation to the triangles.
+    %   mesh   ... Struct, containing mesh information, i.e. coordinates of
+    %              vertices and it's relation to the triangles.
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the edge information.
@@ -20,14 +20,17 @@ function mesh = appendEdgeInfo(mesh)
     %     /            \
     %    /_ _ _ 3>_ _ _ \
     % point1          point 3
-    %
 
     %% Check input.
     
     assert(isstruct(mesh) && isfield(mesh, 'cell2vtx'), ...
         'mesh - struct, containing vetrex-triangle relation, expected.');
-       
+
     %% Add edges.
+    
+    % Make sure that cell2vtx list is orderd ascendingly.
+    % (May not be the case if loaded externaly)
+    mesh.cell2vtx = sort(mesh.cell2vtx, 2);
     
     % Line number = number of edges.
     % colums 1 and 2 = first and second vertex.
@@ -53,6 +56,34 @@ function mesh = appendEdgeInfo(mesh)
     % Remove multiply occuring edges.
     [edge_list, ~, red2full] = unique(edge_list_full, ...
         'rows', 'first');
+    
+    %% Check consistency with external mesh.
+    
+    switch mesh.type
+        case {'gmsh_create', 'gmsh_load'}
+            % Sort given bnd edge list.
+            bnd_edge_list = sort(mesh.bnd_edge2vtx, 2);
+
+            % Find predetermined boundary edges in total edge list;
+            [e2v_in_el, idx_e2v_in_el] = ismember(edge_list, ...
+                bnd_edge_list, 'rows');
+            
+            % Check if every boundary edge is included.
+            assert(length(find(e2v_in_el)) == size(mesh.bnd_edge2vtx, 1), ...
+                'Not all given boundary edges could be found in grid.');
+            mesh = rmfield(mesh, 'bnd_edge2vtx');
+            
+            % Expand mesh struct with mapping from gmsh bnd edge list to
+            % total edge list.
+            mesh.gmsh_bnd_edge2total_edge = e2v_in_el;
+            mesh.gmsh_bnd_edge2total_edge_map = idx_e2v_in_el;
+            
+        case {'cube', 'rhomb'}
+            % Nothing to do.
+            
+        otherwise
+            error('Unknown mesh type.');
+    end
     
     %% Summarize information.
     

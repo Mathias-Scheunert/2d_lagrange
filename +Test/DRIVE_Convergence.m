@@ -145,7 +145,8 @@ for cur_order = order
         end
         
         % Init mesh.
-        mesh = Mesh.initMesh(mesh_type, [x, y], cur_ref, verbosity);
+        mesh = Mesh.initMesh(mesh_type, [x, y], ...
+            'ref', cur_ref, 'verbosity', verbosity);
 
         %% Set up Parameter.
 
