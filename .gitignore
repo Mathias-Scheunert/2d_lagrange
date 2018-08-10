@@ -1,5 +1,6 @@
 # files
 *~
+.nfs*
 
 # folders
 /test
