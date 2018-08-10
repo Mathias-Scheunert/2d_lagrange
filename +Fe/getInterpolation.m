@@ -58,7 +58,9 @@ function I = getInterpolation(fe, mesh, point)
         (1:fe.sizes.cell).');
 
         % Check if point(s) is/are inside simplex.
-        tol = pick(2, 0, eps * 1e1);
+        % Note that choosing tol might be quite tricky.
+        % Avoid testing points with high number of decimal places.
+        tol = pick(3, 0, 1e-5, eps * 1e1);
         cells_fit = cell2mat(cellfun(@(x) {(...
             all(x.xy_ref > -tol, 2) & ...
             all(x.xy_ref <= 1 + tol, 2) & ...
