@@ -38,6 +38,9 @@ scale = pick(1, 1, 50);
 x = scale * [-1, 1];
 y = scale * [-1, 1];
 
+% Define background conductivity.
+sig_background = 1/100;
+
 % Define observation points.
 RX = pick(1, ...
     [linspace(-0.9, 0.9, scale * 15).', ...
@@ -89,10 +92,10 @@ bnd_mix.quad_ord = 1;
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
-mesh_type = pick(2, 'rhomb', 'cube', 'external');
+mesh_type = pick(2, 'rhomb', 'cube');
 
 % Set number of grid refinements.
-ref_steps = 4;
+ref_steps = 2;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);
@@ -116,17 +119,16 @@ end
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, [x, y], ...
-    'ref', ref_steps, 'verbosity', verbosity);
+    'ref', ref_steps, 'verbosity', verbosity, 'sigma', sig_background);
 
-%% Set up Parameter.
+%% Set up parameter anomaly.
 
 % Set disturbed area (equals vertical dike).
 x_dist = scale * [0, 1];
 y_dist = scale * [0.25, 0.35];
 
 % Define parameter of cunductivity (conductor within resistor).
-back = 1/100;
-dist = pick(1, back, 20);
+dist = pick(1, sig_background, 20);
 
 % Find all cell midpoints using barycentric coordinates.
 lambda_mid = 1/3 + zeros(3, 1);
@@ -138,12 +140,9 @@ cell_mid = cellfun(@(x) ...
 % Find cells, belonging to distrubed area.
 cell_dist = cellfun(@(x) (x(1) >= x_dist(1) && x(1) <= x_dist(2)) && ...
         (x(2) >= y_dist(1) && x(2) <= y_dist(2)), cell_mid);
-    
-% Set background parameter for grid.
-param = back + zeros(length(mesh.cell2vtx), 1);
 
 % Set parameter for disturbed area.
-param(cell_dist) = dist;
+mesh.params(cell_dist) = dist;
 
 %% Set up FE structure.
 
@@ -151,13 +150,13 @@ fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
 
 %% Set up BC.
 
-bnd = Fe.assignBC(bnd, fe, mesh, param);
+bnd = Fe.assignBC(bnd, fe, mesh);
 
 %% Set up FEM linear System.
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+sol.A = Fe.assembleStiff(fe, mesh, verbosity);
 
 % Set up rhs vector.
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
@@ -176,7 +175,7 @@ u = Fe.solveFwd(sol, fe, verbosity);
 %% Plot solution.
 
 % Solution field.
-Plot.plotSolution(fe, mesh, u, param, verbosity);
+Plot.plotSolution(fe, mesh, u, mesh.params, verbosity);
 
 % Add profile.
 % Get solution at RX positions.

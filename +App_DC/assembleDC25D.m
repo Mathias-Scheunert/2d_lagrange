@@ -1,4 +1,4 @@
-function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
+function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
     % Set up and assemble the 2.5D DC linear system and inverse FT info.
     %
     % SYNTAX
@@ -8,8 +8,6 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %   mesh       ... Struct, containing mesh information, i.e. 
     %                  coordinatesof vertices and its relation to the
     %                  triangles and edges.
-    %   param      ... Vector, defining the cell piece-wise constant 
-    %                  parameter.
     %   fwd_params ... Struct, containing initial parameters that define
     %                  the forward problem.
     %
@@ -27,10 +25,8 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     
     %% Check input.
     
-    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx', 'params'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
-    assert(length(param) == size(mesh.cell2vtx, 1), ...
-        'params - Vector with length equal to the number of mesh cells expected.');
     assert(isstruct(fwd_params) && all(isfield(fwd_params, ...
         {'TX', 'RX', 'bnd', 'FE_order', 'FT_type'})), ...
         ['param - Struct, containing initial parameters that define ', ...
@@ -52,7 +48,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %% Set up FE structure.
     
     fe = Fe.initFiniteElement(order, mesh, RX.coo, verbosity);
-    bnd = Fe.assignBC(bnd, fe, mesh, param);
+    bnd = Fe.assignBC(bnd, fe, mesh);
 
     %% Treat 2.5D wavenumber domain handling and set up DC-FE system.
 
@@ -60,8 +56,8 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     rhs = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
-    A_GradDiv = Fe.assembleStiff(fe, mesh, param, verbosity);
-    A_Mass = Fe.assembleMass(fe, mesh, param, verbosity);
+    A_GradDiv = Fe.assembleStiff(fe, mesh, verbosity);
+    A_Mass = Fe.assembleMass(fe, mesh, verbosity);
 
     % Get parameter for inverse spatial Fourier transform.
     FT_info = App_DC.getInvFTParam(TX.coo, RX.coo, FT_type);

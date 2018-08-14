@@ -72,6 +72,9 @@ y = [0, 50];
 topo_min = -2;
 topo_max = 3;
 
+% Set halfspace conductivity.
+sig_background = 1/1000;
+
 % Define source and receiver locations at earth's surface.
 % (With an arbitrary topography)
 TX.type = 'point_exact';
@@ -97,6 +100,8 @@ topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,
 topo = round(topo .* 10) ./ 10;
 
 % Define mesh.
+% Note: TX/RX positions may not be part of the vertex list of 'cube' & 
+% 'rhomb' mesh.
 mesh_type = pick(3, 'cube', 'rhomb', 'gmsh_create', 'gmsh_load');
 
 % Set up boundary conditions.
@@ -127,13 +132,13 @@ fwd_params.FE_order = FE_order;
 
 mesh = Mesh.initMesh(mesh_type, [x, y], ...
     'ref', refinement, 'verbosity', verbosity, ...
-    'topo', topo, 'TX', TX.coo, 'RX', RX.coo);
+    'topo', topo, 'TX', TX.coo, 'RX', RX.coo, 'sigma', sig_background);
 % mesh = Mesh.initMesh(mesh_type, [x, y], ...
 %     'ref', refinement, 'verbosity', verbosity, ...
 %     'TX', TX.coo, 'RX', RX.coo);
 
 
-%% Set up conductivity distribution.
+%% Set up conductivity anomaly.
 
 % Set disturbed area (equals vertical dike).
 x_dist = [-80, -10];
@@ -141,37 +146,34 @@ y_dist = [10, 80];
 
 % Define parameter of conductivity (conductor within resistor).
 if debugging
-    [sig_anomaly, sig_background] = deal(1 / (2 * pi));
+    mesh.params = (0 * mesh.params) + 1 / (2 * pi);
+    sig_anomaly = 1 / (2 * pi);
 else
-    sig_background = 1/1000;
-    sig_anomaly = 1/50;
-end
-
-% Find all cell midpoints using barycentric coordinates.
-lambda_mid = 1/3 + zeros(3, 1);
-cell_mid = cellfun(@(x) ...
-    {[lambda_mid(1)*x(1,1) + lambda_mid(2)*x(2,1) + lambda_mid(3)*x(3,1); ...
-    lambda_mid(1)*x(1,2) + lambda_mid(2)*x(2,2) + lambda_mid(3)*x(3,2)]}, ...
-    mesh.cell2cord);
-
-% Find cells, belonging to distrubed area.
-cell_dist = cellfun(@(x) ...
-    (x(1) > x_dist(1) && x(1) < x_dist(2)) && ...
-    (x(2) > y_dist(1) && x(2) < y_dist(2)), ...
-        cell_mid);
+    sig_anomaly = 1/250;
     
-% Set background parameter for grid.
-param = sig_background + zeros(length(mesh.cell2vtx), 1);
+    % Find all cell midpoints using barycentric coordinates.
+    lambda_mid = 1/3 + zeros(3, 1);
+    cell_mid = cellfun(@(x) ...
+        {[lambda_mid(1)*x(1,1) + lambda_mid(2)*x(2,1) + lambda_mid(3)*x(3,1); ...
+        lambda_mid(1)*x(1,2) + lambda_mid(2)*x(2,2) + lambda_mid(3)*x(3,2)]}, ...
+        mesh.cell2cord);
 
-% Set parameter for disturbed area.
-param(cell_dist) = sig_anomaly;
-
-% Update parameter domain vector.
-mesh.parameter_domains(cell_dist) = mesh.parameter_domains(cell_dist) + 1;
+    % Find cells, belonging to distrubed area.
+    cell_dist = cellfun(@(x) ...
+        (x(1) > x_dist(1) && x(1) < x_dist(2)) && ...
+        (x(2) > y_dist(1) && x(2) < y_dist(2)), ...
+            cell_mid);
+        
+    % Set parameter for disturbed area.
+    mesh.params(cell_dist) = sig_anomaly;
+    
+    % Update parameter domain vector.
+    mesh.parameter_domains(cell_dist) = mesh.parameter_domains(cell_dist) + 1;
+end
 
 %% Assemble 2.5D DC problem.
 
-[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, param, fwd_params, verbosity);
+[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, fwd_params, verbosity);
 
 %% Solve 2.5D DC problem.
 
