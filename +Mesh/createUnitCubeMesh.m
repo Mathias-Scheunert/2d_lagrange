@@ -60,5 +60,5 @@ function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
     mesh.dim = 2;    
     mesh.vertices = vertex_coords.';
     mesh.cell2vtx = cells.';
-    mesh.parameter_domain = ones(size(mesh.vertices, 1), 1);
+    mesh.parameter_domains = ones(size(mesh.cell2vtx, 1), 1);
 end

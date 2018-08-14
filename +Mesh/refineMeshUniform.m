@@ -135,15 +135,16 @@ function mesh = refineMeshUniform(mesh, ref_num)
         % Expand parameter domain vector by inserting new cells.
         % (Relying on the 1 -> 4 rule [see cell2cord definition])
         mesh.parameter_domains = kron(mesh.parameter_domains(:), ...
-                                    ones(4, 1));        
-    end
-    
-    %% Expand grid information.
-
-    if ~strcmp(mesh.type, 'basic')
-        refine = true;
-        mesh = Mesh.appendEdgeInfo(mesh, refine);
-        mesh = Mesh.appendCoordInfo(mesh, refine);
-        mesh = Mesh.appendBndInfo(mesh, refine);
+                                    ones(4, 1));
+        
+        % Expand parameter vector.
+        mesh.params = kron(mesh.params(:), ones(4, 1));
+        
+        if ~strcmp(mesh.type, 'basic')
+            % Update coordinate relations.
+            mesh = Mesh.appendEdgeInfo(mesh);
+            mesh = Mesh.appendCoordInfo(mesh);
+            mesh = Mesh.appendBndInfo(mesh);
+        end
     end
 end
