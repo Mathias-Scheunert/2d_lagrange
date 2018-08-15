@@ -31,9 +31,9 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
     
     assert(isstruct(fe) && all(isfield(fe, {'order', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
-    assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge_xmin'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
-    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val'})), ...
+    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val', 'name'})), ...
         'bnd - struct, containing basic boundary condition information, expected.');
     if nargin < 4
         verbosity = false;
@@ -48,21 +48,14 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
        fprintf('Get or load bnd DOFs ... '); 
     end
     
-    % Get bndDOF.
+    % Appand bndDOF information.
     switch mesh.type
-        case {'cube', 'rhomb', 'gmsh_create'}          
+        case {'cube', 'rhomb', 'gmsh_create', 'gmsh_load'}          
             if ~isfield(bnd, 'bndDOF')
-                bnd.bndDOF = Fe.getBndDOF(fe, mesh);
+                bnd = Fe.getBndDOF(fe, mesh, bnd);
             end
-            
-        case {'external'}
-            error('Not implemented yet.');
-            % TODO: if mesh is given, load information at this stage.
-            % Make shure that these fit to the information-style of
-            % internal meshes.
-            
         otherwise
-            error('BC handling only supported for kown mesh type.');
+            error('BC handling only supported for known mesh types.');
     end
     if verbosity
        fprintf('done.\n'); 

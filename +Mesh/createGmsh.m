@@ -27,11 +27,11 @@ function mesh = createGmsh(bnd, args)
     
     gmsh_file = 'tmp_mesh';
     createGmshInput([gmsh_file, '.geo'], bnd, ...
-        args.TX, args.RX, args.topo, args.verbosity);
+        args.TX, args.RX, args.topo, args.sigma, args.verbosity);
     
     %% Run Gmsh.
     
-    system([pwd, '/+Mesh/External/gmsh -2 ', gmsh_file, '.geo']);
+    system([pwd, '/+Mesh/External/gmsh -2 ', gmsh_file, '.geo -v 0']);
     if args.verbosity
         fprintf('Refine mesh ... '); 
     end
@@ -52,19 +52,19 @@ function mesh = createGmsh(bnd, args)
     delete([gmsh_file, '.geo'], [gmsh_file, '.msh']);
 end
 
-function createGmshInput(name, bnd, TX, RX, topo, verbosity)
+function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     % Creates an .geo input file for Gmesh
     % 
     % SYNTAX
     %   createGmshInput(name, bnd, TX, RX, topo)
     %
     % INPUT PARAMETER
-    %   name ... Char, denoting the file name to be created.
-    %   bnd  ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
-    %   TX   ... Vector [n x 2], denoting the source position(s).
-    %   RX   ... Vector [m x 2], denoting the receiver position(s).
-    %   topo ... Vector [k x 2], denoting the descrete topography.
-    %   ref  ... Scalar, denoting the number of uniform refinenments.
+    %   name  ... Char, denoting the file name to be created.
+    %   bnd   ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
+    %   TX    ... Vector [n x 2], denoting the source position(s).
+    %   RX    ... Vector [m x 2], denoting the receiver position(s).
+    %   topo  ... Vector [k x 2], denoting the descrete topography.
+    %   sigma ... Scalar of conductivity for the parameter domain.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -254,58 +254,53 @@ function createGmshInput(name, bnd, TX, RX, topo, verbosity)
     fprintf(fileID, ...
         'Plane Surface(%d) = {%d};\n', id_plane_surface, id_line_loop);
     
-    % Add detached points.
-    if any(idx_txrx_not_in_pd)
-        fprintf(fileID, '\n');
-        for i = 1:n_TXRX
-            fprintf(fileID, 'Point(%d) = {%d, %d, %d, %d};\n', ...
-                point_internal(i,:));
+    if exist('idx_txrx_not_in_pd', 'var')
+        % Add detached points.
+        if any(idx_txrx_not_in_pd)
+            fprintf(fileID, '\n');
+            for i = 1:n_TXRX
+                fprintf(fileID, 'Point(%d) = {%d, %d, %d, %d};\n', ...
+                    point_internal(i,:));
+            end
+        end
+
+        % Add detached points to surface.
+        % (Only in this case they will be considered by the meshing routine.)
+        if any(idx_txrx_not_in_pd) && n_TXRX > 1
+            fprintf(fileID, '\n');
+            fprintf(fileID, ...
+                ['Point{', repmat('%d, ', 1, n_TXRX-1),'%d} In Surface{%d};\n'], ...
+                point_internal(:, 1), id_plane_surface);
+
+        elseif any(idx_txrx_not_in_pd) && n_TXRX == 1
+            fprintf(fileID, '\n');
+            fprintf(fileID, ...
+                'Point{%d} In Surface{%d};\n', ...
+                point_internal(1, 1), id_plane_surface);
         end
     end
     
-    % Add detached points to surface.
-    % (Only in this case they will be considered by the meshing routine.)
-    if any(idx_txrx_not_in_pd) && n_TXRX > 1
-        fprintf(fileID, '\n');
-        fprintf(fileID, ...
-            ['Point{', repmat('%d, ', 1, n_TXRX-1),'%d} In Surface{%d};\n'], ...
-            point_internal(:, 1), id_plane_surface);
-    
-    elseif any(idx_txrx_not_in_pd) && n_TXRX == 1
-        fprintf(fileID, '\n');
-        fprintf(fileID, ...
-            'Point{%d} In Surface{%d};\n', ...
-            point_internal(1, 1), id_plane_surface);
-    end
-    
     % Add boundary (physical) line ids.
-%     id_phys_line = 2*10^(ceil(log10(id_plane_surface)));
-    id_phys_line = 1;
     % xmin (left)
     fprintf(fileID, '\n');
-    fprintf(fileID, 'Physical Line(%d) = {%d};\n', ...
-        id_phys_line, line(end, 1));
+    fprintf(fileID, 'Physical Line("xmin") = {%d};\n', line(end, 1));
     % xmax (right)
-    fprintf(fileID, 'Physical Line(%d) = {%d};\n', ...
-        id_phys_line+1, line(end-2, 1));
+    fprintf(fileID, 'Physical Line("xmax") = {%d};\n', line(end-2, 1));
     % ymin (surface)
     if n_line > 4
-        fprintf(fileID, ['Physical Line(%d) = {', ...
+        fprintf(fileID, ['Physical Line("ymin") = {', ...
             repmat('%d, ', 1, n_line-4), '%d};\n'], ...
-            id_phys_line+2, line(1:(end-3), 1));        
+            line(1:(end-3), 1));        
     elseif n_line == 4
-        fprintf(fileID, 'Physical Line(%d) = {%d};\n', ...
-            id_phys_line+2, line(1, 1));
+        fprintf(fileID, 'Physical Line("ymin") = {%d};\n', line(1, 1));
     end
     % ymax (bottom)
-    fprintf(fileID, 'Physical Line(%d) = {%d};\n', ...
-        id_phys_line+3, line(end-1, 1));
+    fprintf(fileID, 'Physical Line("ymax") = {%d};\n', line(end-1, 1));
     
     % Add physical surface id.
-    id_phys_surface = 1;
     fprintf(fileID, '\n');
     fprintf(fileID, ...
-        'Physical Surface(%d) = {%d};\n', id_phys_surface, id_plane_surface);
+        'Physical Surface("%d") = {%d};\n', sigma, id_plane_surface);
     
     fclose(fileID);
     

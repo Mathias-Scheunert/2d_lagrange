@@ -26,7 +26,7 @@ warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
-convergence = pick(1, false, true); % iterate a sequence of refinements
+convergence = pick(2, false, true); % iterate a sequence of refinements
 if convergence
     [debuging, verbosity, plotting] = deal(false);
 end
@@ -67,7 +67,7 @@ TXp.coo = pick(2, [0, 1], [0, 0]);
 TXp.val = 1;
 TXp.ref_sol_u = RefSol.getPoisson2D(TXp.coo);
 %
-TX = pick(2, TXr, TXp);
+TX = pick(1, TXr, TXp);
 
 % Define outermost grid boundaries.
 switch TX.type
@@ -85,15 +85,17 @@ bnd_D = struct();
 bnd_D.type = {'dirichlet'};
 %                       xmin            xmax            ymin            ymax
 bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
+bnd_D.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
 %                         xmin            xmax            ymin            ymax                            
-bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J}, ...
-               {[];             TX.ref_sol_u.f;             [];             []}};
+bnd_mix.val = {{TX.ref_sol_u.J;             [];             []; TX.ref_sol_u.J}, ...
+               {[];             TX.ref_sol_u.f; TX.ref_sol_u.f;             []}};
+bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
-bnd_basic = pick(1, bnd_D, bnd_mix);
+bnd_basic = pick(2, bnd_D, bnd_mix);
 
 % Define observation points.
 n_obs = pick(2, 11, 101);

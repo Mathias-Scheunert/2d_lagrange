@@ -14,11 +14,6 @@ function mesh = appendBndInfo(mesh)
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the boundary
     %            information.
-    %
-    % REMARKS
-    %   Note, that this procedure will only work for grids which doesn't
-    %   contain any cutting areas and which is bordered by a strict
-    %   rectangular shape.
 
     %% Check input.
     
@@ -44,19 +39,30 @@ function mesh = appendBndInfo(mesh)
             bnd_ymax = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
             mesh.bnd_edge = bnd_ymin | bnd_ymax | bnd_xmin | bnd_xmax;
             
+            % Summarize.
+            mesh.bnd_edge_part = [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax];
+            mesh.bnd_edge_part_name = {'xmin', 'xmax', 'ymin', 'ymax'};
+            
         case {'gmsh_create', 'gmsh_load'}
+            % Check input.
+            assert(isfield(mesh, 'gmsh_bnd_edge2total_edge'), ...
+                ['Mapping bewteen the boundary edges given by Gmsh ', ...
+                'and the entire edge list is missing. Make sure to ', ...
+                'apply Mesh.appendEdgeInfo() after loading a Gmsh mesh.']);
+            
             % Expand gmsh bnd_egde logicals to comprise total edge number.
             mesh.bnd_edge = mesh.gmsh_bnd_edge2total_edge;
             [~, ~, map_order] = find(mesh.gmsh_bnd_edge2total_edge_map);
             
             % Expand domain boundary logicals.
-            [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax] = ...
-                deal(false(size(mesh.edge2vtx, 1), 1));
-            bnd_xmin(mesh.gmsh_bnd_edge2total_edge) = mesh.bnd_edge_xmin(map_order);
-            bnd_xmax(mesh.gmsh_bnd_edge2total_edge) = mesh.bnd_edge_xmax(map_order);
-            bnd_ymin(mesh.gmsh_bnd_edge2total_edge) = mesh.bnd_edge_ymin(map_order);
-            bnd_ymax(mesh.gmsh_bnd_edge2total_edge) = mesh.bnd_edge_ymax(map_order);
-            
+            n_parts = length(mesh.bnd_edge_part_name);
+            bnd_edge_part = false(length(mesh.bnd_edge), n_parts);
+            for ii = 1:n_parts
+                bnd_edge_part(mesh.gmsh_bnd_edge2total_edge,ii) = ...
+                    mesh.bnd_edge_part(map_order,ii);
+            end
+            mesh.bnd_edge_part = bnd_edge_part;
+
             % Clean up.
             mesh = rmfield(mesh, {'gmsh_bnd_edge2total_edge', ...
                 'gmsh_bnd_edge2total_edge_map'});
@@ -64,10 +70,4 @@ function mesh = appendBndInfo(mesh)
         otherwise
             error('Unkown mesh type');
     end
-    
-    % Summarize.
-    mesh.bnd_edge_xmin = bnd_xmin;
-    mesh.bnd_edge_xmax = bnd_xmax;
-    mesh.bnd_edge_ymin = bnd_ymin;
-    mesh.bnd_edge_ymax = bnd_ymax;
 end

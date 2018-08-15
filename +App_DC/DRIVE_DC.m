@@ -107,15 +107,16 @@ mesh_type = pick(3, 'cube', 'rhomb', 'gmsh_create', 'gmsh_load');
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
 bnd.type = {'dirichlet', 'neumann'};
-%         xmin xmax ymin ymax
-bnd.val = {{ 0;   0;  [];   0}, ...   % 1 for Dirichlet
-           {[];  [];   0;  []}}; ...  % 2 for Neumann
+%         ymin ymax  xmin xmax 
+bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
+           {0;  [];   [];  []}}; ...  % 2 for Neumann
+bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
 bnd.quad_ord = 1;
 
 %% Set up FEM.
 
 % Define number of grid refinements.
-refinement = 2;
+refinement = 0;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);

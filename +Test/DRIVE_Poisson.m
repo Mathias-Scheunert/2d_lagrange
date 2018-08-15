@@ -75,6 +75,7 @@ TX = pick(1, TXp, TXd, TXq, TXh);
 bnd_N.type = {'neumann'};
 %           xmin xmax ymin ymax
 bnd_N.val = {{ 0;   0;   0;   0}};
+bnd_N.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_N.quad_ord = 1;
 %
 bnd_D.type = {'dirichlet'};
@@ -82,11 +83,13 @@ bnd_D.type = {'dirichlet'};
 bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
                      { 10;  10;   3;   3}, ... % inhomogeneous DRB
                      {  0;   0;  10;   0})};   % inhomogeneous DRB
+bnd_D.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
 %               xmin xmax ymin ymax
 bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
                {  [];  [];  0; []}}; ...  % 2 for Neumann
+bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);
