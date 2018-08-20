@@ -1,8 +1,8 @@
-function mesh = loadGmsh(name, verbosity)
+function mesh = loadGmsh(name, args)
     % Read out mesh information from Gmsh .msh structure.
     %
     % SYNTAX
-    %   mesh = loadGmsh(name[, verbosity])
+    %   mesh = loadGmsh(name[, ref, verbosity])
     %
     % INPUT PARAMETER
     %   name ... Char, denoting the file name (with extention) to import 
@@ -17,8 +17,10 @@ function mesh = loadGmsh(name, verbosity)
     %            boundary edge2boundary parts, boundary part names
     %
     % OPTIONAL PARAMETER
-    %   verbosity ... Logical, denoting if current status should be
-    %                 printed
+    %   args.verbosity ... Logical, denoting if current status should be
+    %                      printed
+    %   args.ref       ... Scalar, denoting the number of uniform 
+    %                      refinement steps.
     %
     % REMARKS
     %   To be able to handle arbitrary .msh inputs it some requirements on
@@ -41,21 +43,33 @@ function mesh = loadGmsh(name, verbosity)
     
     %% Check input.
     
-    if nargin < 2
-       verbosity = false;
-    else
-       assert(islogical(verbosity), ...
-           'verbosity - logical specifying the output verbosity, expected.'); 
+    % Not required as already done in Mesh.initMesh().
+    
+    %% Refine uniformly.
+    
+    if args.verbosity
+        fprintf('Refine mesh ... '); 
     end
     
-    if verbosity
-       fprintf('read Gmsh output ... '); 
+    name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
+    copyfile(name, name_tmp);
+    for i = 1:args.ref
+        system([pwd, '/+Mesh/External/gmsh -refine -v 0 ', ...
+            name_tmp]);
+    end
+    if args.verbosity
+       fprintf('done.\n');
     end
     
     %% Load .msh file.
     
+    if args.verbosity
+       fprintf('Load Gmsh output ... '); 
+    end
+    
     % Get whole content from file.
-    file_content = fileread(name);
+    file_content = fileread(name_tmp);
+    delete(name_tmp);
     
     % Remove obsolete pattern.
     file_content = regexprep(file_content, '"', '');
@@ -227,7 +241,7 @@ function mesh = loadGmsh(name, verbosity)
     assert(~isempty(mesh.parameter_domains), ...
         'Parameter domain(s) could not be assigned.');
     
-    if verbosity
+    if args.verbosity
        fprintf('done.\n'); 
     end
 end
