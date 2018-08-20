@@ -69,16 +69,16 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
 
-%     if verbosity
-%        fprintf('Print mesh ... '); 
-%     end
-%     cell_coo_all = cell2mat(mesh.cell2cord);
-%     cell_coo_x = reshape(cell_coo_all(:,1), [3, fe.sizes.cell]);
-%     cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
-%     patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
-%     if verbosity
-%        fprintf('done.\n'); 
-%     end
+    if verbosity
+       fprintf('Print mesh ... '); 
+    end
+    cell_coo_all = cell2mat(mesh.cell2cord);
+    cell_coo_x = reshape(cell_coo_all(:,1), [3, fe.sizes.cell]);
+    cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
+    patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
+    if verbosity
+       fprintf('done.\n'); 
+    end
     
     %% Add solution.
     
@@ -91,10 +91,12 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
             case 1
                 trisurf(mesh.cell2vtx, x, y, u, 'edgecolor', 'none');
             case 2
-                mesh_ref = Mesh.refineMeshUniform(mesh, 1);
-                [~, DOF2vtx_map] = ismember(mesh_ref.vertices, ...
+                mesh_plot = mesh;
+                mesh_plot.type = 'basic';
+                mesh_plot = Mesh.refineMeshUniform(mesh_plot, 1);
+                [~, DOF2vtx_map] = ismember(mesh_plot.vertices, ...
                     fe.DOF_maps.DOF_coo, 'rows');
-                trisurf(mesh_ref.cell2vtx, ...
+                trisurf(mesh_plot.cell2vtx, ...
                     x(DOF2vtx_map), y(DOF2vtx_map), u(DOF2vtx_map), ...
                     'edgecolor', 'none');
         end
