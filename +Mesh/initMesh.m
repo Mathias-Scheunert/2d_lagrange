@@ -1,14 +1,14 @@
-function mesh = initMesh(var, bnd, varargin)
+function mesh = initMesh(var, varargin)
     % Creates and optionaly uniformly refines a 2D triangle-based mesh.
     % 
     % SYNTAX
-    %   mesh = initMesh(bnd, var, varargin)
+    %   mesh = initMesh(var, varargin)
     %
     % INPUT PARAMETER
     %   var ... Char, denoting the variant of elementary grid.
-    %   bnd ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
     %
     % OPTIONAL PARAMETER
+    %   bnd ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
     %   TX        ... Vector [n x 2], denoting the source position(s).
     %   RX        ... Vector [m x 2], denoting the receiver position(s).
     %   topo      ... Vector [k x 2], denoting the descrete topography.
@@ -26,16 +26,17 @@ function mesh = initMesh(var, bnd, varargin)
     
     assert(ischar(var), ...
         'var - Char, denoting the basic grid type, expected.');
-    assert(isvector(bnd) && length(bnd) == 4 && ...
-        bnd(1) < bnd(2) && bnd(3) < bnd(4), ...
-        ['bnd - Vector [1 x 4] denoting the lower and the upper ', ...
-        'integral boundary, expected.']);
     
     % Define possible input keys and its properties checks.
-    input_keys = {'ref', 'TX', 'RX', 'topo', 'sigma', 'name', 'verbosity'};
+    input_keys = {'bnd', 'ref', 'TX', 'RX', 'topo', 'sigma', 'name', ...
+                  'verbosity'};
+    assertBnd = @(x) assert(isvector(x) && length(x) == 4 && ...
+        x(1) < x(2) && x(3) < x(4), ...
+        ['bnd - Vector [1 x 4] denoting the lower and the upper ', ...
+        'integral boundary, expected.']);
     assertRef = @(x) assert(isscalar(x) && ~islogical(x) && x >= 0, ...
         'ref - Scalar, denoting the number of uniform ref steps, expected.');
-    assertPos = @(x) assert(ismatrix(x) && size(x, 2) == 2, ...
+    assertPos = @(x) assert(isempty(x) || (ismatrix(x) && size(x, 2) == 2), ...
         'TX/RX/topo - Vector [n x 2], denoting positions, expected.');
     assertSigma = @(x) assert(isscalar(x), ...
         'Sigma - Scalar, denoting parameter domain conductivity, expected.');
@@ -46,42 +47,36 @@ function mesh = initMesh(var, bnd, varargin)
     
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
-    parser_obj.addParameter(input_keys{1}, 0, assertRef);
-    parser_obj.addParameter(input_keys{2}, [], assertPos);
+    parser_obj.addParameter(input_keys{1}, [-1, 1, -1, 1], assertBnd);
+    parser_obj.addParameter(input_keys{2}, 0, assertRef);
     parser_obj.addParameter(input_keys{3}, [], assertPos);
     parser_obj.addParameter(input_keys{4}, [], assertPos);
-    parser_obj.addParameter(input_keys{5}, 1, assertSigma);
-    parser_obj.addParameter(input_keys{6}, [], assertName);
-    parser_obj.addParameter(input_keys{7}, false, assertVerbose);
+    parser_obj.addParameter(input_keys{5}, [], assertPos);
+    parser_obj.addParameter(input_keys{6}, 1, assertSigma);
+    parser_obj.addParameter(input_keys{7}, [], assertName);
+    parser_obj.addParameter(input_keys{8}, false, assertVerbose);
    
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
     
     %% Create mesh.
-    
-    if args.verbosity
-       fprintf('Create basic mesh ... '); 
-    end
     switch var
         case 'rhomb'
-            mesh = Mesh.createRhombMesh(bnd);
+            mesh = Mesh.createRhombMesh(args.bnd, args.verbosity);
             mesh.params = args.sigma + zeros(size(mesh.cell2vtx, 1), 1);
         case 'cube'
-            mesh = Mesh.createUnitCubeMesh(bnd, [3, 3]);
+            mesh = Mesh.createUnitCubeMesh(args.bnd, [3, 3], args.verbosity);
             mesh.params = args.sigma + zeros(size(mesh.cell2vtx, 1), 1);
         case 'gmsh_create'
-            mesh = Mesh.createGmsh(bnd, args);
+            mesh = Mesh.createGmsh(args.bnd, args);
         case 'gmsh_load'
             if isempty(args.name)
                 error('Provide file name as an argument for Mesh.initMesh().');
             end
-            mesh = Mesh.loadGmsh(args.name);
+            mesh = Mesh.loadGmsh(args.name, args);
         otherwise 
             error('Unknown mesh type.');
-    end
-    if args.verbosity && ~any(strcmp(var, {'gmsh_create', 'gmsh_load'}))
-       fprintf('done.\n'); 
     end
     mesh.type = var;
     
@@ -107,7 +102,7 @@ function mesh = initMesh(var, bnd, varargin)
     if args.verbosity
        fprintf('Append BND info ... '); 
     end
-    mesh.bnd = bnd;
+    mesh.bnd = args.bnd;
     mesh = Mesh.appendBndInfo(mesh);
     if args.verbosity
        fprintf('done.\n'); 

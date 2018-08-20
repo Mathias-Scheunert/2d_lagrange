@@ -28,7 +28,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
     assert(isscalar(ref_num) && round(ref_num) == ref_num, ...
         'ref_num - integer, denoting number of refinements, expected.');
     
-    if ~any(strcmp(mesh.type, {'cube', 'rhomb'}))
+    if ~any(strcmp(mesh.type, {'cube', 'rhomb', 'basic'}))
         warning(['Uniform refinement not supported for external meshes. ',...
             'Rather use the functionality of the external mesh generator.']);
         % TODO: Handle splitting up the boundary edge info.
@@ -123,6 +123,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
         if strcmp(mesh.type, 'basic')
             % Initialize new (avoid mixing of refined and unrefined info).
             mesh = struct();
+            mesh.type = 'basic';
             mesh.vertices = vert_list;
             mesh.cell2vtx = cell_list;
             
@@ -132,15 +133,15 @@ function mesh = refineMeshUniform(mesh, ref_num)
             mesh.cell2vtx = cell_list;
         end
         
-        % Expand parameter domain vector by inserting new cells.
-        % (Relying on the 1 -> 4 rule [see cell2cord definition])
-        mesh.parameter_domains = kron(mesh.parameter_domains(:), ...
-                                    ones(4, 1));
-        
-        % Expand parameter vector.
-        mesh.params = kron(mesh.params(:), ones(4, 1));
-        
         if ~strcmp(mesh.type, 'basic')
+            % Expand parameter domain vector by inserting new cells.
+            % (Relying on the 1 -> 4 rule [see cell2cord definition])
+            mesh.parameter_domains = kron(mesh.parameter_domains(:), ...
+                                        ones(4, 1));
+
+            % Expand parameter vector.
+            mesh.params = kron(mesh.params(:), ones(4, 1));
+        
             % Update coordinate relations.
             mesh = Mesh.appendEdgeInfo(mesh);
             mesh = Mesh.appendCoordInfo(mesh);

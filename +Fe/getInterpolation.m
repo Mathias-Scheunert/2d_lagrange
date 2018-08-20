@@ -36,7 +36,7 @@ function I = getInterpolation(fe, mesh, point)
     %% Find cell(s) at which the solution is required.
     
     % Get sizes.
-    n_point = size(point, 1);
+    n_point = size(point, 1);    
     
     % Try to identify cells by matlab builtin.
     % Ultra fast variant but may provide NaNs.
@@ -69,10 +69,12 @@ function I = getInterpolation(fe, mesh, point)
     
         % Obtain cell indices w.r.t to each obervation point.
         % (For multiple hits just take the first cell)
-        cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
-        if isempty(cell_idx(cell_idx_fail(ii)))
-            error('No cell for observation point could be found.');
+        if isempty(find(cells_fit, 1, 'first'))
+            error(['No cell for observation point could be found. ', ...
+                'Make sure that observation point lies inside the ', ...
+                'modelling domain.']);
         end
+        cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
     end
     
     % Get DOF index for respective cells.
