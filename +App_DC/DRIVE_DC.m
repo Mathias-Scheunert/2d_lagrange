@@ -64,7 +64,7 @@ verbosity = pick(2, false, true);
 %% Set up disctrete DC fwd problem.
 
 % Define type of numerical integration approach.
-FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
+FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
 
 % Set up domain boundaries.
 x = [-400, 400];
@@ -76,7 +76,6 @@ topo_max = 3;
 sig_background = 1/1000;
 
 % Define source and receiver locations at earth's surface.
-% (With an arbitrary topography)
 TX.type = 'point_exact';
 TX.coo = [0, 0];
 TX.val = 1;
@@ -90,33 +89,38 @@ RX.coo = pick(2, ...
 RX.coo(ismember(RX.coo(:,1), TX.coo(:,1)),:) = [];
 RX.coo = round(RX.coo .* 10) ./ 10;
 
-% Add some arbitrary topography.
-% (Including the TX RY positions)
-topo = [TX.coo(1:2); RX.coo];
-topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]; ...
-        topo;
-        [linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]
-       ];
-topo = round(topo .* 10) ./ 10;
+if debugging
+    topo = [];
+else
+    % Add some arbitrary topography.
+    % (Including the TX RY positions)
+    topo = [TX.coo(1:2); RX.coo];
+    topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]; ...
+            topo;
+            [linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]
+           ];
+    topo = round(topo .* 10) ./ 10;
+end
+clear('topo_max', 'topo_min');
 
 % Define mesh.
 % Note: TX/RX positions may not be part of the vertex list of 'cube' & 
 % 'rhomb' mesh.
-mesh_type = pick(3, 'cube', 'rhomb', 'gmsh_create', 'gmsh_load');
+mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
 bnd.type = {'dirichlet', 'neumann'};
 %         ymin ymax  xmin xmax 
 bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
-           {0;  [];   [];  []}}; ...  % 2 for Neumann
+           {0;  [];   [];  []}}; ... % 2 for Neumann
 bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
 bnd.quad_ord = 1;
 
 %% Set up FEM.
 
 % Define number of grid refinements.
-refinement = 0;
+refinement = 1;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
@@ -125,19 +129,22 @@ FE_order = pick(2, 1, 2);
 fwd_params = struct();
 fwd_params.TX = TX;
 fwd_params.RX = RX;
+fwd_params.topo = topo;
 fwd_params.bnd = bnd;
+fwd_params.dom_bnd = [x, y];
 fwd_params.FT_type = FT_type;
 fwd_params.FE_order = FE_order;
+fwd_params.ref = refinement;
+fwd_params.sig_background = sig_background;
+clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
+      'refinement', 'topo', 'sig_background', 'x', 'y');
 
 %% Set up mesh.
 
-mesh = Mesh.initMesh(mesh_type, [x, y], ...
-    'ref', refinement, 'verbosity', verbosity, ...
-    'topo', topo, 'TX', TX.coo, 'RX', RX.coo, 'sigma', sig_background);
-% mesh = Mesh.initMesh(mesh_type, [x, y], ...
-%     'ref', refinement, 'verbosity', verbosity, ...
-%     'TX', TX.coo, 'RX', RX.coo);
-
+mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
+    'ref', fwd_params.ref, 'verbosity', verbosity, ...
+    'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
+    'RX', fwd_params.RX.coo, 'sigma', fwd_params.sig_background);
 
 %% Set up conductivity anomaly.
 
@@ -150,8 +157,8 @@ if debugging
     mesh.params = (0 * mesh.params) + 1 / (2 * pi);
     sig_anomaly = 1 / (2 * pi);
 else
-    sig_anomaly = 1/250;
-    
+    sig_anomaly = 10;
+
     % Find all cell midpoints using barycentric coordinates.
     lambda_mid = 1/3 + zeros(3, 1);
     cell_mid = cellfun(@(x) ...
@@ -164,10 +171,10 @@ else
         (x(1) > x_dist(1) && x(1) < x_dist(2)) && ...
         (x(2) > y_dist(1) && x(2) < y_dist(2)), ...
             cell_mid);
-        
+
     % Set parameter for disturbed area.
     mesh.params(cell_dist) = sig_anomaly;
-    
+
     % Update parameter domain vector.
     mesh.parameter_domains(cell_dist) = mesh.parameter_domains(cell_dist) + 1;
 end
@@ -185,20 +192,24 @@ phi_FE = fe.I * u_FE;
 
 %% Compare with analytic point source at top of homogeneous half-space.
 
+x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.RX.coo(1,1)) .^2 + ...
+              (fwd_params.RX.coo(:,2) - fwd_params.RX.coo(1,2)) .^2);
+
 if debugging
     % Get reference solution in 3D.
-    ref_3D = RefSol.getElectrodeAtHS(1/sig_anomaly, TX.val, TX.coo);
+    ref_3D = RefSol.getElectrodeAtHS(1/sig_anomaly, ...
+        fwd_params.TX.val, fwd_params.TX.coo);
     u_ref = arrayfun(@(x, y) ref_3D.f(x, y), ...
                 fe.DOF_maps.DOF_coo(:, 1), ...
                 fe.DOF_maps.DOF_coo(:, 2));
     phi_3D = arrayfun(@(x, y) ref_3D.f(x, y), ...
-                  RX.coo(:, 1), RX.coo(:, 2));
+                  fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
 
     % Get asymptotic solution.
-    phi_asy = zeros(size(RX.coo, 1), 1);
-    for i=1:size(RX.coo, 1)
-        r = abs(RX.coo(i,1) - TX.coo(1,1));
-        switch FT_type
+    phi_asy = zeros(size(fwd_params.RX.coo, 1), 1);
+    for i=1:size(fwd_params.RX.coo, 1)
+        r = abs(fwd_params.RX.coo(i,1) - fwd_params.TX.coo(1,1));
+        switch fwd_params.FT_type
             case {'Boerner', 'Xu'}
                 phi_asy(i) = (2 / pi) * sum(FT_info.w .* besselk(0, FT_info.k * r));
             case 'Bing'
@@ -207,8 +218,8 @@ if debugging
     end
 
     % Plot / compare solutions along the profile.
-    x_plot = sqrt((RX.coo(:,1) - RX.coo(1,1)) .^2 + ...
-                  (RX.coo(:,2) - RX.coo(1,2)) .^2);
+    x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.RX.coo(1,1)) .^2 + ...
+                  (fwd_params.RX.coo(:,2) - fwd_params.RX.coo(1,2)) .^2);
     figure()
     subplot(2, 1, 1)
         plot(x_plot, phi_3D, 'ok', ...
@@ -227,7 +238,14 @@ if debugging
         legend('\phi_{ref} vs. \phi_{FE}', ...
                '\phi_{ref} vs. \phi_{asy}');
         ylabel('rel. error');
-        xlabel('profile length');       
+        xlabel('profile length');
+        
+else
+    figure()
+        plot(x_plot, phi_FE, '-r');
+        legend('\phi_{FE}');
+        ylabel('potential');
+        xlabel('profile length');
 end
 
 return;
@@ -236,7 +254,8 @@ return;
 
 if debugging
     % Get asymptotics in 2D.
-    r_TX2RX = sqrt((TX.coo(1) - RX.coo(:,1)).^2 + (TX.coo(2) - RX.coo(:,2)).^2);
+    r_TX2RX = sqrt((fwd_params.TX.coo(1) - fwd_params.RX.coo(:,1)).^2 + ...
+        (fwd_params.TX.coo(2) - fwd_params.RX.coo(:,2)).^2);
     phi_ref_2D = cell(FT_info.n, 1);
     for jj = 1:(FT_info.n)
         phi_ref_2D{jj} = arrayfun(@(r) besselk(0, FT_info.k(jj) * r), r_TX2RX);
