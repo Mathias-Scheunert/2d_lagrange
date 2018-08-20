@@ -1,13 +1,18 @@
-function mesh = createUnitCubeMesh(bnd, divisions)
+function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
     % Build unit cube mesh.
     %
     % SYNTAX
-    %   mesh = createUnitCubeMesh(divisions)
+    %   mesh = createUnitCubeMesh(bnd, divisions[, verbosity])
     %
-    % INPUT/OUTPUT PARAMETERS
+    % INPUT PARAMETER
     %
     %   bnd       ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
     %   divisions ... Number of divisions along axes, i.e., [nx, ny].
+    %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if verbose output is desired.
+    %
+    % OUTPUT PARAMETER
     %   mesh      ... Structure with basic topoogy and geometry data.
     %
     % REMARKS
@@ -23,10 +28,31 @@ function mesh = createUnitCubeMesh(bnd, divisions)
     % COPYRIGHT
     %   Code originally written by Jan Blechta (CurlCurl-Toolbox).
     
-    if numel(divisions) == 2
-      mesh = generate_unit_2cube_mesh(bnd, divisions(1), divisions(2));
+    %% Check input.
+    
+    assert(isvector(bnd) && length(bnd) == 4, ...
+        'bnd - Vector [4 x 1] denoting the domain boundaries, expected.');
+    assert(isvector(divisions) && length(divisions) == 2, ...
+        ['divisions - Vector [2 x 1] denoting the number of divisions ', ...
+        'along axes, expected.']);
+    
+    if nargin < 3
+        verbosity = false;
     else
-      error('Dimensions %d not implemented', numel(divisions));
+        assert(islogical(verbosity), ...
+            'verbosity - Logical, denoting if verbose output is desired, expected.');        
+    end
+    
+    %% Create mesh.
+    
+    if verbosity
+       fprintf('Create basic mesh ... \n'); 
+    end
+
+    mesh = generate_unit_2cube_mesh(bnd, divisions(1), divisions(2));
+    
+    if verbosity
+       fprintf('done.\n');
     end
 end
 

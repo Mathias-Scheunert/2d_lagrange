@@ -20,6 +20,9 @@ function mesh = appendEdgeInfo(mesh)
     %     /            \
     %    /_ _ _ 3>_ _ _ \
     % point1          point 3
+    %
+    % Note that this relation can only be achieved if vertices in cell2vtx
+    % are sorted in acending order!
 
     %% Check input.
     
@@ -45,38 +48,35 @@ function mesh = appendEdgeInfo(mesh)
         edge_list_full(3*ii,:) = [mesh.cell2vtx(ii, 1), mesh.cell2vtx(ii, 3)];
     end
     
-    % Add respective relations between cells and edges (with multiple 
-    % ocurring).
-    % Line number = number of edges.
-    % colum = cell index.
-%     edge_full2cell = kron((1:n_cells).', ones(3,1));
-    
     %% Reduce edge list in order to comprise only unique edges.
     
     % Remove multiply occuring edges.
     [edge_list, ~, red2full] = unique(edge_list_full, ...
-        'rows', 'first');
+                                  'rows', 'first');
     
     %% Check consistency with external mesh.
     
     switch mesh.type
         case {'gmsh_create', 'gmsh_load'}
-            % Sort given bnd edge list.
-            bnd_edge_list = sort(mesh.bnd_edge2vtx, 2);
+            % Ascendingly sort given bnd edge list.
+            mesh.bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
 
             % Find predetermined boundary edges in total edge list;
-            [e2v_in_el, idx_e2v_in_el] = ismember(edge_list, ...
-                bnd_edge_list, 'rows');
+            [edge2vtx_in_edge_list, idx_edge2vtx_in_edge_list] = ...
+                ismember(edge_list, mesh.bnd_edge2vtx, 'rows');                
             
-            % Check if every boundary edge is included.
-            assert(length(find(e2v_in_el)) == size(mesh.bnd_edge2vtx, 1), ...
-                'Not all given boundary edges could be found in grid.');
+            % Check if every boundary edge is included in total edge list.
+            assert(length(find(edge2vtx_in_edge_list)) == ...
+                size(mesh.bnd_edge2vtx, 1), ...
+                ['Not all given boundary edges could be found in grid. ', ...
+                'Make sure that all (straight) lines are associated ', ...
+                'with a physical line within the Gmsh input file.']);
             mesh = rmfield(mesh, 'bnd_edge2vtx');
             
             % Expand mesh struct with mapping from gmsh bnd edge list to
             % total edge list.
-            mesh.gmsh_bnd_edge2total_edge = e2v_in_el;
-            mesh.gmsh_bnd_edge2total_edge_map = idx_e2v_in_el;
+            mesh.gmsh_bnd_edge2total_edge = edge2vtx_in_edge_list;
+            mesh.gmsh_bnd_edge2total_edge_map = idx_edge2vtx_in_edge_list;
             
         case {'cube', 'rhomb'}
             % Nothing to do.

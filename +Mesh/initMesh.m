@@ -117,8 +117,11 @@ function mesh = initMesh(var, varargin)
         mesh = Mesh.refineMeshUniform(mesh, args.ref);
         if args.verbosity
            fprintf('done.\n');
-           fprintf('... Mesh struct initialized.\n \n'); 
         end
+    end
+    
+    if args.verbosity
+        fprintf('... Mesh struct initialized.\n \n');
     end
     
     %% Get affine mappings.

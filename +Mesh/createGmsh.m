@@ -32,20 +32,10 @@ function mesh = createGmsh(bnd, args)
     %% Run Gmsh.
     
     system([pwd, '/+Mesh/External/gmsh -2 ', gmsh_file, '.geo -v 0']);
-    if args.verbosity
-        fprintf('Refine mesh ... '); 
-    end
-    for i = 1:args.ref
-        system([pwd, '/+Mesh/External/gmsh -refine -v 0 ', ...
-            gmsh_file, '.msh']);
-    end
-    if args.verbosity
-       fprintf('done.\n');
-    end
 
     %% Import mesh information from .msh file.
 
-    mesh = Mesh.loadGmsh([gmsh_file, '.msh'], args.verbosity);
+    mesh = Mesh.loadGmsh([gmsh_file, '.msh'], args);
 
     %% Clean up.
     
@@ -92,7 +82,7 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     %  that the domain boundary will be adapted.
     
     if verbosity
-       fprintf('\ndefine Gmesh input ... '); 
+       fprintf('Define Gmsh input ... '); 
     end
         
     %% Set up domain basic geometry entities (points, lines).

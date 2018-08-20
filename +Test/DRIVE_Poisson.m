@@ -66,7 +66,7 @@ TXh.type = 'reference';
 TXh.val = 1;                  % homogeneous Poisson problem
 TXh.ref_sol = RefSol.getConst(TXh.val);
 %              1    2    3    4
-TX = pick(1, TXp, TXd, TXq, TXh);
+TX = pick(4, TXp, TXd, TXq, TXh);
 
 % Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
@@ -92,7 +92,7 @@ bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
 bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(3, bnd_N, bnd_D, bnd_mix);
+bnd = pick(2, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -121,17 +121,17 @@ end
 
 %% Set up mesh.
 
-mesh = Mesh.initMesh(mesh_type, [x, y], ...
+mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
     'ref', ref_steps, 'verbosity', verbosity, 'sigma', sig_background);
 
 %% Set up parameter anomaly.
 
 % Set disturbed area (equals vertical dike).
 x_dist = scale * [0, 1];
-y_dist = scale * [0.25, 0.35];
+y_dist = scale * [0.25, 0.55];
 
 % Define parameter of cunductivity (conductor within resistor).
-dist = pick(1, sig_background, 20);
+dist = pick(2, sig_background, 1/1e3);
 
 % Find all cell midpoints using barycentric coordinates.
 lambda_mid = 1/3 + zeros(3, 1);
