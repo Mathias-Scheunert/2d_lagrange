@@ -87,21 +87,59 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
         
     %% Set up domain basic geometry entities (points, lines).
         
-    % Set domain boundaries
+    % Set domain boundaries.
+    % If TX/RX positions are known, rather use an adapted offset to the
+    % domain boundary.
+    if ~isempty([TX; RX])
+        % Prepare.
+        coo_offset = pick(1, 2500);
+        TXRX = [TX; RX];
+        
+        % Get specific extentions.
+        min_x = min(TXRX(:,1));
+        max_x = max(TXRX(:,1));
+        max_y = max(TXRX(:,2));
+        bnd = [min_x - coo_offset, ...
+               max_x + coo_offset, ...
+               bnd(3), ...
+               max_y + coo_offset];
+        
+        % Round values.
+        bnd_dec = ceil(log10(abs(bnd([1, 2, 4]))));
+        bnd = [roundn(bnd(1), bnd_dec(1) - 2), ...
+               roundn(bnd(2), bnd_dec(2) - 2), ... 
+               bnd(3), ...
+               roundn(bnd(4), bnd_dec(3) - 2)];
+        warning(sprintf(['\nAdapt domain boundaries using the given ', ...
+            'TX/RX positions. \nThis ensures the accuracy of the ', ...
+            'numerical solution.']));
+    end
+    
+    % Transform boundary cooridnates.
     X = [bnd(1:2), fliplr(bnd(1:2))]; 
     Y = [bnd(3:4); bnd(3:4)];
     Y = Y(:).';
     
-    % Insert topography points.
+    % If topography information is given.
     if ~isempty(topo)
+        % Check consistency.
+        % TODO: automatically expand domain.
         assert(all(topo(:,1) > bnd(1)) && all(topo(:,1) < bnd(2)), ...
             ['Points describing topography exceed the horizontal ', ...
             'domain extension.']);
+        
+        % Sort points w.r.t. x-coordinate.
+        topo = sortrows(topo);
+        
+        % Project the outermost height to the domain boundaries.
+        min_x_y = topo(1, 2);
+        max_x_y = topo(end, 2);
+        Y([1, 2]) = [min_x_y, max_x_y];
     end
     
     % Set maximal element size.
-    %                  geometry based              fix
-    h_domain = pick(1, round(diff(bnd(1:2)) / 25), 10);
+    %                  geometry based                  fix
+    h_domain = pick(1, 5 * round(diff(bnd(1:2)) / 25), 10);
     
     % Create point input ([n x 5] matrix) structure for domain boundaries.
     n_domain = length(X);
@@ -116,8 +154,6 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     
     % Add topography.
     if ~isempty(topo)
-        % Sort points w.r.t. x-coordinate.
-        topo = sortrows(topo);
         
         % Set maximal element size.
         % Use min point offset in x direction (~horizontal) & avoid zero.
@@ -141,7 +177,6 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
         % Initialize.
         %                geometry based               fix
         h_TXRX = pick(1, round(diff(bnd(1:2)) / 500), 0.1);
-        TXRX = [TX; RX];
         
         % Just reduce h, if points are already part of point_domain.
         [txrx_in_pd, idx_txrx_in_pd] = ismember(... 
