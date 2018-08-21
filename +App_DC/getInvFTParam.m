@@ -29,22 +29,26 @@ function params = getInvFTParam(TX, RX, type)
         'type - Char, denoting the quadrature type, expected.')
     
     %% Get infos.
+    
+    % Define number od wavenubers.
+    % TODO: find usefull approach to somehow predetermine numbers of k's.
+    n_k = pick(1, 20, 60);
+    
     params = struct();
     switch type
         case 'Boerner'
-            [params.k, params.w, params.n] = getInvFTBoerner(TX, RX);
+            [params.k, params.w, params.n] = getInvFTBoerner(TX, RX, n_k);
         case 'Bing'
-            [params.k, params.n] = getInvFTBing(TX, RX);
+            [params.k, params.n] = getInvFTBing(TX, RX, n_k);
         case 'Xu'
-            [params.k, params.w, params.n] = getInvFTXu(TX, RX);
-%             [params.k, params.w, params.n] = getInvFTXu_fix();
+            [params.k, params.w, params.n] = getInvFTXu(TX, RX, n_k);
         otherwise
             error('Unknown type - "Boerner", "Bing" or "Xu" supported.')
     end
     params.type = type;
 end
 
-function [k, w, n] = getInvFTBoerner(TX, RX)
+function [k, w, n] = getInvFTBoerner(TX, RX, n)
     % Calculate nodes and weights for quadrature approach by Boerner R.-U.
     %
     % Approach exploits logarithmic and exponetial asymptotic behaviour of
@@ -56,12 +60,17 @@ function [k, w, n] = getInvFTBoerner(TX, RX)
     % quantities is justified.
     %
     % SYNTAX
-    %   [k, w, n] = getInvFTBoerner(TX, RX)
+    %   [k, w, n] = getInvFTBoerner(TX, RX, n)
+    %
+    % INPUT PARAMETER
+    %   TX ... Vector of TX position coordinates.
+    %   RX ... Vector of RX position coordinates.
+    %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
     %   k ... Vector, containing quadrature nodes (spatial wavenumbers).
     %   w ... Vector, containing weights for quadrature summation.
-    %   n ... Scaler, denoting number of k or w, respectively.
+    %   n ... Scalar, denoting number of k or w, respectively.
     
     
     %% Prepare parameter.
@@ -74,10 +83,8 @@ function [k, w, n] = getInvFTBoerner(TX, RX)
 
     % Define number of wavenumbers for both parts of the asymptotic 
     % behavior of the analytic solution.
-    % TODO: find usefull approach to somehow predetermine numbers of k's.
-    n_k_log = 30;
-    n_k_exp = 30;
-    n = n_k_log + n_k_exp;
+    n_k_log = round(n/2);
+    n_k_exp = n - n_k_log;
 
     % Get quadrature rules for both asymptotics.
     [x_Leg, w_Leg] = Quad.getQuadratureRule(n_k_log, 1, ...
@@ -94,7 +101,7 @@ function [k, w, n] = getInvFTBoerner(TX, RX)
     w = [w_log; w_exp];
 end
 
-function [k, n] = getInvFTBing(TX, RX)
+function [k, n] = getInvFTBing(TX, RX, n)
     % Calculate nodes and weights for quadrature approach by Bing Z. 1998.
     %
     % The values are based on the consideration of the bessel function
@@ -103,6 +110,11 @@ function [k, n] = getInvFTBing(TX, RX)
     %
     % SYNTAX
     %   [k, n] = getInvFTBing(TX, RX)
+    %
+    % INPUT PARAMETER
+    %   TX ... Vector of TX position coordinates.
+    %   RX ... Vector of RX position coordinates.
+    %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
     %   k   ... Vector, containing wavenumbers.
@@ -120,9 +132,6 @@ function [k, n] = getInvFTBing(TX, RX)
     
     % Set tolerance for curvature criteria.
     tol_min = 2e-1;
-    
-    % Define number od wavenubers.
-    n = pick(2, 20, 60);
         
     %% Get k range.
     
@@ -143,7 +152,7 @@ function [k, n] = getInvFTBing(TX, RX)
     k = logspace(log10(k_min), log10(k_crit), n);
 end
 
-function [k, w, n] = getInvFTXu(TX, RX)
+function [k, w, n] = getInvFTXu(TX, RX, n)
     % Calculate weights by Xu S. 2000 for quadrature nodes by Bing Z 1998.
     %
     % The values are based on the consideration of the bessel function
@@ -152,6 +161,11 @@ function [k, w, n] = getInvFTXu(TX, RX)
     %
     % SYNTAX
     %   [k, n] = getInvFTXu(TX, RX)
+    %
+    % INPUT PARAMETER
+    %   TX ... Vector of TX position coordinates.
+    %   RX ... Vector of RX position coordinates.
+    %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
     %   k   ... Vector, containing wavenumbers.
@@ -169,9 +183,6 @@ function [k, w, n] = getInvFTXu(TX, RX)
     % Set tolerance for curvature criteria.
     tol_min = 2e-1;
     tol_max = 1e-20;
-    
-    % Define number od wavenubers.
-    n = pick(2, 20, 60);
         
     %% Get k range.
     
@@ -267,7 +278,7 @@ function [k, w, n] = getInvFTXu(TX, RX)
     w = (pi / 2) * m(n + 1:end);
 %}   
     %% Get corresponding w by linear least-squares.
-% %{
+
     % For a point source over a homogeneous half-space the solution
     %   (\rho * I) / (2 * pi * abs(r))
     % is ~ to
@@ -298,7 +309,6 @@ function [k, w, n] = getInvFTXu(TX, RX)
     % Solve corresponding normal equation (Levenberg-Maquard-scheme).
     % (Add prefactor to derive weights,  equivalent to Boerner and Bing.)
     w = (pi / 2) * ((A_w.'*A_w + lambda * eye(n, n)) \ (A_w.' * b_w));
-% %}
 
     %% Plot asymptotics.
     
