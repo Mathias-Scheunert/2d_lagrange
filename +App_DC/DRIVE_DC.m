@@ -67,8 +67,9 @@ verbosity = pick(2, false, true);
 FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
 
 % Set up domain boundaries.
-x = [-400, 400];
-y = [0, 50];
+% (For given TX/RX these may be adapted)
+x = [-1000, 1000];
+y = [0, 500];
 topo_min = -2;
 topo_max = 3;
 
@@ -206,6 +207,8 @@ if debugging
                   fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
 
     % Get asymptotic solution.
+    % I.e. the numerical integration of the asymptotic Bessel functions
+    % which map the 2D behavior of the 3D solution for each wavenumbers.
     phi_asy = zeros(size(fwd_params.RX.coo, 1), 1);
     for i=1:size(fwd_params.RX.coo, 1)
         r = abs(fwd_params.RX.coo(i,1) - fwd_params.TX.coo(1,1));
@@ -225,6 +228,9 @@ if debugging
         plot(x_plot, phi_3D, 'ok', ...
              x_plot, phi_asy, 'xb', ...
              x_plot, phi_FE, '-r');
+        title(sprintf(...
+            ['2.5D solution for numerical integration using %d ', ...
+            'wavenumbers'], length(sol)));
         legend('\phi_{3D}', ...
                '\phi_{asy}', ...
                '\phi_{FE}');
@@ -234,7 +240,7 @@ if debugging
         rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
         plot(x_plot, rel_err_FE, 'b', ...
              x_plot, rel_err_asy, 'r');
-        ylim([-10, 10]);
+        ylim([-5, 5]);
         legend('\phi_{ref} vs. \phi_{FE}', ...
                '\phi_{ref} vs. \phi_{asy}');
         ylabel('rel. error');
@@ -248,7 +254,7 @@ else
         xlabel('profile length');
 end
 
-return;
+Plot.plotMesh(mesh, mesh.params)
 
 %% Compare some solutions within the wavenumber domain.
 
@@ -264,10 +270,14 @@ if debugging
     % Compare to 2D FE solutions.
     figure()
     subplot(2, 1, 1)
-        cur_k_idx = pick(1, 30, round(length(FT_info.k) / 2));
+        %                    relative                    fix (not too large!)
+        cur_k_idx = pick(2, round(length(FT_info.k) / 2), 2);
         u_cur = Fe.solveFwd(sol{cur_k_idx}, fe);
         phi_FE_2D = fe.I * u_cur;
-        plot(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, '-ob');
+        plot(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, 'ob');
+        title(sprintf(...
+            '2D solution w.r.t the %d th wavenumber (k = %e)) ', ...
+            cur_k_idx, FT_info.k(cur_k_idx)));
         legend('\phi_{FE}', '\phi_{bessel}');
     subplot(2, 1, 2)
         rel_err_2D = (1 - (phi_FE_2D ./ phi_ref_2D{cur_k_idx})) * 100;

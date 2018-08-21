@@ -57,7 +57,7 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     %% Treat Neumann.
     
     % As the entire system might be reduced during the handling of
-    % Dirichlet BC, handling of Neumann BC has to processed first.
+    % Dirichlet BC, handling of Neumann BC has to be processed first.
 
     if any(idx_N)
         % Initialize.

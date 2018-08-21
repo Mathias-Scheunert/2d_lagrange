@@ -90,18 +90,20 @@ function mesh = loadGmsh(name, args)
     
     % Go through content and search for leading keywords
     % (see gmsh file format documentation) to separate information blocks.
-    idx_node_start = find(cellfun(@(x) strcmp(x, '$Nodes'), ...
-        file_content)) + 2;
-    idx_node_stop = find(cellfun(@(x) strcmp(x, '$EndNodes'), ...
-        file_content)) - 1;
-    idx_element_start = find(cellfun(@(x) strcmp(x, '$Elements'), ...
-        file_content)) + 2;
-    idx_element_stop = find(cellfun(@(x) strcmp(x, '$EndElements'), ...
-        file_content)) - 1;
-    idx_phys_start = find(cellfun(@(x) strcmp(x, '$PhysicalNames'), ...
-        file_content)) + 1;
-    idx_phys_stop = find(cellfun(@(x) strcmp(x, '$EndPhysicalNames'), ...
-        file_content)) - 1;
+    name_list = {'$PhysicalNames', '$EndPhysicalNames', ...
+                 '$Nodes', '$EndNodes', ...
+                 '$Elements', '$EndElements'};
+    [~, name_in_file] = ismember(file_content, name_list);
+    [idx_in_file, ~, idx_in_name] = find(name_in_file);
+    assert(all(ismember(1:6, idx_in_name)), ...
+        ['Not all relevant name tags could be found in the provided ', ...
+        'mesh file.']);
+    idx_phys_start = idx_in_file(idx_in_name == 1) + 1;
+    idx_phys_stop = idx_in_file(idx_in_name == 2) - 1;
+    idx_node_start = idx_in_file(idx_in_name == 3) + 2;
+    idx_node_stop = idx_in_file(idx_in_name == 4) - 1;
+    idx_element_start = idx_in_file(idx_in_name == 5) + 2;
+    idx_element_stop = idx_in_file(idx_in_name == 6) - 1;
     
     % Get vertex information.
     % Information structure:
@@ -145,10 +147,14 @@ function mesh = loadGmsh(name, args)
     %    2. tag == elementary geometrical entity id
     %                -> straight line / plane surface id
     % (As two types of information are included in the element list, the
-    % above trick doesn't work here.)
-    ele_content = file_content(idx_element_start:idx_element_stop);
-    ele_content = cellfun(@(x) {sscanf(sprintf('%s ', x), '%f').'}, ...
-                        ele_content);
+    % above trick doesn't work here - the number of columns are different.)
+    ele_content_tmp = file_content(idx_element_start:idx_element_stop);
+    n_ele_cells = length(ele_content_tmp);
+    ele_content = cell(n_ele_cells, 1);
+    ele_content_tmp = char(ele_content_tmp);
+    for ii = 1:n_ele_cells
+       ele_content{ii} = sscanf(ele_content_tmp(ii,:), '%f').';
+    end
     ele_types = cellfun(@(x) x(2), ele_content);
     assert(all(ele_types <= 2), ...
         'Gmsh file contains 3D data (or unsupported 2D element format).');
@@ -166,9 +172,9 @@ function mesh = loadGmsh(name, args)
     
     % Exclude physical properties of cells and edges.
     if isempty(idx_phys_start)
-        warning(['No physical properties for cells (edges) are set. ', ...
-            'Set mesh.params = 1 and assuming homogeneous Neumann ', ...
-            'boundary conditions on every given edge.']);
+        warning(sprintf(['\nNo physical properties for cells (edges) ', ...
+            'are set. \nSet mesh.params = 1 and assuming homogeneous ', ...
+            'Neumann boundary conditions on every given edge.']));
         params = ones(size(cell_content, 1), 1);
     else
         % Information structure:
@@ -192,10 +198,11 @@ function mesh = loadGmsh(name, args)
         
         % Check consistencies.
         if length(unique(edge_content(:,4))) ~= length(find(phys_edge_id))
-           warning(['The number of physical lines differs from the ', ...
-               'number of physical line names. Lines which are not ', ...
-               'associated with a physical line name are considered ', ...
-               'as internal boundary and, hence, are ignored from now on.']);
+           warning(sprintf(['\nThe number of physical lines differs ', ...
+               'from the number of physical line names. \nLines which ', ...
+               'are not associated with a physical line name are ', ...
+               'considered as internal boundary and, hence, are ', ...
+               'ignored from now on.']));
            
            % Reduce edge_content.
            obsolete_idx = ~ismember(edge_content(:,4), ...
