@@ -1,8 +1,8 @@
-function bnd = assignBC(bnd, fe, mesh, param, verbosity)
+function bnd = assignBC(bnd, fe, mesh, verbosity)
     % Assigns (or loads) the values to each boundary DOF.
     %
     % SYNTAX
-    %   bnd = assignBC(bnd, fe, mesh, param[, verbosity])
+    %   bnd = assignBC(bnd, fe, mesh[, verbosity])
     %
     % INPUT PARAMETER
     %   bnd  ... Struct, containing the preset of the BC types.
@@ -31,13 +31,11 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     
     assert(isstruct(fe) && all(isfield(fe, {'order', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
-    assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge_xmin'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
-    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val'})), ...
+    assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val', 'name'})), ...
         'bnd - struct, containing basic boundary condition information, expected.');
-    assert(isvector(param) && length(param) == fe.sizes.cell, ...
-        'param - vector of parameters for each cell, expected.');
-    if nargin < 5
+    if nargin < 4
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -50,21 +48,14 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
        fprintf('Get or load bnd DOFs ... '); 
     end
     
-    % Get bndDOF.
+    % Appand bndDOF information.
     switch mesh.type
-        case {'cube', 'rhomb'}          
+        case {'cube', 'rhomb', 'gmsh_create', 'gmsh_load'}          
             if ~isfield(bnd, 'bndDOF')
-                bnd.bndDOF = Fe.getBndDOF(fe, mesh);
+                bnd = Fe.getBndDOF(fe, mesh, bnd);
             end
-            
-        case {'external'}
-            error('Not implemented yet.');
-            % TODO: if mesh is given, load information at this stage.
-            % Make shure that these fit to the information-style of
-            % internal meshes.
-            
         otherwise
-            error('BC handling only supported for kown mesh type.');
+            error('BC handling only supported for known mesh types.');
     end
     if verbosity
        fprintf('done.\n'); 
@@ -157,7 +148,7 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     
     % Add parameter info (required in case of inhomogeneous Neumann BC).
     if any(strcmp(bnd.type, 'neumann'))
-       bnd.param = param; 
+       bnd.param = mesh.params; 
     end
     
     if verbosity

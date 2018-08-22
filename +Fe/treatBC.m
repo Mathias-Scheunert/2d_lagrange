@@ -1,4 +1,4 @@
-function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
+function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     % Handles the given BC.
     %
     % SYNTAX
@@ -22,8 +22,6 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
     %   sol ... Struct, adapted sol struct, depending on the BC the system
     %           matrix and or the rhs-vector is appended or reduced,
     %           respectively.
-    %   bnd ... Struct, containing the boundary condition information 
-    %           appended by bnd DOF information.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -59,7 +57,7 @@ function [sol, bnd] = treatBC(fe, mesh, sol, bnd, verbosity)
     %% Treat Neumann.
     
     % As the entire system might be reduced during the handling of
-    % Dirichlet BC, handling of Neumann BC has to processed first.
+    % Dirichlet BC, handling of Neumann BC has to be processed first.
 
     if any(idx_N)
         % Initialize.
@@ -261,7 +259,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             if ~isa(bnd.val{kk}, 'function_handle')
                 % If not already given as function handle, 
                 % transform constant values to this shape.
-                fun_hand = RefSol.getConstFunction(bnd.val{kk});
+                fun_hand = RefSol.getConst(bnd.val{kk});
                 bnd_val = fun_hand.f;
                 gradient = false;
             else

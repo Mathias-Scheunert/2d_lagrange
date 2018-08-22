@@ -1,5 +1,8 @@
 function mesh = refineMeshUniform(mesh, ref_num)
     % Refines mesh by splitting up one triangle into four triangles.
+    %
+    % This function only acts in the initial mesh information, i.e. the
+    % vertices and the cell2vertex list.
     % 
     % SYNTAX
     %   mesh = refineMeshUniform(mesh, ref_num)
@@ -24,7 +27,14 @@ function mesh = refineMeshUniform(mesh, ref_num)
     
     assert(isscalar(ref_num) && round(ref_num) == ref_num, ...
         'ref_num - integer, denoting number of refinements, expected.');
-       
+    
+    if ~any(strcmp(mesh.type, {'cube', 'rhomb', 'basic'}))
+        warning(['Uniform refinement not supported for external meshes. ',...
+            'Rather use the functionality of the external mesh generator.']);
+        % TODO: Handle splitting up the boundary edge info.
+        return;
+    end
+           
     %% Split up triangles.
     
     for i = 1:ref_num
@@ -70,7 +80,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
 
         % Redefine cell2cord list by incorporating the new cells.
         % That is, one former cell will be replaced by four new cells.
-        % Therefore, use the above mentioned vert.-2-cell ordering.
+        % Therefore, use the above mentioned vtx2cell ordering.
         cell2cord = cellfun(@(x,y) {...
             [[x(1,1), x(1,2)]; [y(1,1), y(1,2)];[y(2,1), y(2,2)]]; ...
             [[y(1,1), y(1,2)]; [x(2,1), x(2,2)];[y(3,1), y(3,2)]]; ...
@@ -89,7 +99,7 @@ function mesh = refineMeshUniform(mesh, ref_num)
 
         % Generate 'global' vertex list.
         vert_list_local = cell2mat(vert_list_local);
-        [vert_list, ind_loc2glob, ind_glob2loc] = unique(vert_list_local, ...
+        [vert_list, ~, ind_glob2loc] = unique(vert_list_local, ...
             'rows', 'stable');
 
         % Define 'local' cell list.
@@ -110,16 +120,32 @@ function mesh = refineMeshUniform(mesh, ref_num)
             ind_glob2loc_tmp, 'UniformOutput', false);
         cell_list = cell2mat(cell_list);
 
-        % Override existing information.
-        mesh.vertices = vert_list;
-        mesh.cell2vtx = cell_list;
-        mesh.cell2cord = reshape([cell2cord{:}], ...
-            n_cell_old * length(cell_list_local), 1);
-    end
-    
-    %% Expand grid information.
+        if strcmp(mesh.type, 'basic')
+            % Initialize new (avoid mixing of refined and unrefined info).
+            mesh = struct();
+            mesh.type = 'basic';
+            mesh.vertices = vert_list;
+            mesh.cell2vtx = cell_list;
+            
+        else
+            % Override existing information.
+            mesh.vertices = vert_list;
+            mesh.cell2vtx = cell_list;
+        end
+        
+        if ~strcmp(mesh.type, 'basic')
+            % Expand parameter domain vector by inserting new cells.
+            % (Relying on the 1 -> 4 rule [see cell2cord definition])
+            mesh.parameter_domains = kron(mesh.parameter_domains(:), ...
+                                        ones(4, 1));
 
-    mesh = Mesh.appendElementInfo(mesh);
-    mesh = Mesh.appendMappings(mesh);
-    mesh = Mesh.appendBndInfo(mesh);
+            % Expand parameter vector.
+            mesh.params = kron(mesh.params(:), ones(4, 1));
+        
+            % Update coordinate relations.
+            mesh = Mesh.appendEdgeInfo(mesh);
+            mesh = Mesh.appendCoordInfo(mesh);
+            mesh = Mesh.appendBndInfo(mesh);
+        end
+    end
 end

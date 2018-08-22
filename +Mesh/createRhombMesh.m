@@ -1,8 +1,8 @@
-function mesh = createRhombMesh(bnd)
+function mesh = createRhombMesh(bnd, verbosity)
     % Creates a mesh in 2D representing a rhombus in a finit rectangle.
     % 
     % SYNTAX
-    %   mesh = createRhombMesh(bnd)
+    %   mesh = createRhombMesh(bnd[, verbosity])
     %
     % INPUT PARAMETER
     %   bnd ... Vector, denoting boundaries of modeling area  
@@ -11,6 +11,9 @@ function mesh = createRhombMesh(bnd)
     % OUTPUT PARAMETER
     %   mesh ... Struct, containing mesh information, i.e. coordinates of
     %            vertices and its relation to the triangles and edges.
+    %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if verbose output is desired.
     %
     % REMARKS
     %
@@ -23,8 +26,19 @@ function mesh = createRhombMesh(bnd)
     
     assert(isvector(bnd) && length(bnd) == 4, ...
         'Expected bnd to be vectors 4 x 1 denoting the domain boundaries.');
+    
+    if nargin < 2
+        verbosity = false;
+    else
+        assert(islogical(verbosity), ...
+            'verbosity - Logical, denoting if verbose output is desired, expected.');        
+    end
 
     %% Create vertex (point) list.
+    
+    if verbosity
+       fprintf('Create basic mesh ... \n'); 
+    end
     
     % Line number = number of vertex
     % 1. colum = x coordinate
@@ -86,4 +100,9 @@ function mesh = createRhombMesh(bnd)
     mesh.dim = 2;
     mesh.vertices = vert_list;
     mesh.cell2vtx = cell_list;
+    mesh.parameter_domains = ones(size(mesh.cell2vtx, 1), 1);
+    
+    if verbosity
+       fprintf('done.\n');
+    end
 end

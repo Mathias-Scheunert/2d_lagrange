@@ -33,15 +33,20 @@ Feel free to use this repo for:
 # Features
 
 Mesh:
-- domains bounded by a rectangle
+- arbitrary bounded domains (exctracted areas at interior allowed)
 - initial mesh variants: uniform splitted rectangle and arbitrary mesh including a rhombus
 - uniform mesh refinement
+- Gmsh: - workable Gmsh binary
+	- routine to create default DC Gmsh .geo input file (including topography, TX/RX positions)
+	- routine to load arbitrary mesh from Gmsh .msh output files
+	- using Gmsh physical tags to identify parameter domains (surfaces) and boundary parts (lines) from .msh
 
 Lagrange elements:
 - 2D first and second order
 
 Assembling of:
 - mass and stiffness matrix
+- tensor representation for derivative of these matrices w.r.t. the parameter
 - rhs vector for point source(es)
 - rhs vector for given reference function
 - interpolation operator for observing solution at arbitrary points within the domain
@@ -53,3 +58,7 @@ Boundary conditions:
 Visualization:
 - mesh with parameter and edge orientations and normals
 - FE solution within domain and observations
+
+Applications:
+- 2.5D DC modelling (1 TX, n RX) for potential
+	- including routine to derive wavenumbers and quadrature weights

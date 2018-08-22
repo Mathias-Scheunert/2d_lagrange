@@ -1,14 +1,22 @@
 % Script for testing the FE-Code w.r.t. an analytic test function.
 %
-% Problem:
+% Problem 1 'reference':
 %   given: 
 %       f(x), \nabla²(f(x))
 %   solve:
-%   -\nabla²(u) = -\nabla²(f(x(DOF)))    in Omega
-%        u(x,y) = -\nabla²(f(x(bndDOF))) at d_Omega
-% Variants:
-%   f(x) = \dirac(x_0)
-%   f(x) = -\nabla²(f(x(DOF))) 
+%   -\nabla²(u) + u = -\nabla²(f(x(DOF)))                   in Omega
+%              u(x) = -\nabla²(f(x(bndDOF))) + f(x(bndDOF)) at d_Omega_1
+%   optional:
+%           d_u/d_n = \grad(f(x))) * n                      at d_Omega_2
+%
+% Problem 1 'poisson':
+%   given: 
+%       p(x)
+%   solve:
+%   -\nabla²(u) = \dirac(x_0)      in Omega
+%          u(x) = p(x)             at d_Omega_1
+%   optional:
+%       d_u/d_n = \grad(p(x))) * n at d_Omega_2
 
 %% Set up script.
 
@@ -18,7 +26,7 @@ warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
-convergence = pick(1, false, true); % iterate a sequence of refinements
+convergence = pick(2, false, true); % iterate a sequence of refinements
 if convergence
     [debuging, verbosity, plotting] = deal(false);
 end
@@ -51,24 +59,13 @@ end
 [TXp, TXr] = deal(struct());
 %
 TXr.type = 'reference';
-TXr.ref_sol_u = RefSol.getSinFunction();
-TXr.ref_sol.f = TXr.ref_sol_u.L;
+TXr.ref_sol_u = RefSol.getSin();
+TXr.ref_sol.f = @(X, Y) TXr.ref_sol_u.L(X, Y) + TXr.ref_sol_u.f(X, Y);
 %
 TXp.type = 'point_exact';
 TXp.coo = pick(2, [0, 1], [0, 0]);
 TXp.val = 1;
-TXp.ref_sol_u.f = @(x, y) -1/(2*pi) * log(norm([x; y] - TXp.coo(:)));
-if license('test', 'symbolic_toolbox')
-    x_sym = sym('x', 'real');
-    y_sym = sym('y', 'real');
-    TXp.ref_sol_u.grad = [diff(TXp.ref_sol_u.f, x_sym); diff(TXp.ref_sol_u.f, y_sym)];
-    TXp.ref_sol_u.grad = matlabFunction(TXp.ref_sol_u.grad, 'Vars', {'x', 'y'});
-    TXp.ref_sol_u.J = TXp.ref_sol_u.grad;
-    clear('x_sym', 'y_sym');
-else
-    % Skipt derivation.
-end
-TXp.ref_sol_u.quad_ord = 6;
+TXp.ref_sol_u = RefSol.getPoisson2D(TXp.coo);
 %
 TX = pick(1, TXr, TXp);
 
@@ -86,23 +83,19 @@ end
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_D = struct();
 bnd_D.type = {'dirichlet'};
-%                     xmin              xmax            ymin        ymax
+%                       xmin            xmax            ymin            ymax
 bnd_D.val = {{TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f; TX.ref_sol_u.f}};
-%
-bnd_N = struct();
-bnd_N.type = {'neumann'};
-%                     xmin              xmax            ymin        ymax                        
-bnd_N.val = {{TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J; TX.ref_sol_u.J}};
-bnd_N.quad_ord = TX.ref_sol_u.quad_ord;
+bnd_D.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
-%                     xmin              xmax            ymin        ymax                            
-bnd_mix.val = {{TX.ref_sol_u.J;             []; TX.ref_sol_u.J; TX.ref_sol_u.J}, ...
-               {[];             TX.ref_sol_u.f;             [];             []}};
+%                         xmin            xmax            ymin            ymax                            
+bnd_mix.val = {{TX.ref_sol_u.J;             [];             []; TX.ref_sol_u.J}, ...
+               {[];             TX.ref_sol_u.f; TX.ref_sol_u.f;             []}};
+bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = TX.ref_sol_u.quad_ord;
 %
-bnd_basic = pick(1, bnd_D, bnd_N, bnd_mix);
+bnd_basic = pick(2, bnd_D, bnd_mix);
 
 % Define observation points.
 n_obs = pick(2, 11, 101);
@@ -110,7 +103,7 @@ RX = pick(3, ...
     [linspace(x(1), x(end), n_obs).', ...
         linspace(y(end), y(1), n_obs).'], ...               % diagonal profile
     [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
-    [linspace(x(1), x(end), n_obs).', -4 + zeros(n_obs, 1)], ... % profile on axis
+    [linspace(x(1), x(end), n_obs).', min(y) + zeros(n_obs, 1)], ... % profile on axis
     []);                                                    % none
 if convergence
     RX = [];
@@ -138,7 +131,7 @@ if verbosity
    fprintf('... FE-FWP set up.\n \n'); 
 end
 
-    %% Set up mesh.
+%% Set up mesh.
 
 % Iterate (if required) over different Lagrange orders.
 for cur_order = order
@@ -154,7 +147,8 @@ for cur_order = order
         end
         
         % Init mesh.
-        mesh = Mesh.initMesh(mesh_type, [x, y], cur_ref, verbosity);
+        mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
+            'ref', cur_ref, 'verbosity', verbosity);
 
         %% Set up Parameter.
 
@@ -168,19 +162,22 @@ for cur_order = order
         %% Set up BC.
         
         bnd = bnd_basic;
-        bnd = Fe.assignBC(bnd, fe, mesh, param);
+        bnd = Fe.assignBC(bnd, fe, mesh);
 
         %% Set up FEM linear System.
 
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+        sol.A = Fe.assembleStiff(fe, mesh, verbosity);
+        if strcmp(TX.type, 'reference')
+            sol.A = sol.A + Fe.assembleMass(fe, mesh, verbosity);
+        end
 
         % Set up rhs vector.
         sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
         % Handle boundary conditions.
-        [sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+        sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
 
         if verbosity
            fprintf('... Linear system and BC set up.\n \n'); 
@@ -196,7 +193,7 @@ for cur_order = order
         if convergence
             cur_idx = cur_ref - ref_steps(1) + 1;
             [err_L2{cur_order}(cur_idx), err_H1{cur_order}(cur_idx)] = ...
-                Fe.getError(mesh, fe, u, TX.ref_sol_u);
+                Test.getError(mesh, fe, u, TX.ref_sol_u);
             err_num_DOF{cur_order}(cur_idx) = fe.sizes.DOF;  
         end
         

@@ -38,6 +38,9 @@ scale = pick(1, 1, 50);
 x = scale * [-1, 1];
 y = scale * [-1, 1];
 
+% Define background conductivity.
+sig_background = 1/100;
+
 % Define observation points.
 RX = pick(1, ...
     [linspace(-0.9, 0.9, scale * 15).', ...
@@ -49,7 +52,7 @@ RX = scale * RX;
 % Define source point and strength.
 [TXp, TXd, TXq, TXh] = deal(struct());
 TXp.type = 'point_exact';
-TXp.coo = scale * pick(2, [0, 1], [0, 0]); 
+TXp.coo = scale * pick(1, [0, -1], [0, 0]); 
 % Note: source AT bnd only reasonable with h. N-BC
 TXp.val = 1;                  % discrete    Poisson problem (pole)
 TXd.type = 'point_exact';
@@ -58,23 +61,21 @@ TXd.val = [-1, 1];            % discrete    Poisson problem (dipole)
 TXq.type = 'point_approx';
 TXq.coo = scale * [0.5, 0.5; -0.5, -0.5; -0.5, 0.5; 0.5, -0.5];
 TXq.val = [1, 0.5, -1, -0.5]; % discrete    Poisson problem (quadrupole)
-TXq.ref_sol = RefSol.getPeakFunction(TXq.val, TXq.coo, 1e-5);
+TXq.ref_sol = RefSol.getPeak(TXq.val, TXq.coo, 1e-5);
 TXh.type = 'reference';
 TXh.val = 1;                  % homogeneous Poisson problem
-TXh.ref_sol = RefSol.getConstFunction(TXh.val);
+TXh.ref_sol = RefSol.getConst(TXh.val);
 %              1    2    3    4
-TX = pick(2, TXp, TXd, TXq, TXh);
-
-% Choose basic grid type.
-mesh_type = pick(2, 'rhomb', 'cube', 'external');
+TX = pick(4, TXp, TXd, TXq, TXh);
 
 % Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
 [bnd_N, bnd_D, bnd_mix] = deal(struct());
 %
 bnd_N.type = {'neumann'};
-%                   xmin xmax ymin ymax
-bnd_N.val = {pick(2, { 0;   0;   0;   0}, {0;  0;  1;  -1})};
+%           xmin xmax ymin ymax
+bnd_N.val = {{ 0;   0;   0;   0}};
+bnd_N.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_N.quad_ord = 1;
 %
 bnd_D.type = {'dirichlet'};
@@ -82,17 +83,22 @@ bnd_D.type = {'dirichlet'};
 bnd_D.val = {pick(1, {  0;   0;   0;   0}, ... %   homogeneous DRB
                      { 10;  10;   3;   3}, ... % inhomogeneous DRB
                      {  0;   0;  10;   0})};   % inhomogeneous DRB
+bnd_D.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 %
 bnd_mix.type = {'dirichlet', 'neumann'};
-%                      xmin xmax ymin ymax
-bnd_mix.val = pick(2,{{   3;  [];  10;  []}, ...   % 1 for Dirichlet
-                      {  [];   0;  [];  0}}); ...  % 2 for Neumann
+%               xmin xmax ymin ymax
+bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
+               {  [];  [];  0; []}}; ...  % 2 for Neumann
+bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(3, bnd_N, bnd_D, bnd_mix);
+bnd = pick(2, bnd_N, bnd_D, bnd_mix);
+
+% Choose basic grid type.
+mesh_type = pick(2, 'rhomb', 'cube');
 
 % Set number of grid refinements.
-ref_steps = 3;
+ref_steps = 2;
 
 % Set up order of Lagrange elements.
 order = pick(2, 1, 2);
@@ -115,19 +121,17 @@ end
 
 %% Set up mesh.
 
-mesh = Mesh.initMesh(mesh_type, [x, y], ref_steps, verbosity);
+mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
+    'ref', ref_steps, 'verbosity', verbosity, 'sigma', sig_background);
 
-%% Set up Parameter.
-
-% TODO: if external mesh is provided, also these info has to be given.
+%% Set up parameter anomaly.
 
 % Set disturbed area (equals vertical dike).
 x_dist = scale * [0, 1];
-y_dist = scale * [0.25, 0.35];
+y_dist = scale * [0.25, 0.55];
 
 % Define parameter of cunductivity (conductor within resistor).
-back = 1/100;
-dist = pick(1, back, 20);
+dist = pick(2, sig_background, 1/1e3);
 
 % Find all cell midpoints using barycentric coordinates.
 lambda_mid = 1/3 + zeros(3, 1);
@@ -139,12 +143,9 @@ cell_mid = cellfun(@(x) ...
 % Find cells, belonging to distrubed area.
 cell_dist = cellfun(@(x) (x(1) >= x_dist(1) && x(1) <= x_dist(2)) && ...
         (x(2) >= y_dist(1) && x(2) <= y_dist(2)), cell_mid);
-    
-% Set background parameter for grid.
-param = back + zeros(length(mesh.cell2vtx), 1);
 
 % Set parameter for disturbed area.
-param(cell_dist) = dist;
+mesh.params(cell_dist) = dist;
 
 %% Set up FE structure.
 
@@ -152,19 +153,19 @@ fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
 
 %% Set up BC.
 
-bnd = Fe.assignBC(bnd, fe, mesh, param);
+bnd = Fe.assignBC(bnd, fe, mesh);
 
 %% Set up FEM linear System.
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+sol.A = Fe.assembleStiff(fe, mesh, verbosity);
 
 % Set up rhs vector.
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
 % Handle boundary conditions.
-[sol, bnd] = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
 if verbosity
    fprintf('... Linear system and BC set up.\n \n'); 
 end
@@ -177,7 +178,7 @@ u = Fe.solveFwd(sol, fe, verbosity);
 %% Plot solution.
 
 % Solution field.
-Plot.plotSolution(fe, mesh, u, param, verbosity);
+Plot.plotSolution(fe, mesh, u, mesh.params, verbosity);
 
 % Add profile.
 % Get solution at RX positions.

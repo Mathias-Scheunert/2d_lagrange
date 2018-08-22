@@ -1,5 +1,9 @@
 # files
 *~
+.nfs*
+tmp_*
+*.geo
+*.msh
 
 # folders
 /test

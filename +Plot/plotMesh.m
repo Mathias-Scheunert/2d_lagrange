@@ -32,26 +32,21 @@ function [] = plotMesh(mesh, params, debug)
     
     figure();
     axis('equal');
-    set(gca, 'Ydir', 'reverse')
+    set(gca, 'Ydir', 'reverse') % As y should point downwards.
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
-    if all(~isnan(params)) && length(unique(params)) ~= 1
-        col_range = [min(params), max(params)] / max(params);
-        caxis(col_range);
-    else
-        caxis('auto');
-    end
+    caxis('auto');
     if debug
         drawnow();
     end
     
     %% Add simplices.
     
-    cell_coo_all = cell2mat(mesh.cell2cord);
-    cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
-    cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
     hold on
-    if debug
+    if debug && isfield(mesh, 'cell2cord')
+        cell_coo_all = cell2mat(mesh.cell2cord);
+        cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
+        cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
         pause_time = 5/n_cells;
         for kk = 1:n_cells
             patch(cell_coo_x(:,kk), cell_coo_y(:,kk), params(kk));
@@ -59,7 +54,9 @@ function [] = plotMesh(mesh, params, debug)
             pause(pause_time);
         end
     else
-        patch(cell_coo_x, cell_coo_y, params);
+        patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
+            'FaceVertexCData', params(:), ...
+            'FaceColor', 'flat')
     end
     hold off
     drawnow();

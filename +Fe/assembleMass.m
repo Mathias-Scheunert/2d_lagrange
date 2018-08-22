@@ -1,4 +1,4 @@
-function M = assembleMass(fe, param, verbosity)
+function [M, TM] = assembleMass(fe, mesh, verbosity)
     % Assembles the sparse mass matrix.
     %
     % a(u,v) = \int_Omega param u * \param(x,y) v d(x,y) = ...
@@ -13,25 +13,22 @@ function M = assembleMass(fe, param, verbosity)
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   S = assembleMass(fe, param[, verbosity])
+    %   [M, TM] = assembleMass(fe, mesh[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
     %   mesh  ... Struct, containing mesh information, i.e. coordinates
     %             of vertices and its relation to the triangles and edges.
-    %   param ... Vector, defining the cell piece-wise constant parameter.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
     %                 printed.
     %
     % OUTPUT PARAMETER
-    %   M ... Matrix, representing the mass part of the variational
-    %         formulation.
-    %
-    % TODO: implement tensor-based handling (e.g. from toolbox).
-    
-    warning('Function not tested, yet.');
+    %   M  ... Matrix, representing the mass part of the variational
+    %          formulation.
+    %   TS ... 3-way-tensor, representing the parameter independent
+    %          derivative of M w.r.t. the param vector.
     
     %% Check input.
     
@@ -39,8 +36,6 @@ function M = assembleMass(fe, param, verbosity)
         'fe - struct, including Lagrange reference element info , expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
         'mesh - appended struct, containing cell2cord info, expected.');
-    assert(length(param) == fe.sizes.cell, ...
-        'params - vector with length equal to the number of mesh cells expected.');
     if nargin < 3
         verbosity = false;
     else
@@ -64,13 +59,13 @@ function M = assembleMass(fe, param, verbosity)
     gauss_weights = num2cell(fe.quad.weights);
         
     % Initialize index and value vector for sparse matrix assembling.
-    [i, j, m] = deal(zeros(n_cell * n_entry_loc, 1));
+    [i, j, m, m_TM] = deal(zeros(n_cell * n_entry_loc, 1));
     
     % Set up recurring quantity.
     % Get basis functions for all quadrature nodes referred to
     % the reference simplex.
     quad_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
-        gauss_cords(:,1), gauss_cords(:,2)).';      
+        gauss_cords(:,1), gauss_cords(:,2));      
         
     % Iterate over all simplices.
     for ii = 1:n_cell                   
@@ -83,12 +78,11 @@ function M = assembleMass(fe, param, verbosity)
         quad_kern = cellfun(@(x, y) {y * (x.' * x)}, ...
             quad_eval, gauss_weights);
         
-        % Combine constant local cell parameter with the integral over the
-        % current simplex (quadrature summation).
+        % Apply quadrature summation of the integral over the current
+        % simplex.
         % As integral is referred to the reference simplex, the
         % Jacobi-determinat has to be incorporated.
-        m_loc = param(ii) * abs(mesh.maps{ii}.detB) * ...
-            sum(cat(3, quad_kern{:}), 3);
+        m_loc = abs(mesh.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
                   
         % Fill up index and value vectors.
         cur_DOF_map = fe.DOF_maps.cell2DOF{ii};
@@ -97,13 +91,25 @@ function M = assembleMass(fe, param, verbosity)
         glob_idx_end = glob_idx_start + n_entry_loc - 1;
         i(glob_idx_start:glob_idx_end) = i_loc(:);
         j(glob_idx_start:glob_idx_end) = j_loc(:);
-        m(glob_idx_start:glob_idx_end) = m_loc(:);
+        % Combine constant local cell parameter with the current kernel.
+        m(glob_idx_start:glob_idx_end) = mesh.params(ii) * m_loc(:);
+        % Ignore this parameter value for tensor assembling.
+        m_TM(glob_idx_start:glob_idx_end) = m_loc(:);
     end
     
     % Create sparse matrix from index and value vectors.
     % Note, values belonging to the same index pair are automatically
     % summed up by sparse().
     M = sparse(i, j, m, n_DOF_glob, n_DOF_glob);
+    
+    % Create sparse 3-way-tensor from index and value vectors.
+    % Note, that this quantity is independent of the parameter vector. The
+    % mass matrix can be obtained by a sparse tensor-times-vector 
+    % multiplication:
+    %   M = ttv(TM, param, 3);
+    size_TM = [n_DOF_glob, n_DOF_glob, fe.sizes.cell];
+    index_TM = [i, j, kron((1:fe.sizes.cell).', ones(n_entry_loc, 1))];
+    TM = Tensor.Tensor3Coord(size_TM, index_TM, m_TM);
     
     if verbosity
        fprintf('done.\n'); 
