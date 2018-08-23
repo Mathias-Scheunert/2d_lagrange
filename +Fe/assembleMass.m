@@ -1,4 +1,4 @@
-function [M, TM] = assembleMass(fe, mesh, verbosity)
+function [M, TM] = assembleMass(fe, mesh, param, verbosity)
     % Assembles the sparse mass matrix.
     %
     % a(u,v) = \int_Omega param u * \param(x,y) v d(x,y) = ...
@@ -13,12 +13,13 @@ function [M, TM] = assembleMass(fe, mesh, verbosity)
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   [M, TM] = assembleMass(fe, mesh[, verbosity])
+    %   [M, TM] = assembleMass(fe, mesh, param[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
     %   mesh  ... Struct, containing mesh information, i.e. coordinates
     %             of vertices and its relation to the triangles and edges.
+    %   param      ... Vector of constant cell parameter values.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -36,7 +37,9 @@ function [M, TM] = assembleMass(fe, mesh, verbosity)
         'fe - struct, including Lagrange reference element info , expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
         'mesh - appended struct, containing cell2cord info, expected.');
-    if nargin < 3
+    assert(isvector(param) && length(param) == size(mesh.cell2vtx, 1), ...
+        'param - Vector of constant cell parameter values, expected.');
+    if nargin < 4
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -92,7 +95,7 @@ function [M, TM] = assembleMass(fe, mesh, verbosity)
         i(glob_idx_start:glob_idx_end) = i_loc(:);
         j(glob_idx_start:glob_idx_end) = j_loc(:);
         % Combine constant local cell parameter with the current kernel.
-        m(glob_idx_start:glob_idx_end) = mesh.params(ii) * m_loc(:);
+        m(glob_idx_start:glob_idx_end) = param(ii) * m_loc(:);
         % Ignore this parameter value for tensor assembling.
         m_TM(glob_idx_start:glob_idx_end) = m_loc(:);
     end

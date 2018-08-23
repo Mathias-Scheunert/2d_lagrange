@@ -14,6 +14,9 @@ function params = getInvFTParam(TX, RX, type)
     %   params ... Struct, containing the relevant quadrature approach
     %              information. See respective subfunctions for further
     %              details.
+    %
+    % TODO: Debug the Bing-variant (there is still an offset w.r.t. 
+    % analytic solution for homog. HR).
     
     %% Check input.
     
@@ -32,7 +35,7 @@ function params = getInvFTParam(TX, RX, type)
     
     % Define number od wavenubers.
     % TODO: find usefull approach to somehow predetermine numbers of k's.
-    n_k = pick(1, 20, 60);
+    n_k = pick(2, 8, 17);
     
     params = struct();
     switch type

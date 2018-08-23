@@ -61,9 +61,11 @@ function bnd = getBndDOF(fe, mesh, bnd)
         mesh.bnd_edge_part_name{~match_mesh});
         
         % Remove obsolete entries.
+        bnd_edge2idx = mesh.bnd_edge_part == 1:length(mesh.bnd_edge_part_name);
         mesh.bnd_edge_part_name = mesh.bnd_edge_part_name(match_mesh);
-        mesh.bnd_edge(mesh.bnd_edge_part(:,~match_mesh)) = false;
-        mesh.bnd_edge_part(:,~match_mesh) = [];
+        mesh.bnd_edge = bnd_edge2idx * double(match_mesh);
+        mesh.bnd_edge_part = bnd_edge2idx(:,match_mesh) * ...
+                                (1:length(find(match_mesh))).';
     end
     
     % Sort remaining information of bnd to match the order of mesh.
@@ -83,7 +85,7 @@ function bnd = getBndDOF(fe, mesh, bnd)
     % edges share the corner vertex)!
     bnd_part_vtx_idx = cell(n_bnd_part, 1);
     for ii = 1:n_bnd_part
-        bnd_part_vtx_idx{ii} = mesh.edge2vtx(mesh.bnd_edge_part(:,ii),:);
+        bnd_part_vtx_idx{ii} = mesh.edge2vtx(mesh.bnd_edge_part == ii,:);
         bnd_part_vtx_idx{ii} = unique(bnd_part_vtx_idx{ii});
     end
     
@@ -100,7 +102,7 @@ function bnd = getBndDOF(fe, mesh, bnd)
             bnd_part_edge_idx = cell(n_bnd_part, 1);
             for ii = 1:n_bnd_part
                 bnd_part_edge_idx{ii} = n_vtx + ...
-                                        find(mesh.bnd_edge_part(:,ii));
+                                        find(mesh.bnd_edge_part == ii);
             end
             
             % Summarize.

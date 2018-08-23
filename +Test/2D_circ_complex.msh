@@ -7,8 +7,8 @@ $PhysicalNames
 1 2 "subsurface"
 1 3 "interior"
 1 6 "tunnel"
-2 4 "1e2"
-2 5 "1e-2"
+2 4 "inner_part"
+2 5 "outer_part"
 $EndPhysicalNames
 $Nodes
 1203

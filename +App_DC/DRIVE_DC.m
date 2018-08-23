@@ -64,7 +64,7 @@ verbosity = pick(2, false, true);
 %% Set up disctrete DC fwd problem.
 
 % Define type of numerical integration approach.
-FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
+FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
 
 % Set up domain boundaries.
 % (For given TX/RX these may be adapted)
@@ -73,8 +73,9 @@ y = [0, 500];
 topo_min = -2;
 topo_max = 3;
 
-% Set halfspace conductivity.
-sig_background = 1/1000;
+% Define background conductivity.
+param_info.val = 1/1000;
+param_info.name = {'entire'};
 
 % Define source and receiver locations at earth's surface.
 TX.type = 'point_exact';
@@ -121,7 +122,7 @@ bnd.quad_ord = 1;
 %% Set up FEM.
 
 % Define number of grid refinements.
-refinement = 1;
+refinement = 0;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
@@ -136,18 +137,20 @@ fwd_params.dom_bnd = [x, y];
 fwd_params.FT_type = FT_type;
 fwd_params.FE_order = FE_order;
 fwd_params.ref = refinement;
-fwd_params.sig_background = sig_background;
 clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
-      'refinement', 'topo', 'sig_background', 'x', 'y');
+      'refinement', 'topo', 'x', 'y');
 
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
     'ref', fwd_params.ref, 'verbosity', verbosity, ...
     'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
-    'RX', fwd_params.RX.coo, 'sigma', fwd_params.sig_background);
+    'RX', fwd_params.RX.coo, 'dom_name', param_info.name{:});
 
 %% Set up conductivity anomaly.
+
+% Set up parameter vector.
+param = Param.initParam(mesh, param_info);
 
 % Set disturbed area (equals vertical dike).
 x_dist = [-80, -10];
@@ -155,7 +158,7 @@ y_dist = [10, 80];
 
 % Define parameter of conductivity (conductor within resistor).
 if debugging
-    mesh.params = (0 * mesh.params) + 1 / (2 * pi);
+    param = (0 * param) + 1 / (2 * pi);
     sig_anomaly = 1 / (2 * pi);
 else
     sig_anomaly = 10;
@@ -174,15 +177,15 @@ else
             cell_mid);
 
     % Set parameter for disturbed area.
-    mesh.params(cell_dist) = sig_anomaly;
+    params(cell_dist) = sig_anomaly;
 
     % Update parameter domain vector.
-    mesh.parameter_domains(cell_dist) = mesh.parameter_domains(cell_dist) + 1;
+    parameter_domain(cell_dist) = parameter_domain(cell_dist) + 1;
 end
 
 %% Assemble 2.5D DC problem.
 
-[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, fwd_params, verbosity);
+[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, param, fwd_params, verbosity);
 
 %% Solve 2.5D DC problem.
 
@@ -217,6 +220,7 @@ if debugging
                 phi_asy(i) = (2 / pi) * sum(FT_info.w .* besselk(0, FT_info.k * r));
             case 'Bing'
                 % Not known.
+                phi_asy = phi_asy * NaN;
         end
     end
 
@@ -240,7 +244,7 @@ if debugging
         rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
         plot(x_plot, rel_err_FE, 'b', ...
              x_plot, rel_err_asy, 'r');
-        ylim([-5, 5]);
+        ylim([-3, 3]);
         legend('\phi_{ref} vs. \phi_{FE}', ...
                '\phi_{ref} vs. \phi_{asy}');
         ylabel('rel. error');
@@ -254,11 +258,11 @@ else
         xlabel('profile length');
 end
 
-Plot.plotMesh(mesh, mesh.params)
+Plot.plotMesh(mesh, param)
 
 %% Compare some solutions within the wavenumber domain.
 
-if debugging
+if debugging && ~strcmp(FT_info.type, 'Bing')
     % Get asymptotics in 2D.
     r_TX2RX = sqrt((fwd_params.TX.coo(1) - fwd_params.RX.coo(:,1)).^2 + ...
         (fwd_params.TX.coo(2) - fwd_params.RX.coo(:,2)).^2);

@@ -40,8 +40,9 @@ function mesh = appendBndInfo(mesh)
             mesh.bnd_edge = bnd_ymin | bnd_ymax | bnd_xmin | bnd_xmax;
             
             % Summarize.
-            mesh.bnd_edge_part = [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax];
             mesh.bnd_edge_part_name = {'xmin', 'xmax', 'ymin', 'ymax'};
+            mesh.bnd_edge_part = [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax] * ...
+                                   (1:length(mesh.bnd_edge_part_name)).';
             
         case {'gmsh_create', 'gmsh_load'}
             % Check input.
@@ -50,17 +51,14 @@ function mesh = appendBndInfo(mesh)
                 'and the entire edge list is missing. Make sure to ', ...
                 'apply Mesh.appendEdgeInfo() after loading a Gmsh mesh.']);
             
-            % Expand gmsh bnd_egde logicals to comprise total edge number.
+            % Expand gmsh bnd_edge logicals to comprise total edge number.
             mesh.bnd_edge = mesh.gmsh_bnd_edge2total_edge;
             [~, ~, map_order] = find(mesh.gmsh_bnd_edge2total_edge_map);
-            
-            % Expand domain boundary logicals.
-            n_parts = length(mesh.bnd_edge_part_name);
-            bnd_edge_part = false(length(mesh.bnd_edge), n_parts);
-            for ii = 1:n_parts
-                bnd_edge_part(mesh.gmsh_bnd_edge2total_edge,ii) = ...
-                    mesh.bnd_edge_part(map_order,ii);
-            end
+                        
+            % Expand domain boundary ids.
+            bnd_edge_part = zeros(length(mesh.bnd_edge), 1);
+            bnd_edge_part(mesh.gmsh_bnd_edge2total_edge) = ...
+                mesh.bnd_edge_part(map_order);
             mesh.bnd_edge_part = bnd_edge_part;
 
             % Clean up.

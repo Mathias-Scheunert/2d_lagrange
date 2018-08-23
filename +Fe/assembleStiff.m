@@ -1,4 +1,4 @@
-function [S, TS] = assembleStiff(fe, mesh, verbosity)
+function [S, TS] = assembleStiff(fe, mesh, param, verbosity)
     % Assembles the sparse stiffness matrix.
     %
     % a(u,v) = \int_Omega param \grad(u) * \param(x,y) \grad(v) d(x,y) = ...
@@ -13,12 +13,13 @@ function [S, TS] = assembleStiff(fe, mesh, verbosity)
     % Using elemente-wise procedure to set up the global mass matrix.
     %
     % SYNTAX
-    %   [S, TS] = assembleStiff(fe, mesh[, verbosity])
+    %   [S, TS] = assembleStiff(fe, mesh, param[, verbosity])
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
     %   mesh  ... Struct, containing mesh information, i.e. coordinates
     %             of vertices and its relation to the triangles and edges.
+    %   param      ... Vector of constant cell parameter values.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -36,7 +37,9 @@ function [S, TS] = assembleStiff(fe, mesh, verbosity)
         'fe - struct, including Lagrange reference element info , expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
         'mesh - appended struct, containing cell2cord info, expected.');
-    if nargin < 3
+    assert(isvector(param) && length(param) == size(mesh.cell2vtx, 1), ...
+        'param - Vector of constant cell parameter values, expected.');
+    if nargin < 4
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -100,7 +103,7 @@ function [S, TS] = assembleStiff(fe, mesh, verbosity)
         i(glob_idx_start:glob_idx_end) = i_loc(:);
         j(glob_idx_start:glob_idx_end) = j_loc(:);
         % Combine constant local cell parameter with the current kernel.
-        s(glob_idx_start:glob_idx_end) = mesh.params(ii) * s_loc(:);
+        s(glob_idx_start:glob_idx_end) = param(ii) * s_loc(:);
         % Ignore this parameter value for tensor assembling.
         s_TS(glob_idx_start:glob_idx_end) = s_loc(:);
     end

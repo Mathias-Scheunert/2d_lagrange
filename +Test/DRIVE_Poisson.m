@@ -39,7 +39,8 @@ x = scale * [-1, 1];
 y = scale * [-1, 1];
 
 % Define background conductivity.
-sig_background = 1/100;
+param_info.val = 1;
+param_info.name = {'entire'};
 
 % Define observation points.
 RX = pick(1, ...
@@ -92,7 +93,7 @@ bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
 bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = 1;
 %                 1      2        3      
-bnd = pick(2, bnd_N, bnd_D, bnd_mix);
+bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
@@ -122,16 +123,18 @@ end
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
-    'ref', ref_steps, 'verbosity', verbosity, 'sigma', sig_background);
+    'ref', ref_steps, 'verbosity', verbosity);
 
 %% Set up parameter anomaly.
+
+param = Param.initParam(mesh, param_info);
 
 % Set disturbed area (equals vertical dike).
 x_dist = scale * [0, 1];
 y_dist = scale * [0.25, 0.55];
 
 % Define parameter of cunductivity (conductor within resistor).
-dist = pick(2, sig_background, 1/1e3);
+dist = pick(2, param_info.val, 1e3);
 
 % Find all cell midpoints using barycentric coordinates.
 lambda_mid = 1/3 + zeros(3, 1);
@@ -145,7 +148,7 @@ cell_dist = cellfun(@(x) (x(1) >= x_dist(1) && x(1) <= x_dist(2)) && ...
         (x(2) >= y_dist(1) && x(2) <= y_dist(2)), cell_mid);
 
 % Set parameter for disturbed area.
-mesh.params(cell_dist) = dist;
+param(cell_dist) = dist;
 
 %% Set up FE structure.
 
@@ -153,13 +156,13 @@ fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
 
 %% Set up BC.
 
-bnd = Fe.assignBC(bnd, fe, mesh);
+bnd = Fe.assignBC(bnd, fe, mesh, param);
 
 %% Set up FEM linear System.
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-sol.A = Fe.assembleStiff(fe, mesh, verbosity);
+sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
 
 % Set up rhs vector.
 sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
@@ -178,7 +181,7 @@ u = Fe.solveFwd(sol, fe, verbosity);
 %% Plot solution.
 
 % Solution field.
-Plot.plotSolution(fe, mesh, u, mesh.params, verbosity);
+Plot.plotSolution(fe, mesh, u, param, verbosity);
 
 % Add profile.
 % Get solution at RX positions.

@@ -100,7 +100,8 @@ function mesh = createRhombMesh(bnd, verbosity)
     mesh.dim = 2;
     mesh.vertices = vert_list;
     mesh.cell2vtx = cell_list;
-    mesh.parameter_domains = ones(size(mesh.cell2vtx, 1), 1);
+    mesh.parameter_domain = ones(size(mesh.cell2vtx, 1), 1);
+    mesh.parameter_domain_name = {'entire'};
     
     if verbosity
        fprintf('done.\n');

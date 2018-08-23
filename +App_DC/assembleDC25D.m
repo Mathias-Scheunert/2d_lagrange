@@ -1,4 +1,4 @@
-function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
+function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     % Set up and assemble the 2.5D DC linear system and inverse FT info.
     %
     % SYNTAX
@@ -8,6 +8,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
     %   mesh       ... Struct, containing mesh information, i.e. 
     %                  coordinatesof vertices and its relation to the
     %                  triangles and edges.
+    %   param      ... Vector of constant cell parameter values.
     %   fwd_params ... Struct, containing initial parameters that define
     %                  the forward problem.
     %
@@ -25,13 +26,15 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
     
     %% Check input.
     
-    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx', 'params'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(fwd_params) && all(isfield(fwd_params, ...
         {'TX', 'RX', 'bnd', 'FE_order', 'FT_type'})), ...
-        ['param - Struct, containing initial parameters that define ', ...
-         'the forward problem., expected.']);
-    if nargin < 3
+        ['fwd_params - Struct, containing initial parameters that ', ...
+         'define the forward problem., expected.']);
+    assert(isvector(param) && length(param) == size(mesh.cell2vtx, 1), ...
+        'param - Vector of constant cell parameter values, expected.');
+    if nargin < 4
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -48,7 +51,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
     %% Set up FE structure.
     
     fe = Fe.initFiniteElement(order, mesh, RX.coo, verbosity);
-    bnd = Fe.assignBC(bnd, fe, mesh);
+    bnd = Fe.assignBC(bnd, fe, mesh, param);
 
     %% Treat 2.5D wavenumber domain handling and set up DC-FE system.
 
@@ -56,8 +59,8 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, fwd_params, verbosity)
     rhs = Fe.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
-    A_GradDiv = Fe.assembleStiff(fe, mesh, verbosity);
-    A_Mass = Fe.assembleMass(fe, mesh, verbosity);
+    A_GradDiv = Fe.assembleStiff(fe, mesh, param, verbosity);
+    A_Mass = Fe.assembleMass(fe, mesh, param, verbosity);
 
     % Get parameter for inverse spatial Fourier transform.
     FT_info = App_DC.getInvFTParam(TX.coo, RX.coo, FT_type);

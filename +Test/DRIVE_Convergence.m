@@ -162,15 +162,15 @@ for cur_order = order
         %% Set up BC.
         
         bnd = bnd_basic;
-        bnd = Fe.assignBC(bnd, fe, mesh);
+        bnd = Fe.assignBC(bnd, fe, mesh, param);
 
         %% Set up FEM linear System.
 
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = Fe.assembleStiff(fe, mesh, verbosity);
+        sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
         if strcmp(TX.type, 'reference')
-            sol.A = sol.A + Fe.assembleMass(fe, mesh, verbosity);
+            sol.A = sol.A + Fe.assembleMass(fe, mesh, param, verbosity);
         end
 
         % Set up rhs vector.

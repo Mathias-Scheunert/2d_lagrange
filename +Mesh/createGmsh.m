@@ -27,7 +27,7 @@ function mesh = createGmsh(bnd, args)
     
     gmsh_file = 'tmp_mesh';
     createGmshInput([gmsh_file, '.geo'], bnd, ...
-        args.TX, args.RX, args.topo, args.sigma, args.verbosity);
+        args.TX, args.RX, args.topo, args.dom_name, args.verbosity);
     
     %% Run Gmsh.
     
@@ -42,11 +42,11 @@ function mesh = createGmsh(bnd, args)
     delete([gmsh_file, '.geo'], [gmsh_file, '.msh']);
 end
 
-function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
+function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     % Creates an .geo input file for Gmesh
     % 
     % SYNTAX
-    %   createGmshInput(name, bnd, TX, RX, topo)
+    %   createGmshInput(name, bnd, TX, RX, topo, dom_name)
     %
     % INPUT PARAMETER
     %   name  ... Char, denoting the file name to be created.
@@ -54,7 +54,7 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     %   TX    ... Vector [n x 2], denoting the source position(s).
     %   RX    ... Vector [m x 2], denoting the receiver position(s).
     %   topo  ... Vector [k x 2], denoting the descrete topography.
-    %   sigma ... Scalar of conductivity for the parameter domain.
+    %   dom_name ... Char, denoting the physical domain name.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -92,7 +92,7 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     % domain boundary.
     if ~isempty([TX; RX])
         % Prepare.
-        coo_offset = pick(1, 2500);
+        coo_offset = pick(1, 3500);
         TXRX = [TX; RX];
         
         % Get specific extentions.
@@ -325,7 +325,7 @@ function createGmshInput(name, bnd, TX, RX, topo, sigma, verbosity)
     % Add physical surface id.
     fprintf(fileID, '\n');
     fprintf(fileID, ...
-        'Physical Surface("%d") = {%d};\n', sigma, id_plane_surface);
+        'Physical Surface("%s") = {%d};\n', dom_name, id_plane_surface);
     
     fclose(fileID);
     

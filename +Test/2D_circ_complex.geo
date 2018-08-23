@@ -28,8 +28,8 @@ Physical Line("surface") = {15, 26, 28};
 Physical Line("subsurface") = {27};
 Physical Line("interior") = {12};
 
-Physical Surface("1e2") = {2};
-Physical Surface("1e-2") = {1};
+Physical Surface("inner_part") = {2};
+Physical Surface("outer_part") = {1};
 
 // Add some complexity to model.
 

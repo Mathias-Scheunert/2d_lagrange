@@ -76,12 +76,16 @@ RX.coo = [0, 0; 0, 5];
 mesh_type = 'gmsh_load';
 file_name = [pwd, '/+Test/', '2D_circ_complex.msh'];
 
+% Set up domain parameter.
+param.val = [1e0, 1e-2];
+param.name = {'inner_part', 'outer_part'};
+
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
 bnd.type = {'dirichlet', 'neumann'};
 bnd.val = {{[];  0; []}, ... % 1 for Dirichlet
            { 0; []; 0}}; ... % 2 for Neumann
-bnd.name = {'surface', 'subsurface', 'tunnel'};
+bnd.name = {'surface'; 'subsurface'; 'tunnel'};
 bnd.quad_ord = 1;
 
 %% Set up FEM.
@@ -100,8 +104,9 @@ fwd_params.bnd = bnd;
 fwd_params.FT_type = FT_type;
 fwd_params.FE_order = FE_order;
 fwd_params.ref = refinement;
+fwd_params.param = param;
 clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
-      'refinement');
+      'refinement', 'param');
   
 %% Set up mesh.
     
@@ -112,9 +117,13 @@ mesh = Mesh.initMesh(mesh_type, ...
     'TX', fwd_params.TX.coo, ...
     'RX', fwd_params.RX.coo);
 
+%% Set up parameter vector.
+
+param = Param.initParam(mesh, fwd_params.param);
+
 %% Assemble 2.5D DC problem.
 
-[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, fwd_params, verbosity);
+[fe, sol, FT_info] = App_DC.assembleDC25D(mesh, param, fwd_params, verbosity);
 
 %% Solve 2.5D DC problem.
 
@@ -122,7 +131,8 @@ u_FE = App_DC.solveDC25D(fe, sol, FT_info, verbosity);
 
 %% Visualize solution.
 
-Plot.plotMesh(mesh, mesh.params);
+Plot.plotMesh(mesh, param);
+colorbar;
 Plot.plotSolution(fe, mesh, u_FE);
 Plot.plotSolution(fe, mesh, u_FE);
 view(2);

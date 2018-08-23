@@ -1,4 +1,4 @@
-function bnd = assignBC(bnd, fe, mesh, verbosity)
+function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     % Assigns (or loads) the values to each boundary DOF.
     %
     % SYNTAX
@@ -10,6 +10,7 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
     %            as well as the linear system components.
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges.
+    %   param      ... Vector of constant cell parameter values.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -33,9 +34,11 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
         'fe - struct, including all information of FE linear system, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
+    assert(isvector(param) && length(param) == size(mesh.cell2vtx, 1), ...
+        'param - Vector of constant cell parameter values, expected.');
     assert(isstruct(bnd) && all(isfield(bnd, {'type', 'val', 'name'})), ...
         'bnd - struct, containing basic boundary condition information, expected.');
-    if nargin < 4
+    if nargin < 5
         verbosity = false;
     else
         assert(islogical(verbosity), ...
@@ -148,7 +151,7 @@ function bnd = assignBC(bnd, fe, mesh, verbosity)
     
     % Add parameter info (required in case of inhomogeneous Neumann BC).
     if any(strcmp(bnd.type, 'neumann'))
-       bnd.param = mesh.params; 
+       bnd.param = param; 
     end
     
     if verbosity

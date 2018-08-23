@@ -136,11 +136,8 @@ function mesh = refineMeshUniform(mesh, ref_num)
         if ~strcmp(mesh.type, 'basic')
             % Expand parameter domain vector by inserting new cells.
             % (Relying on the 1 -> 4 rule [see cell2cord definition])
-            mesh.parameter_domains = kron(mesh.parameter_domains(:), ...
+            mesh.parameter_domain = kron(mesh.parameter_domain(:), ...
                                         ones(4, 1));
-
-            % Expand parameter vector.
-            mesh.params = kron(mesh.params(:), ones(4, 1));
         
             % Update coordinate relations.
             mesh = Mesh.appendEdgeInfo(mesh);

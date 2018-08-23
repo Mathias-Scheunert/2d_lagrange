@@ -32,14 +32,15 @@ function mesh = loadGmsh(name, args)
     %   - the names can be arbitrary char strings
     %     (these will be used to link boundary conditions see Fe.getBndDOF)
     %
-    %   - the physical_surface names consist of characters denoting the 
-    %     corresponding domain/cell conductivivies.
-    %     (char strings of letters will be refused - only 'Inf' is allowed)
+    %   - each physical_surface hase a physical surface name.
+    %   - the names can be arbitrary char strings
+    %     (these will be used to link parameter domains with resp. values 
+    %     within DRIVE_).
     %
     %   Note that the obtained boundary edge list does not refer to the
     %   complete list of edges within the given mesh!
     %   To achieve this relations applying Mesh.appendEdgeInfo() is
-    %   absolutely necessary.
+    %   required.
     
     %% Check input.
     
@@ -156,6 +157,7 @@ function mesh = loadGmsh(name, args)
        ele_content{ii} = sscanf(ele_content_tmp(ii,:), '%f').';
     end
     ele_types = cellfun(@(x) x(2), ele_content);
+    % TODO: allow for type 4, 15 - tetrahedron and points
     assert(all(ele_types <= 2), ...
         'Gmsh file contains 3D data (or unsupported 2D element format).');
     
@@ -168,14 +170,21 @@ function mesh = loadGmsh(name, args)
     
     % Exclude cell/simplex information.
     cell_content = cell2mat(ele_content(~edge_content_idx));
-    parameter_domains = cell_content(:,4);
     
     % Exclude physical properties of cells and edges.
     if isempty(idx_phys_start)
-        warning(sprintf(['\nNo physical properties for cells (edges) ', ...
-            'are set. \nSet mesh.params = 1 and assuming homogeneous ', ...
-            'Neumann boundary conditions on every given edge.']));
-        params = ones(size(cell_content, 1), 1);
+        warning(sprintf(['No physical names for surfaces and edges in ', ...
+            'mesh are set. In order to assign boundary conditions and', ...
+            ' a parameter vector, physical names are required.\n', ...
+            'Only read out the vertex and cell2vtx information.']));
+
+        % Summarize.
+        mesh = struct();
+        % TODO: consider type 4, 15.
+        mesh.dim = max(ele_types);
+        mesh.vertices = vertices;
+        mesh.cell2vtx = cell_content(:, [6, 7, 8]);
+
     else
         % Information structure:
         % $
@@ -190,68 +199,70 @@ function mesh = loadGmsh(name, args)
         phys_content = cellfun(@strsplit, phys_content(2:end), ...
                           'UniformOutput', false);
         phys_content = vertcat(phys_content{:});
-        
-        % Separate phys. dimensions.
-        phys_ids = str2double(phys_content(:,1)); 
-        phys_edge_id = phys_ids == 1;
-        phys_dom_id = phys_ids == 2;
-        
+
+        % Separate phys. dimensions (=geometrical entity types).
+        % TODO: insert points and tetrahedra.
+        phys_dim_id = str2double(phys_content(:,1)); 
+        phys_edge_id = phys_dim_id == 1;
+        phys_dom_id = phys_dim_id == 2;
+
         % Check consistencies.
+        % TODO: insert points surfaces and tetrahedra.
+        assert(phys_num == length(find([phys_edge_id, phys_dom_id])), ...
+           ['The number of physical entities differs from the number', ...
+           'of detected edges and surface domains. ', ...
+           'Make sure that all geometrical entites are related to ', ...
+           'a physical entity.']);
         if length(unique(edge_content(:,4))) ~= length(find(phys_edge_id))
            warning(sprintf(['\nThe number of physical lines differs ', ...
                'from the number of physical line names. \nLines which ', ...
                'are not associated with a physical line name are ', ...
                'considered as internal boundary and, hence, are ', ...
                'ignored from now on.']));
-           
+
            % Reduce edge_content.
            obsolete_idx = ~ismember(edge_content(:,4), ...
                str2double(phys_content(phys_edge_id,2)));
            edge_content(obsolete_idx,:) = [];
         end
-        assert(phys_num == length(find([phys_edge_id, phys_dom_id])), ...
-           ['The number of physical domains differs from the number', ...
-           'of detected edges and surface domains.']); 
-        assert(length(find(phys_dom_id)) == length(unique(parameter_domains)), ...
-            ['Number of physical domains and domains in mesh do not ', ...
-            'match. Make sure that each (plane) surface is associated ', ...
-            'with a respective physical surface whose (physical) ', ...
-            'name is the layer conductivity (given as string).']);
-        
+        assert(length(unique(cell_content(:,4))) == length(find(phys_dom_id)), ...
+            ['Number of physical surfaces differs from the number of ', ...
+            'physical surface names.']);
+
         % Exclude edge/bnd information.
+        % (Provide a new progressive indexing, starting from 1 - that
+        % matches the ordering of names.)
         phys_edge_content = phys_content(phys_edge_id,:);
         phys_edge_id = str2double(phys_edge_content(:,2));
         edge2bnd_id = edge_content(:,4) == phys_edge_id.';
-        phys_edge_names = phys_edge_content(:,3).';
-        
+        edge2bnd_id = edge2bnd_id * (1:length(phys_edge_id)).';
+        phys_edge_names = phys_edge_content(:,3);
+
         % Exclude domain information and set up cell/parameter information.
-        phys_dom_content = str2double(phys_content(phys_dom_id,:));
-        assert(all(all(~isnan(phys_dom_content))), ...
-            ['Converting domain (strings) info into double failed. ', ...
-            'Make sure that each character string of physical names ', ...
-            'only contains the domain conductivity values.']);
-        phys_dom_id = phys_dom_content(:,2);
-        param2dom_id = parameter_domains == phys_dom_id.';
-        params = param2dom_id * phys_dom_content(:,3);
+        % (Provide a new progressive indexing.)
+        phys_dom_content = phys_content(phys_dom_id,:);
+        phys_dom_id = str2double(phys_dom_content(:,2));
+        param2dom_id = cell_content(:,4) == phys_dom_id.';
+        param2dom_id = param2dom_id * (1:length(phys_dom_id)).';
+        parameter_domain_names = phys_dom_content(:,3);
+
+        % Summarize.
+        mesh = struct();
+        mesh.dim = max(ele_types);
+        mesh.vertices = vertices;
+        mesh.cell2vtx = cell_content(:, [6, 7, 8]);
+        mesh.parameter_domain = param2dom_id;
+        mesh.parameter_domain_name = parameter_domain_names;
+        mesh.bnd_edge2vtx = edge_content(:, [6, 7]);
+        mesh.bnd_edge_part = edge2bnd_id;
+        mesh.bnd_edge_part_name = phys_edge_names;
+
+        % Check consistencies.
+        assert(~isempty(mesh.bnd_edge2vtx), ...
+            'Domain boundaries could not be assigned.');
+        assert(~isempty(mesh.parameter_domain), ...
+            'Parameter domain(s) could not be assigned.');
     end
-    
-    %% Summarize.
-    
-    mesh = struct();
-    mesh.dim = max(ele_types);
-    mesh.vertices = vertices;
-    mesh.cell2vtx = cell_content(:, [6, 7, 8]);
-    mesh.parameter_domains = parameter_domains;
-    mesh.params = params;
-    mesh.bnd_edge2vtx = edge_content(:, [6, 7]);
-    mesh.bnd_edge_part = edge2bnd_id;
-    mesh.bnd_edge_part_name = phys_edge_names;
-    
-    % Check consistencies.
-    assert(~isempty(mesh.bnd_edge2vtx), ...
-        'Domain boundaries could not be assigned.');
-    assert(~isempty(mesh.parameter_domains), ...
-        'Parameter domain(s) could not be assigned.');
     
     if args.verbosity
        fprintf('done.\n'); 

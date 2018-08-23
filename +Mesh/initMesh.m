@@ -28,7 +28,7 @@ function mesh = initMesh(var, varargin)
         'var - Char, denoting the basic grid type, expected.');
     
     % Define possible input keys and its properties checks.
-    input_keys = {'bnd', 'ref', 'TX', 'RX', 'topo', 'sigma', 'name', ...
+    input_keys = {'bnd', 'ref', 'TX', 'RX', 'topo', 'dom_name', 'name', ...
                   'verbosity'};
     assertBnd = @(x) assert(isvector(x) && length(x) == 4 && ...
         x(1) < x(2) && x(3) < x(4), ...
@@ -38,10 +38,10 @@ function mesh = initMesh(var, varargin)
         'ref - Scalar, denoting the number of uniform ref steps, expected.');
     assertPos = @(x) assert(isempty(x) || (ismatrix(x) && size(x, 2) == 2), ...
         'TX/RX/topo - Vector [n x 2], denoting positions, expected.');
-    assertSigma = @(x) assert(isscalar(x), ...
-        'Sigma - Scalar, denoting parameter domain conductivity, expected.');
     assertName = @(x) assert(ischar(x), ...
-        'Name - Character of Gmsh file name to load (including file extention!).');
+        'name - Character of Gmsh file name to load (including file extention!).');
+    assertDomName = @(x) assert(ischar(x), ...
+        'dom_name - Character of parameter domain name, expected.');
     assertVerbose = @(x) assert(islogical(x), ...
         'verbosity - logical, denoting if status should be printed, expected');
     
@@ -52,8 +52,8 @@ function mesh = initMesh(var, varargin)
     parser_obj.addParameter(input_keys{3}, [], assertPos);
     parser_obj.addParameter(input_keys{4}, [], assertPos);
     parser_obj.addParameter(input_keys{5}, [], assertPos);
-    parser_obj.addParameter(input_keys{6}, 1, assertSigma);
-    parser_obj.addParameter(input_keys{7}, [], assertName);
+    parser_obj.addParameter(input_keys{6}, [], assertName);
+    parser_obj.addParameter(input_keys{7}, 'def', assertDomName);
     parser_obj.addParameter(input_keys{8}, false, assertVerbose);
    
     % Exctract all properties from inputParser.
@@ -61,13 +61,12 @@ function mesh = initMesh(var, varargin)
     args = parser_obj.Results;
     
     %% Create mesh.
+    
     switch var
         case 'rhomb'
             mesh = Mesh.createRhombMesh(args.bnd, args.verbosity);
-            mesh.params = args.sigma + zeros(size(mesh.cell2vtx, 1), 1);
         case 'cube'
             mesh = Mesh.createUnitCubeMesh(args.bnd, [3, 3], args.verbosity);
-            mesh.params = args.sigma + zeros(size(mesh.cell2vtx, 1), 1);
         case 'gmsh_create'
             mesh = Mesh.createGmsh(args.bnd, args);
         case 'gmsh_load'
