@@ -1,5 +1,16 @@
 function mesh = loadGmsh(name, args)
-    % Read out mesh information from Gmsh .msh structure.
+    % Read out mesh information from Gmsh .msh file (ascii, format Ver. 2).
+    %
+    % Additionally, an uniform mesh refinement can be applied before data
+    % import.
+    %
+    % The function supports two operation modes:
+    %   1) .msh file includes physical entities:
+    %       - only the entities which are additionally equipped with a
+    %       physical name are stored. Other entities will be ignored.
+    %
+    %   2) .msh file includes no physical entities:
+    %       - all occuring geometric entities will be stored.
     %
     % SYNTAX
     %   mesh = loadGmsh(name[, ref, verbosity])
@@ -9,7 +20,9 @@ function mesh = loadGmsh(name, args)
     %            from.
     %
     % OUTPUT PARAMETER
-    %   mesh ... Struct, containing: 
+    %   mesh ... Struct, containing:
+    %       1) dim                                      - scalar
+    %          vertices, points, edges, faces, volumes
     %            dimension, 
     %            vertex list, vertex2simplex list, 
     %            simplex2parameter domain list, parameter vector,
@@ -23,27 +36,69 @@ function mesh = loadGmsh(name, args)
     %                      refinement steps.
     %
     % REMARKS
-    %   To be able to handle arbitrary .msh inputs it some requirements on
-    %   the gmsh files are made:
     %
-    %   - each physical_line which has a physical line name is considered
-    %     to be a domain boundary 
-    %     (other physical lines are ignored/treated as internal boundaries)
+    %   If no physical entities at all are set for geometrical entities in
+    %   mesh, Gmsh seems to store every occuring geometric element in the 
+    %   element list of the .msh file (e.g. all points are listed).
+    %   -> there physical entity id is set to '0' by default
+    %
+    %   However, if physical entities are set for a subset of geometric
+    %   entities (e.g. some points in mesh) Gmsh seems not to mention the
+    %   remaining gometric entities anymore!
+    %
+    %   To be able to handle arbitrary .msh inputs in order to use their
+    %   information for setting up FEM simulations, some requirements 
+    %   on the Gmsh files / meshes are made:
+    %
+    %   - physical entities including physical entity names for all
+    %     relevant geometric entities have to be set!
+    %
+    %   - each physical_line has a physical line name. These are considered
+    %     to be domain boundaries (2D mesh).
+    %     (if occur: physical lines without name are ignored)
     %   - the names can be arbitrary char strings
-    %     (these will be used to link boundary conditions see Fe.getBndDOF)
     %
-    %   - each physical_surface hase a physical surface name.
+    %   - each physical_surface has a physical surface name. These are
+    %     consired to be parameter domains (2D mesh) or boundaries 
+    %     (3D mesh).
     %   - the names can be arbitrary char strings
-    %     (these will be used to link parameter domains with resp. values 
-    %     within DRIVE_).
     %
-    %   Note that the obtained boundary edge list does not refer to the
-    %   complete list of edges within the given mesh!
-    %   To achieve this relations applying Mesh.appendEdgeInfo() is
-    %   required.
+    %   - each physical volume has a physical volume name. These are
+    %     considere to be parameter domains (3D mesh).
+    %   - the names can be arbitrary char strings
+    %
+    %   Note 2D mesh:
+    %   The obtained (boundary) edge list does only comprise a subset of
+    %   the entire list of edges in the mesh.
+    %   To achieve this relations additional routines 
+    %   (e.g. Mesh.appendEdgeInfo) are required.
+    %
+    %   Note 3D mesh:
+    %   The obtained (boundary) face list does only comprise a subset of
+    %   the entire list of faces in the mesh.
+    %   To achieve this relations additional routines are required.
+    %
+    %   Depending on the applied gmsh meshing variant during the mesh
+    %   generation (i.e gmsh -2 [-> 2D mesh] or gmsh -3 [-> 3D]) the
+    %   element list always comprises the complete list of triangels [2D] 
+    %   or thedrahera [3D].
+    %   The node list always comprises the complete list of vertices,
+    %   forming the mesh.
     
     %% Check input.
     
+%{
+    assert(isstruct(args) && all(isfield(args, {'ref', 'verbosity'})));
+    assert(ischar(name), ...
+        ['name - Character of Gmsh file name to load ', ...
+        '(including file extention!).']);
+    assert(isscalar(args.ref) && ~islogical(args.ref) && args.ref >= 0, ...
+        ['ref - Scalar, denoting the number of uniform ref steps, ', ...
+        'expected.']);
+    assert(islogical(args.verbosity), ...
+        ['verbosity - logical, denoting if status should be printed, ', ...
+        'expected']);
+%}
     % Not required as already done in Mesh.initMesh().
     
     %% Refine uniformly.
@@ -54,8 +109,9 @@ function mesh = loadGmsh(name, args)
     
     name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
     copyfile(name, name_tmp);
+    gmsh_path = dir('**/gmsh');
     for i = 1:args.ref
-        system([pwd, '/+Mesh/External/gmsh -refine -v 0 ', ...
+        system([gmsh_path.folder, '/gmsh -refine -v 0 ', ...
             name_tmp]);
     end
     if args.verbosity
@@ -81,55 +137,45 @@ function mesh = loadGmsh(name, args)
     file_content = file_content{1};
     
     % Check file.
-    if isempty(file_content)
-        error('Empty file.');
-
-    elseif ~strcmp(file_content{1}, '$MeshFormat')
-        error(['File to import from seems not to be an .msh ', ...
-            'ascii formatted file.']);
-    end
+    assert(~isempty(file_content), ...
+        'Empty file detected.');
     
-    % Go through content and search for leading keywords
-    % (see gmsh file format documentation) to separate information blocks.
-    name_list = {'$PhysicalNames', '$EndPhysicalNames', ...
+    % Go through content and search for leading keywords which separates
+    % information blocks (see gmsh file format documentation).
+    name_list = {'$MeshFormat', '$EndMeshFormat', ...
+                 '$PhysicalNames', '$EndPhysicalNames', ...
                  '$Nodes', '$EndNodes', ...
                  '$Elements', '$EndElements'};
     [~, name_in_file] = ismember(file_content, name_list);
     [idx_in_file, ~, idx_in_name] = find(name_in_file);
-    assert(all(ismember(1:6, idx_in_name)), ...
-        ['Not all relevant name tags could be found in the provided ', ...
-        'mesh file.']);
-    idx_phys_start = idx_in_file(idx_in_name == 1) + 1;
-    idx_phys_stop = idx_in_file(idx_in_name == 2) - 1;
-    idx_node_start = idx_in_file(idx_in_name == 3) + 2;
-    idx_node_stop = idx_in_file(idx_in_name == 4) - 1;
-    idx_element_start = idx_in_file(idx_in_name == 5) + 2;
-    idx_element_stop = idx_in_file(idx_in_name == 6) - 1;
-    
-    % Get vertex information.
-    % Information structure:
-    % $
-    % Number of vertices
-    % vtx. number, x-coord, y-coord, z-coord
-    % $End
-    vtx_content = file_content(idx_node_start:idx_node_stop);
-    
-    % Use a trick to speed up transforming the strings within the cells
-    % into an array of numbers,
-    cols = size(str2double(strsplit(vtx_content{1})), 2);
-    rows = size(vtx_content, 1);
-    vtx_content = sprintf('%s ', vtx_content{:});
-    vertices = reshape(sscanf(vtx_content, '%f'), cols, rows).';
+    assert(all(ismember([1:2, 5:8], idx_in_name)), ...
+        ['Could not observe relevant name tags in the provided ', ...
+        'file. Check if input is a Gmsh .msh file (given in ASCII ', ...
+        'format version 2']);
+    if ~any(ismember(3:4, idx_in_name))
+        warning(sprintf(['Given file does not contain physical names.', ...
+            '\nExport mode 1) will be used (see function doc).']));
+    end
+    idx_format_start = idx_in_file(idx_in_name == 1) + 1;
+    idx_format_stop = idx_in_file(idx_in_name == 2) - 1;
+    idx_phys_start = idx_in_file(idx_in_name == 3) + 1;
+    idx_phys_stop = idx_in_file(idx_in_name == 4) - 1;
+    idx_node_start = idx_in_file(idx_in_name == 5) + 2;
+    idx_node_stop = idx_in_file(idx_in_name == 6) - 1;
+    idx_element_start = idx_in_file(idx_in_name == 7) + 2;
+    idx_element_stop = idx_in_file(idx_in_name == 8) - 1;
 
-    % Keep only relevant information.
-    vertices = vertices(:, [2, 4]);
-    
-    % Consistency check.
-    assert(size(vertices, 1) == ...
-        str2double(cell2mat(file_content(idx_node_start - 1))), ...
-        'Mismatch between obtained and expected number of vertices.');
+    % Check if file type is supported.
+    format_content = file_content(idx_format_start:idx_format_stop);
+    format_content = strsplit(format_content{:});
+    if sscanf(format_content{1}, '%d') ~= 2 ...
+        % As in principal all keywords were found, import may work.
+        warning(['File format differs from version 2. Import from ', ...
+                'different versions may lead to wrong results.']);
+    end
        
-    % Get element information.
+    %% Get element information.
+
     % Information structure:
     % $
     % Number of ele.
@@ -140,15 +186,17 @@ function mesh = loadGmsh(name, args)
     %   [tag list] as many columns/entries as given by number of ele. tags
     %   [vertex list] differs in length for edges and cells
     %
-    % ele. type == 1 -> edge
-    %           == 2 -> triangle
+    % ele. type == 1  -> edge
+    %           == 2  -> triangle
+    %           == 4  -> tetrahedron
+    %           == 15 -> point
     %
     %    1. tag == physical entity id
-    %                -> phys. line / phys. surface
+    %                -> phys. line / phys. surface / phys. volume
     %    2. tag == elementary geometrical entity id
-    %                -> straight line / plane surface id
-    % (As two types of information are included in the element list, the
-    % above trick doesn't work here - the number of columns are different.)
+    %                -> straight line / plane surface id / volume id
+    ele_content_num = file_content(idx_element_start - 1);
+    ele_content_num = str2double(ele_content_num{:});
     ele_content_tmp = file_content(idx_element_start:idx_element_stop);
     n_ele_cells = length(ele_content_tmp);
     ele_content = cell(n_ele_cells, 1);
@@ -156,64 +204,192 @@ function mesh = loadGmsh(name, args)
     for ii = 1:n_ele_cells
        ele_content{ii} = sscanf(ele_content_tmp(ii,:), '%f').';
     end
+    assert(size(ele_content, 1) == ele_content_num, ...
+        'Mismatch between obtained and expected number of elements.');
+
+    % Get all occuring element types and check if mesh type is supported.
     ele_types = cellfun(@(x) x(2), ele_content);
-    % TODO: allow for type 4, 15 - tetrahedron and points
-    assert(all(ele_types <= 2), ...
-        'Gmsh file contains 3D data (or unsupported 2D element format).');
+    supported_ele_types = [1, 2, 4, 15];
+    found_ele_types = unique(ele_types);
+    assert(all(ismember(found_ele_types, supported_ele_types)), ...
+        sprintf(['File contains unsupported element types.\n', ...
+        'Currently supported:', ...
+        '\n id \t type', ...
+        '\n 1 \t edge', ...
+        '\n 2 \t triangle', ...
+        '\n 4 \t tetrahedron', ...
+        '\n 15 \t point']));
+    assert(any(ismember(found_ele_types, [2, 4])), ...
+        ['File solely contains point and/or edge information. ', ...
+        'Only 2D meshes (containing triangle-elements) or 3D meshes ', ...
+        '(containing thetrahedra-elements) are supported.']);
     
-    % Exclude boundary edge information.
+    % Determine the mesh dimension.
+    if any(found_ele_types == 4)
+        dim = 3;
+    else
+        dim = 2;
+    end
+
+    % Extract point information.
+    point_content_idx = ele_types == 15;
+    points = cell2mat(ele_content(point_content_idx));
+    
+    % Extract edge information.
     edge_content_idx = ele_types == 1;
-    edge_content = cell2mat(ele_content(edge_content_idx));
-    assert(~isempty(find(edge_content_idx, 1)), ...
-        ['Edge information is missing. Please add (straight) line and ', ...
-        'appropriate physical line information to gmsh file.']);
+    edges = cell2mat(ele_content(edge_content_idx));
+
+    % Extract surface information.
+    face_content_idx = ele_types == 2;
+    faces = cell2mat(ele_content(face_content_idx));
+
+    % Extract volume information.
+    volume_content_idx = ele_types == 4;
+    volumes = cell2mat(ele_content(volume_content_idx));
+
+    % Summarzie.
+    % Don't change order -> see paragraph "Get physical entities ..."
+    element_name = {'point2vtx', 'edge2vtx', 'face2vtx', 'volume2vtx'};
+    element_content = {points; edges; faces; volumes};
+    req_cols = 1:4; % only these colums contain element2vtx relations
+    element_empty = cellfun(@isempty, element_content);
+    element_exist = find(~element_empty);
+    element_n_tag = cellfun(@(x) {x(:,3)}, ...
+                        element_content(~element_empty));
+    assert(all(cellfun(@(x) all(x(1) == x), element_n_tag)), ...
+        ['Number of tags within the list of one or more elements ', ...
+        'types differs.']);
+
+    %% Get vertex information.
+
+    % Information structure:
+    % $
+    % Number of vertices
+    % vtx. number, x-coord, y-coord, z-coord
+    % $End
+    vtx_content_num = file_content(idx_node_start - 1);
+    vtx_content_num = str2double(vtx_content_num{:});
+    vtx_content = file_content(idx_node_start:idx_node_stop);
     
-    % Exclude cell/simplex information.
-    cell_content = cell2mat(ele_content(~edge_content_idx));
-    
-    % Exclude physical properties of cells and edges.
+    % Use a trick to speed up transforming the strings within the cells
+    % into an array of numbers (as number of rows and cols don't change).
+    cols = size(str2double(strsplit(vtx_content{1})), 2);
+    rows = size(vtx_content, 1);
+    vtx_content = sprintf('%s ', vtx_content{:});
+    vertices = reshape(sscanf(vtx_content, '%f'), cols, rows).';
+    vertices(:,1) = [];
+    n_vtx = size(vertices, 1);
+    assert(n_vtx == vtx_content_num, ...
+        'Mismatch between obtained and expected number of vertices.');
+
+    % Keep only relevant information.
+    switch dim
+        case 2
+            % Obtain non-zero coordinate direction.
+            eps_tol = pick(1, 5e0, 1e2);
+            cur_dim = ~(sum(abs(vertices), 1) < eps * n_vtx * eps_tol);
+            vertices = vertices(:, cur_dim);
+        case 3
+            % Nothing to be done.
+    end
+
+    %% Get physical entities of cells and edges and / or create output.
+
     if isempty(idx_phys_start)
-        warning(sprintf(['No physical names for surfaces and edges in ', ...
-            'mesh are set. In order to assign boundary conditions and', ...
-            ' a parameter vector, physical names are required.\n', ...
-            'Only read out the vertex and cell2vtx information.']));
 
         % Summarize.
         mesh = struct();
-        % TODO: consider type 4, 15.
-        mesh.dim = max(ele_types);
+        mesh.dim = dim;
         mesh.vertices = vertices;
-        mesh.cell2vtx = cell_content(:, [6, 7, 8]);
-
+        for ii = 1:length(element_exist)
+            mesh.(element_name{element_exist(ii)}) = ...
+                element_content{element_exist(ii)}...
+                    (:,end-(req_cols(element_exist(ii))-1):end);
+        end
+        switch dim
+            case 2
+                mesh.notes = ['Except of "vertices" and "faces", ', ...
+                    'fields may not refer to the complete list of ', ...
+                    'respective elements.'];
+            case 3
+                mesh.notes = ['Except of "vertices" and "volumes", ', ...
+                    'fields may not refer to the complete list of ', ...
+                    'respective elements.'];
+        end
+       
     else
+        error('Not completely implemented yet.');
+
         % Information structure:
         % $
         % Number of phys. names
         % phys. dimension, phys. number, phys. name
         % $End
-        % phys. dimension == 1 -> edge
-        %                 == 2 -> triangle
+        % phys. dimension == 0 -> point
+        %                 == 1 -> line (edge)
+        %                 == 2 -> face (triangle)
+        %                 == 3 -> volume (tetrahedron) 
         % phys. number == physical entity id (-> see above)
+        phys_names = {'point', 'edge', 'face', 'volume'};
         phys_content = file_content(idx_phys_start:idx_phys_stop);
         phys_num = str2double(phys_content{1});
         phys_content = cellfun(@strsplit, phys_content(2:end), ...
                           'UniformOutput', false);
         phys_content = vertcat(phys_content{:});
 
+        % Get all occuring physical dim types.
+        % Don't change order
+        phys_types = cellfun(@(x) str2double(x), phys_content(:,1));
+        supported_phys_types = [0, 1, 2, 3];
+        found_phys_types = unique(phys_types);
+        phys_exist = ismember(supported_phys_types, found_phys_types);
+        assert(all(ismember(found_phys_types, supported_phys_types)), ...
+            sprintf(['File contains unsupported physical element types.\n', ...
+            'Currently supported:', ...
+            '\n id \t type', ...
+            '\n 0 \t point', ...
+            '\n 1 \t edge', ...
+            '\n 2 \t triangle', ...
+            '\n 3 \t tetrahedron']));
+
         % Separate phys. dimensions (=geometrical entity types).
-        % TODO: insert points and tetrahedra.
-        phys_dim_id = str2double(phys_content(:,1)); 
-        phys_edge_id = phys_dim_id == 1;
-        phys_dom_id = phys_dim_id == 2;
+        phys_point_id = phys_types == 0;
+        phys_points = phys_content(phys_point_id,:);
+        phys_edge_id = phys_types == 1;
+        phys_edges = phys_content(phys_edge_id,:);
+        phys_face_id = phys_types == 2;
+        phys_faces = phys_content(phys_face_id,:);
+        phys_volume_id = phys_types == 3;
+        phys_volumes = phys_content(phys_volume_id,:);
+        phys_ids = {phys_points; phys_edges; phys_faces; phys_volumes};
+        assert(length(phys_types) == phys_num, ...
+            ['Mismatch between obtained and expected number of ', ...
+            'physical entities.']);
 
         % Check consistencies.
-        % TODO: insert points surfaces and tetrahedra.
-        assert(phys_num == length(find([phys_edge_id, phys_dom_id])), ...
-           ['The number of physical entities differs from the number', ...
-           'of detected edges and surface domains. ', ...
-           'Make sure that all geometrical entites are related to ', ...
-           'a physical entity.']);
-        if length(unique(edge_content(:,4))) ~= length(find(phys_edge_id))
+        phys_id_in_ele_cont = cell(4, 1);
+        phys_id_in_ele_cont(element_exist) = ...
+            cellfun(@(x) {unique(x(:,4))}, element_content(element_exist));
+        pt_name_vs_pt_ele = cellfun(@(x, y) {unique(x(:,4)) == ...
+                        unique(str2double(y(:,2)))}, ...
+                            element_content(element_exist), ...
+                            phys_ids(phys_exist));
+        pt_mismatch = cellfun(@(x) {~all(find(x))}, pt_name_vs_pt_ele);
+        if ~isequal(~element_empty(:), phys_exist(:))
+            waring(['Mismatch between physical names and physical ', ...
+                'entities observed.']);
+        elseif ~all(vertcat(pt_name_vs_pt_ele{:}))
+            waring(['Mismatch between physical entity ids within ', ...
+                'physical names list and physical entity ids related ', ...
+                'to geometric entity list.']);
+        end
+        
+        % TODO: continue implementing.
+        % -> check consistency of separate entity types.
+        % -> only exclude those information which are related to physical
+        % names
+
+        if length(unique(edges(:,4))) ~= length(find(phys_edge_id))
            warning(sprintf(['\nThe number of physical lines differs ', ...
                'from the number of physical line names. \nLines which ', ...
                'are not associated with a physical line name are ', ...
@@ -221,11 +397,11 @@ function mesh = loadGmsh(name, args)
                'ignored from now on.']));
 
            % Reduce edge_content.
-           obsolete_idx = ~ismember(edge_content(:,4), ...
+           obsolete_idx = ~ismember(edges(:,4), ...
                str2double(phys_content(phys_edge_id,2)));
-           edge_content(obsolete_idx,:) = [];
+           edges(obsolete_idx,:) = [];
         end
-        assert(length(unique(cell_content(:,4))) == length(find(phys_dom_id)), ...
+        assert(length(unique(faces(:,4))) == length(find(phys_volume_id)), ...
             ['Number of physical surfaces differs from the number of ', ...
             'physical surface names.']);
 
@@ -234,34 +410,28 @@ function mesh = loadGmsh(name, args)
         % matches the ordering of names.)
         phys_edge_content = phys_content(phys_edge_id,:);
         phys_edge_id = str2double(phys_edge_content(:,2));
-        edge2bnd_id = edge_content(:,4) == phys_edge_id.';
+        edge2bnd_id = edges(:,4) == phys_edge_id.';
         edge2bnd_id = edge2bnd_id * (1:length(phys_edge_id)).';
         phys_edge_names = phys_edge_content(:,3);
 
         % Exclude domain information and set up cell/parameter information.
         % (Provide a new progressive indexing.)
-        phys_dom_content = phys_content(phys_dom_id,:);
-        phys_dom_id = str2double(phys_dom_content(:,2));
-        param2dom_id = cell_content(:,4) == phys_dom_id.';
-        param2dom_id = param2dom_id * (1:length(phys_dom_id)).';
+        phys_dom_content = phys_content(phys_volume_id,:);
+        phys_volume_id = str2double(phys_dom_content(:,2));
+        param2dom_id = faces(:,4) == phys_volume_id.';
+        param2dom_id = param2dom_id * (1:length(phys_volume_id)).';
         parameter_domain_names = phys_dom_content(:,3);
 
         % Summarize.
         mesh = struct();
-        mesh.dim = max(ele_types);
+        mesh.dim = dim;
         mesh.vertices = vertices;
-        mesh.cell2vtx = cell_content(:, [6, 7, 8]);
+        mesh.cell2vtx = faces(:, [6, 7, 8]);
         mesh.parameter_domain = param2dom_id;
         mesh.parameter_domain_name = parameter_domain_names;
-        mesh.bnd_edge2vtx = edge_content(:, [6, 7]);
+        mesh.bnd_edge2vtx = edges(:, [6, 7]);
         mesh.bnd_edge_part = edge2bnd_id;
         mesh.bnd_edge_part_name = phys_edge_names;
-
-        % Check consistencies.
-        assert(~isempty(mesh.bnd_edge2vtx), ...
-            'Domain boundaries could not be assigned.');
-        assert(~isempty(mesh.parameter_domain), ...
-            'Parameter domain(s) could not be assigned.');
     end
     
     if args.verbosity

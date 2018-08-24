@@ -31,7 +31,8 @@ function mesh = createGmsh(bnd, args)
     
     %% Run Gmsh.
     
-    system([pwd, '/+Mesh/External/gmsh -2 ', gmsh_file, '.geo -v 0']);
+    gmsh_path = dir('**/gmsh');
+    system([gmsh_path.folder, '/gmsh -2 ', gmsh_file, '.geo -v 0']);
 
     %% Import mesh information from .msh file.
 

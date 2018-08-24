@@ -16,13 +16,13 @@ function [] = plotMesh(mesh, params, debug)
     %% Check input
     
     assert(isstruct(mesh) && isfield(mesh, 'cell2vtx'), ...
-        'mesh - struct expected.');
+        'mesh - Struct - containing information for a 2D mesh expected.');
     
     n_cells = length(mesh.cell2vtx);
     if nargin < 3
         debug = false;
         assert(islogical(debug), ...
-            'debug - logical expected.');
+            'debug - Logical expected.');
     end
     if nargin < 2
         params = NaN * zeros(n_cells, 1);
