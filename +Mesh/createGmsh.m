@@ -36,7 +36,9 @@ function mesh = createGmsh(bnd, args)
 
     %% Import mesh information from .msh file.
 
-    mesh = Mesh.loadGmsh([gmsh_file, '.msh'], args);
+    mesh = Mesh.loadGmsh([gmsh_file, '.msh'], ...
+        'verbosity', args.verbosity, ...
+        'ref', args.ref);
 
     %% Clean up.
     

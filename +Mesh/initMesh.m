@@ -73,7 +73,9 @@ function mesh = initMesh(var, varargin)
             if isempty(args.name)
                 error('Provide file name as an argument for Mesh.initMesh().');
             end
-            mesh = Mesh.loadGmsh(args.name, args);
+            mesh = Mesh.loadGmsh(args.name, ...
+                'verbosity', args.verbosity, ...
+                'ref', args.ref);
         otherwise 
             error('Unknown mesh type.');
     end
