@@ -1,4 +1,4 @@
-function mesh = loadGmsh(name, args)
+function mesh = loadGmsh(name, varargin)
     % Read out mesh information from Gmsh .msh file (ascii, format Ver. 2).
     %
     % Additionally, an uniform mesh refinement can be applied before data
@@ -10,30 +10,34 @@ function mesh = loadGmsh(name, args)
     %       physical name are stored. Other entities will be ignored.
     %
     %   2) .msh file includes no physical entities:
-    %       - all occuring geometric entities will be stored.
+    %       - all available geometric entities will be stored.
     %
     % SYNTAX
-    %   mesh = loadGmsh(name[, ref, verbosity])
+    %   mesh = loadGmsh(name[, varargin])
     %
     % INPUT PARAMETER
     %   name ... Char, denoting the file name (with extention) to import 
     %            from.
     %
+    % OPTIONAL PARAMETER
+    %   verbosity ... Logical, denoting if current status should be
+    %                 printed [default = false].
+    %   ref       ... Scalar, denoting the number of uniform 
+    %                 refinement steps [default = 0].
+    %   force     ... Logical, forcing operation mode 2) even if phys.
+    %                 names are available [default = false].
+    %
     % OUTPUT PARAMETER
     %   mesh ... Struct, containing:
-    %       1) dim                                      - scalar
+    %       1) dimension,
     %          vertices, points, edges, faces, volumes
-    %            dimension, 
-    %            vertex list, vertex2simplex list, 
-    %            simplex2parameter domain list, parameter vector,
-    %            vertex2boundary egde list,
-    %            boundary edge2boundary parts, boundary part names
-    %
-    % OPTIONAL PARAMETER
-    %   args.verbosity ... Logical, denoting if current status should be
-    %                      printed
-    %   args.ref       ... Scalar, denoting the number of uniform 
-    %                      refinement steps.
+    %       2) dimension,
+    %          vertices,
+    %          points, point names,
+    %          simplex2vertex list, 
+    %          simplex2parameter domain list, parameter domain names,
+    %          boundary2vertex list,
+    %          boundary2boundary(id) parts, boundary part names
     %
     % REMARKS
     %
@@ -87,19 +91,24 @@ function mesh = loadGmsh(name, args)
     
     %% Check input.
     
-%{
-    assert(isstruct(args) && all(isfield(args, {'ref', 'verbosity'})));
     assert(ischar(name), ...
         ['name - Character of Gmsh file name to load ', ...
-        '(including file extention!).']);
-    assert(isscalar(args.ref) && ~islogical(args.ref) && args.ref >= 0, ...
-        ['ref - Scalar, denoting the number of uniform ref steps, ', ...
-        'expected.']);
-    assert(islogical(args.verbosity), ...
-        ['verbosity - logical, denoting if status should be printed, ', ...
-        'expected']);
-%}
-    % Not required as already done in Mesh.initMesh().
+        '(including file extention!).']);    % Define possible input keys and its properties checks.
+    input_keys = {'ref', 'verbosity', 'force'};
+    assertRef = @(x) assert(isscalar(x) && ~islogical(x) && x >= 0, ...
+        'ref - Scalar, denoting the number of uniform ref steps, expected.');
+    assertLogic = @(x) assert(islogical(x), ...
+        'verbosity - logical, denoting if status should be printed, expected');
+    
+    % Create inputParser object and set possible inputs with defaults.
+    parser_obj = inputParser();
+    parser_obj.addParameter(input_keys{1}, 0, assertRef);
+    parser_obj.addParameter(input_keys{2}, false, assertLogic);
+    parser_obj.addParameter(input_keys{3}, false, assertLogic);
+   
+    % Exctract all properties from inputParser.
+    parse(parser_obj, varargin{:});
+    args = parser_obj.Results;
     
     %% Refine uniformly.
     
@@ -248,14 +257,15 @@ function mesh = loadGmsh(name, args)
     volumes = cell2mat(ele_content(volume_content_idx));
 
     % Summarzie.
-    % Don't change order -> see paragraph "Get physical entities ..."
-    element_name = {'point2vtx', 'edge2vtx', 'face2vtx', 'volume2vtx'};
+    % -> Leave elements of element_content untouched, only modify summary.
     element_content = {points; edges; faces; volumes};
+    % -> Don't change order, see paragraph "Get physical entities ..."
+    element_name = {'point2vtx', 'edge2vtx', 'face2vtx', 'volume2vtx'};
     req_cols = 1:4; % only these colums contain element2vtx relations
-    element_empty = cellfun(@isempty, element_content);
-    element_exist = find(~element_empty);
+    element_exist = ~cellfun(@isempty, element_content);
+    element_type_exist = find(element_exist);
     element_n_tag = cellfun(@(x) {x(:,3)}, ...
-                        element_content(~element_empty));
+                        element_content(element_exist));
     assert(all(cellfun(@(x) all(x(1) == x), element_n_tag)), ...
         ['Number of tags within the list of one or more elements ', ...
         'types differs.']);
@@ -295,16 +305,16 @@ function mesh = loadGmsh(name, args)
 
     %% Get physical entities of cells and edges and / or create output.
 
-    if isempty(idx_phys_start)
+    if isempty(idx_phys_start) || args.force
 
         % Summarize.
         mesh = struct();
         mesh.dim = dim;
         mesh.vertices = vertices;
-        for ii = 1:length(element_exist)
-            mesh.(element_name{element_exist(ii)}) = ...
-                element_content{element_exist(ii)}...
-                    (:,end-(req_cols(element_exist(ii))-1):end);
+        for ii = 1:length(element_type_exist)
+            mesh.(element_name{element_type_exist(ii)}) = ...
+                element_content{element_type_exist(ii)}...
+                    (:,end-(req_cols(element_type_exist(ii))-1):end);
         end
         switch dim
             case 2
@@ -316,11 +326,9 @@ function mesh = loadGmsh(name, args)
                     'fields may not refer to the complete list of ', ...
                     'respective elements.'];
         end
-       
+        
     else
-        error('Not completely implemented yet.');
-
-        % Information structure:
+        % Information structure of file header:
         % $
         % Number of phys. names
         % phys. dimension, phys. number, phys. name
@@ -330,17 +338,24 @@ function mesh = loadGmsh(name, args)
         %                 == 2 -> face (triangle)
         %                 == 3 -> volume (tetrahedron) 
         % phys. number == physical entity id (-> see above)
-        phys_names = {'point', 'edge', 'face', 'volume'};
+        % Note: Only those four dimension, i.e. entity types are considered!
+        % -> Don't change order of the following definitions:
+        supported_phys_types = [0, 1, 2, 3];
+        supported_phys_type_names = {'point', 'edge', 'face', 'volume'};
+        supported_phys_types_num = length(supported_phys_types);
+        
+        % Get physical entities content from file header.
         phys_content = file_content(idx_phys_start:idx_phys_stop);
         phys_num = str2double(phys_content{1});
         phys_content = cellfun(@strsplit, phys_content(2:end), ...
                           'UniformOutput', false);
         phys_content = vertcat(phys_content{:});
 
-        % Get all occuring physical dim types.
-        % Don't change order
+        % Get all occuring physical entity types.
         phys_types = cellfun(@(x) str2double(x), phys_content(:,1));
-        supported_phys_types = [0, 1, 2, 3];
+        assert(length(phys_types) == phys_num, ...
+            ['Mismatch between obtained and expected number of ', ...
+            'physical entities within header.']);
         found_phys_types = unique(phys_types);
         phys_exist = ismember(supported_phys_types, found_phys_types);
         assert(all(ismember(found_phys_types, supported_phys_types)), ...
@@ -352,7 +367,7 @@ function mesh = loadGmsh(name, args)
             '\n 2 \t triangle', ...
             '\n 3 \t tetrahedron']));
 
-        % Separate phys. dimensions (=geometrical entity types).
+        % Separate phys. dimensions/entities (=geometrical entity types).
         phys_point_id = phys_types == 0;
         phys_points = phys_content(phys_point_id,:);
         phys_edge_id = phys_types == 1;
@@ -361,79 +376,178 @@ function mesh = loadGmsh(name, args)
         phys_faces = phys_content(phys_face_id,:);
         phys_volume_id = phys_types == 3;
         phys_volumes = phys_content(phys_volume_id,:);
-        phys_ids = {phys_points; phys_edges; phys_faces; phys_volumes};
-        assert(length(phys_types) == phys_num, ...
-            ['Mismatch between obtained and expected number of ', ...
-            'physical entities.']);
+        phys_id_info = {phys_points; phys_edges; phys_faces; phys_volumes};
+        phys_ids = cell(supported_phys_types_num, 1);
+        phys_ids(phys_exist) = cellfun(@(x) {unique(str2double(x(:,2)))}, ...
+                                     phys_id_info(phys_exist));
 
-        % Check consistencies.
-        phys_id_in_ele_cont = cell(4, 1);
-        phys_id_in_ele_cont(element_exist) = ...
-            cellfun(@(x) {unique(x(:,4))}, element_content(element_exist));
-        pt_name_vs_pt_ele = cellfun(@(x, y) {unique(x(:,4)) == ...
-                        unique(str2double(y(:,2)))}, ...
-                            element_content(element_exist), ...
-                            phys_ids(phys_exist));
-        pt_mismatch = cellfun(@(x) {~all(find(x))}, pt_name_vs_pt_ele);
-        if ~isequal(~element_empty(:), phys_exist(:))
-            waring(['Mismatch between physical names and physical ', ...
-                'entities observed.']);
-        elseif ~all(vertcat(pt_name_vs_pt_ele{:}))
-            waring(['Mismatch between physical entity ids within ', ...
-                'physical names list and physical entity ids related ', ...
-                'to geometric entity list.']);
+        % Check consistencies between names in header and names in element
+        % list.
+        phys_ids_in_ele_cont = cell(supported_phys_types_num, 1);
+        phys_ids_in_ele_cont(element_type_exist) = ...
+            cellfun(@(x) {unique(x(:,4))}, element_content(element_type_exist));
+        
+        % Check if complete entity types are not related to phys. names.
+        if ~isequal(element_exist(:), phys_exist(:))
+            tmp_names = supported_phys_type_names(...
+                            element_exist(:) ~= phys_exist(:)...
+                        );
+            warning(sprintf(['Not every supported physical entity type is ', ...
+                'related to physical names. Ignoring unrelated ', ...
+                'entity types: \n', ...
+                repmat('- %s\n', 1, length(tmp_names))], ...
+                tmp_names{:}));
+            
+            % Remove obsolete entity types.
+            element_exist(:) = element_exist(:) & phys_exist(:);
+            element_type_exist = find(element_exist);
+            element_content(~element_exist) = {[]};
+            phys_ids_in_ele_cont(~element_exist) = {[]};
         end
         
-        % TODO: continue implementing.
-        % -> check consistency of separate entity types.
-        % -> only exclude those information which are related to physical
-        % names
-
-        if length(unique(edges(:,4))) ~= length(find(phys_edge_id))
-           warning(sprintf(['\nThe number of physical lines differs ', ...
-               'from the number of physical line names. \nLines which ', ...
-               'are not associated with a physical line name are ', ...
-               'considered as internal boundary and, hence, are ', ...
-               'ignored from now on.']));
+        % Check if parts of existing entities are not related to
+        % appropriate phys. names.
+        pid_vs_pid_ele = cellfun(@(x, y) {ismember(x, y)}, ...
+            phys_ids_in_ele_cont, phys_ids);
+        pid_mismatch = cellfun(@(x) {~all(x)}, pid_vs_pid_ele);
+        
+        % Reduce information from element list to only comprise entity data
+        % related to the observed physical names.
+        if pid_mismatch{1}
+            warning(['Number of physical point names differ from the ', ...
+            'number of physical point ids. Ignoring unrelated point ids.']);
+        
+           % Reduce point_content.
+           obsolete_idx = ~ismember(points(:,4), ...
+               str2double(phys_content(phys_point_id, 2)));
+           element_content{1}(obsolete_idx,:) = [];
+        end
+        if pid_mismatch{2}
+           warning(['The number of physical line names differ from ', ...
+               'the number of physical line ids. Ignoring unrelated ', ...
+               'line ids.']);
 
            % Reduce edge_content.
            obsolete_idx = ~ismember(edges(:,4), ...
-               str2double(phys_content(phys_edge_id,2)));
-           edges(obsolete_idx,:) = [];
+               str2double(phys_content(phys_edge_id, 2)));
+           element_content{2}(obsolete_idx,:) = [];
         end
-        assert(length(unique(faces(:,4))) == length(find(phys_volume_id)), ...
-            ['Number of physical surfaces differs from the number of ', ...
-            'physical surface names.']);
+        if pid_mismatch{3}
+            warning(['The number of physical face names differ from ', ...
+               'the number of physical face ids. Ignoring unrelated ', ...
+               'face ids.']);
+        
+            % Reduce face_content.
+           obsolete_idx = ~ismember(faces(:,4), ...
+               str2double(phys_content(phys_face_id, 2)));
+           element_content{3}(obsolete_idx,:) = [];
+        end
+        if pid_mismatch{4}
+            warning(['The number of physical volume names differ from ', ...
+               'the number of physical volume ids. Ignoring unrelated ', ...
+               'volume ids.']);
+        
+            % Reduce volume_content.
+           obsolete_idx = ~ismember(volumes(:,4), ...
+               str2double(phys_content(phys_volume_id, 2)));
+           element_content{4}(obsolete_idx,:) = [];
+        end
 
-        % Exclude edge/bnd information.
+        % Generate entity/entity name mappings.
         % (Provide a new progressive indexing, starting from 1 - that
         % matches the ordering of names.)
-        phys_edge_content = phys_content(phys_edge_id,:);
-        phys_edge_id = str2double(phys_edge_content(:,2));
-        edge2bnd_id = edges(:,4) == phys_edge_id.';
-        edge2bnd_id = edge2bnd_id * (1:length(phys_edge_id)).';
-        phys_edge_names = phys_edge_content(:,3);
+        
+        % Map point information.
+        if ~isempty(element_content{1})
+            phys_point_content = phys_content(phys_point_id,:);
+            phys_point_id = phys_ids{1}(:);
+            point_id_map = element_content{1}(:, 4) == phys_point_id.';
+            point_id_map = point_id_map * (1:length(phys_point_id)).';
+            phys_point_names = phys_point_content(:, 3);
+        else
+            point_id_map = [];
+            phys_point_names = {[]};
+        end
+        
+        % Map edge(= bnd in 2D) information.
+        if ~isempty(element_content{2})
+            phys_edge_content = phys_content(phys_edge_id,:);
+            phys_edge_id = phys_ids{2}(:);
+            edge_id_map = element_content{2}(:, 4) == phys_edge_id.';
+            edge_id_map = edge_id_map * (1:length(phys_edge_id)).';
+            phys_edge_names = phys_edge_content(:, 3);
+        else
+            edge_id_map = [];
+            phys_edge_names = {[]};
+            if dim == 2
+                warning('No boundary information provided.');
+            end
+        end
 
-        % Exclude domain information and set up cell/parameter information.
-        % (Provide a new progressive indexing.)
-        phys_dom_content = phys_content(phys_volume_id,:);
-        phys_volume_id = str2double(phys_dom_content(:,2));
-        param2dom_id = faces(:,4) == phys_volume_id.';
-        param2dom_id = param2dom_id * (1:length(phys_volume_id)).';
-        parameter_domain_names = phys_dom_content(:,3);
+        % Map face(= bnd in 3D or cell/parameter in 2D) information.
+        if ~isempty(element_content{3})
+            phys_face_content = phys_content(phys_face_id,:);
+            phys_face_id = phys_ids{3}(:);
+            face_id_map = element_content{3}(:, 4) == phys_face_id.';
+            face_id_map = face_id_map * (1:length(phys_face_id)).';
+            phys_face_names = phys_face_content(:, 3);
+        else
+            face_id_map = [];
+            phys_face_names = {[]};
+            if dim == 2
+                warning('No domain information provided.');
+            elseif dim == 3
+                warning('No boundary information provided.');
+            end
+        end
+        
+        % Map volume information(= cell/parameter in 3D).
+        if ~isempty(element_content{4})
+            phys_volume_content = phys_content(phys_volume_id,:);
+            phys_volume_id = phys_ids{4}(:);
+            volume_id_map = element_content{4}(:, 4) == phys_volume_id.';
+            volume_id_map = volume_id_map * (1:length(phys_volume_id)).';
+            phys_volume_names = phys_volume_content(:, 3);
+        else
+            volume_id_map = [];
+            phys_volume_names = {[]};
+            if dim == 3
+                warning('No domain information provided.');
+            end
+        end
 
         % Summarize.
+        % Note: The name definitions are adapted to the 2d-lagrange project.
         mesh = struct();
         mesh.dim = dim;
         mesh.vertices = vertices;
-        mesh.cell2vtx = faces(:, [6, 7, 8]);
-        mesh.parameter_domain = param2dom_id;
-        mesh.parameter_domain_name = parameter_domain_names;
-        mesh.bnd_edge2vtx = edges(:, [6, 7]);
-        mesh.bnd_edge_part = edge2bnd_id;
-        mesh.bnd_edge_part_name = phys_edge_names;
+        if ~isempty(point_id_map)
+            mesh.point = point_id_map;
+            mesh.point_names = phys_point_names;
+        end
+        switch dim
+            case 2
+                element_name = {'point2vtx', 'bnd_edge2vtx', ...
+                                'cell2vtx', 'volume2vtx'};
+                mesh.parameter_domain = face_id_map;
+                mesh.parameter_domain_name = phys_face_names;
+                mesh.bnd_edge_part = edge_id_map;
+                mesh.bnd_edge_part_name = phys_edge_names;
+            case 3
+                element_name = {'point2vtx', 'edge2vtx', ...
+                                'bnd_face2vtx', 'cell2vtx'};
+                mesh.parameter_domain = volume_id_map;
+                mesh.parameter_domain_name = phys_volume_names;
+                mesh.bnd_face_part = face_id_map;
+                mesh.bnd_face_part_name = phys_face_names;
+        end
+        for ii = 1:length(element_type_exist)
+            mesh.(element_name{element_type_exist(ii)}) = ...
+                element_content{element_type_exist(ii)}...
+                    (:,end-(req_cols(element_type_exist(ii))-1):end);
+        end
     end
-    
+   
     if args.verbosity
        fprintf('done.\n'); 
     end
