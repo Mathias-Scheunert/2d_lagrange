@@ -57,7 +57,15 @@ function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
 end
 
 function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
-    % Build vertex coordinates
+    % Ensure consistency.
+    if nx == 0
+        nx = 1;
+    end
+    if ny == 0 
+        ny = 1;
+    end
+
+    % Build vertex coordinates.
     x = linspace(bnd(1), bnd(2), nx + 1);
     y = linspace(bnd(3), bnd(4), ny + 1);
     [x, y] = ndgrid(x, y);
@@ -66,7 +74,7 @@ function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
     vertex_coords(1, :) = reshape(x, num_vertices, 1);
     vertex_coords(2, :) = reshape(y, num_vertices, 1);
 
-    % Build cell-to-vertex topology
+    % Build cell-to-vertex topology.
     cells = zeros(3, 2*nx*ny);
     for iy = 0:ny-1
         for ix = 0:nx-1

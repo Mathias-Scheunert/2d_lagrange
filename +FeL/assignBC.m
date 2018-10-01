@@ -55,7 +55,7 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     switch mesh.type
         case {'cube', 'rhomb', 'gmsh_create', 'gmsh_load'}          
             if ~isfield(bnd, 'bndDOF')
-                bnd = Fe.getBndDOF(fe, mesh, bnd);
+                bnd = FeL.getBndDOF(fe, mesh, bnd);
             end
         otherwise
             error('BC handling only supported for known mesh types.');

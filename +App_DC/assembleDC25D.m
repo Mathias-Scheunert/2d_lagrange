@@ -50,17 +50,17 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     
     %% Set up FE structure.
     
-    fe = Fe.initFiniteElement(order, mesh, RX.coo, verbosity);
-    bnd = Fe.assignBC(bnd, fe, mesh, param);
+    fe = FeL.initFiniteElement(order, mesh, RX.coo, verbosity);
+    bnd = FeL.assignBC(bnd, fe, mesh, param);
 
     %% Treat 2.5D wavenumber domain handling and set up DC-FE system.
 
     % Set up invariant rhs vector.
-    rhs = Fe.assembleRHS(fe, mesh, TX, verbosity);
+    rhs = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
-    A_GradDiv = Fe.assembleStiff(fe, mesh, param, verbosity);
-    A_Mass = Fe.assembleMass(fe, mesh, param, verbosity);
+    A_GradDiv = FeL.assembleStiff(fe, mesh, param, verbosity);
+    A_Mass = FeL.assembleMass(fe, mesh, param, verbosity);
 
     % Get parameter for inverse spatial Fourier transform.
     FT_info = App_DC.getInvFTParam(TX.coo, RX.coo, FT_type);
@@ -78,7 +78,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
         sol{ii}.b = (1 / 2) * rhs;
 
         % Handle boundary conditions.
-        sol{ii} = Fe.treatBC(fe, mesh, sol{ii}, bnd);
+        sol{ii} = FeL.treatBC(fe, mesh, sol{ii}, bnd);
     end
     if verbosity
         fprintf('done.\n');

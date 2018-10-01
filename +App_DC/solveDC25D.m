@@ -43,7 +43,7 @@ function u = solveDC25D(fe, sol, FT, verbosity)
     end
     u_2D = cell(FT.n, 1);
     for jj = 1:(FT.n)
-        u_2D{jj} = Fe.solveFwd(sol{jj}, fe);
+        u_2D{jj} = FeL.solveFwd(sol{jj}, fe);
     end
     if verbosity
         fprintf('done.\n'); 

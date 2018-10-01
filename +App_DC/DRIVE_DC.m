@@ -276,7 +276,7 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
     subplot(2, 1, 1)
         %                    relative                    fix (not too large!)
         cur_k_idx = pick(2, round(length(FT_info.k) / 2), 2);
-        u_cur = Fe.solveFwd(sol{cur_k_idx}, fe);
+        u_cur = FeL.solveFwd(sol{cur_k_idx}, fe);
         phi_FE_2D = fe.I * u_cur;
         plot(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, 'ob');
         title(sprintf(...

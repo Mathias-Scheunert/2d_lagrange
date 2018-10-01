@@ -52,31 +52,31 @@ function map = getAffineMap(cell_num, mesh, point)
     %   with
     %   R = [x_1, x_2, x_3;
     %        y_1, y_2, y_3;
-    %        1  , 1  , 2   ]
+    %        1  , 1  , 1]
     %
     %   Resulting coordinates in reference simplex:
-    %   -> lambda_1 = x_hat, lambda_2 = y_hat
+    %   -> lambda_1 = y_hat, lambda_2 = z_hat
     %
     %   local
     %
-    %   y_hat
+    %   z_hat
     %   ^
-    %   '-> x_hat
+    %   '-> y_hat
     % 
-    %   [0,1]=point 3
+    %   [(0),0,1] = point 3
     %   |    \
     %   |     \
-    %   3^     2v
+    %   3^     2^
     %   |       \
     %   |        \
-    %    - - 1> - - [1,0]=point 2  
-    %   [0,0]=point 1
+    %    - - 1> - - [(0),1,0] = point 2  
+    %   [(1),0,0] = point 1
     %
     %   With the definitions for B and b: 
     %      reference             global
-    %       point 1   maps to  [x_3,y_3]
-    %       point 2   maps to  [x_1,y_1]
-    %       point 3   maps to  [x_2,y_2]
+    %       point 1   maps to  [x_3, y_3]
+    %       point 2   maps to  [x_1, y_1]
+    %       point 3   maps to  [x_2, y_2]
     %   And definitions from Mesh.appendElementInfo.m
     %       edge 1    maps to   edge 3
     %       edge 2    maps to   edge 1

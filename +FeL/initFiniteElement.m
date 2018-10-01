@@ -55,7 +55,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Set up Lagrange basis ... '); 
     end
-    fe.base = Fe.getLagrangeBasis(fe.order);
+    fe.base = FeL.getBasis(fe.order);
     if verbosity
        fprintf('done.\n'); 
     end
@@ -64,7 +64,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Obtain DOF maps ... '); 
     end
-    fe.DOF_maps = Fe.getDOFMap(mesh, fe);
+    fe.DOF_maps = FeL.getDOFMap(mesh, fe);
     if verbosity
        fprintf('done.\n'); 
     end
@@ -80,7 +80,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Obtain interpolation operator ... '); 
     end
-    fe.I = Fe.getInterpolation(fe, mesh, point);
+    fe.I = FeL.getInterpolation(fe, mesh, point);
     if verbosity
        fprintf('done.\n');
        fprintf('... FE struct initialized.\n \n');

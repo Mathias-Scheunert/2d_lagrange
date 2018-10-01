@@ -66,7 +66,7 @@ function mesh = initMesh(var, varargin)
         case 'rhomb'
             mesh = Mesh.createRhombMesh(args.bnd, args.verbosity);
         case 'cube'
-            mesh = Mesh.createUnitCubeMesh(args.bnd, [3, 3], args.verbosity);
+            mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
         case 'gmsh_create'
             mesh = Mesh.createGmsh(args.bnd, args);
         case 'gmsh_load'
@@ -132,7 +132,7 @@ function mesh = initMesh(var, varargin)
     end
     % Get maps.
     mesh.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, ...
-                    num2cell(1:length(mesh.cell2vtx)).');
+                    num2cell(1:size(mesh.cell2vtx, 1)).');
                 
     % Check consistency.
 	maps = [mesh.maps{:}].';

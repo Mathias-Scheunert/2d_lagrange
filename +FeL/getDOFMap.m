@@ -2,7 +2,7 @@ function DOF_map = getDOFMap(mesh, fe)
     % Provides mapping of local DOF from reference simplex to a global DOF.
     %
     % SYNTAX
-    %   fe = getDOFMap(fe)
+    %   fe = getDOFMap(mesh, fe)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing the mesh information.
@@ -18,8 +18,8 @@ function DOF_map = getDOFMap(mesh, fe)
     
     %% Check input.
     
-    assert(isstruct(fe) && all(isfield(fe, {'base'})), ...
-        'fe - struct, containing Lagrange basis info, expected.');
+    assert(isstruct(fe) && all(isfield(fe, {'order'})), ...
+        'fe - struct, containing order of Lagrange elements, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, containing cells info, expected.');
     

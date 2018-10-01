@@ -18,7 +18,7 @@ function [] = plotMesh(mesh, params, debug)
     assert(isstruct(mesh) && isfield(mesh, 'cell2vtx'), ...
         'mesh - Struct - containing information for a 2D mesh expected.');
     
-    n_cells = length(mesh.cell2vtx);
+    n_cells = size(mesh.cell2vtx, 1);
     if nargin < 3
         debug = false;
         assert(islogical(debug), ...
@@ -26,6 +26,8 @@ function [] = plotMesh(mesh, params, debug)
     end
     if nargin < 2
         params = NaN * zeros(n_cells, 1);
+    elseif isempty(params)
+        params = NaN * ones(n_cells, 1);
     end
         
     %% Create figure.
