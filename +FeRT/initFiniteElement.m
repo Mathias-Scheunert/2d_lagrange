@@ -37,11 +37,12 @@ function fe = initFiniteElement(mesh, verbosity)
     fe.dim = mesh.dim;
 
     % Get quadrature rules.
-    % Note: Lowest-order RT-elements are set to fix order == 1.
+    % Note: For lowest-order RT-elements, quadrature order == 2 is used.
+    % TODO: Why? Adapted from Jan Blechta, curl-curl toolbox, 2018
     if verbosity
        fprintf('Set up quadrature rule ... '); 
     end
-    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(1, fe.dim);
+    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(2, fe.dim);
     if verbosity
        fprintf('done.\n'); 
     end
