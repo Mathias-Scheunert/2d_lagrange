@@ -4,6 +4,7 @@
 tmp_*
 *.geo
 *.msh
+test_*
 
 # folders
 /test
