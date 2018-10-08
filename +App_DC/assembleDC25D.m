@@ -6,7 +6,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %
     % INPUT PARAMETER
     %   mesh       ... Struct, containing mesh information, i.e. 
-    %                  coordinatesof vertices and its relation to the
+    %                  coordinates of vertices and its relation to the
     %                  triangles and edges.
     %   param      ... Vector of constant cell parameter values.
     %   fwd_params ... Struct, containing initial parameters that define

@@ -1,11 +1,19 @@
 function [M, TM] = assembleMass(fe, mesh, param, verbosity)
     % Assembles the sparse mass matrix.
     %
+    % continuous:
     % a(u,v) = \int_Omega u * \param(x,y) v d(x,y) = ...
-    %   \sum_k param_k \abs(\det(B_k)) \sum_l ( w_l ...
-    %       \sum_i u_i B_k^(-1) \phi_i({x,y}_l) * ...
-    %       \sum_j u_j B_k^(-1) \phi_j({x,y}_l)
-    %                              )
+    % Galerkin approx. 
+    % (i.e. piece-wise evaluation w.r.t. simplices including the  
+    %     numerical quadrature approx for integral evaluation and coord.
+    %     shift to reference simplex):
+    % sum_i a(u_i, v_j) = ...
+    %   \sum_k param_k
+    %       \sum_l ( w_l ...
+    %           \phi_i({x,y}_l) * \phi_j({x,y}_l)
+    %              )
+    %   * \abs(\det(B_k))
+    %
     % k   - num simplices
     % l   - num quadrature nodes
     % j,i - num basis functions  
@@ -46,7 +54,7 @@ function [M, TM] = assembleMass(fe, mesh, param, verbosity)
             'verbosity - logical, denoting if status should be printed, expected');
     end
 
-    %% Assemble stiffness matrix.
+    %% Assemble mass matrix.
 
     if verbosity
        fprintf('Assemble mass matrix ... '); 
@@ -84,7 +92,7 @@ function [M, TM] = assembleMass(fe, mesh, param, verbosity)
         % Apply quadrature summation of the integral over the current
         % simplex.
         % As integral is referred to the reference simplex, the
-        % Jacobi-determinat has to be incorporated.
+        % norm of the Jacobi-determinat has to be incorporated.
         m_loc = abs(mesh.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
                   
         % Fill up index and value vectors.
