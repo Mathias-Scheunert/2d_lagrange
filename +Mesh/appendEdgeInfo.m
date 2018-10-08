@@ -33,7 +33,9 @@ function mesh = appendEdgeInfo(mesh)
     
     % Make sure that cell2vtx list is orderd ascendingly.
     % (May not be the case if loaded externaly)
-    mesh.cell2vtx = sort(mesh.cell2vtx, 2);
+    if any(strcmp(mesh.type, {'gmsh_create', 'gmsh_create'}))
+        mesh.cell2vtx = sort(mesh.cell2vtx, 2);
+    end
     
     % Line number = number of edges.
     % colums 1 and 2 = first and second vertex.
