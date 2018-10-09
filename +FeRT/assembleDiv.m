@@ -83,7 +83,8 @@ function D = assembleDiv(fe, mesh, verbosity)
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions with the
         % reference/source function.
-        quad_kern = cellfun(@(x, y) {x * y * 1/abs(mesh.maps{ii}.detB)}, ...
+        % TODO: check if Jacobian determinant has to be abs() or not?
+        quad_kern = cellfun(@(x, y) {x * y * 1/mesh.maps{ii}.detB}, ...
             basis_eval, gauss_weights);
         
         % Evaluate numerical integration and incorporate the norm of the 
