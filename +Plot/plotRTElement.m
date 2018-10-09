@@ -17,6 +17,8 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
     %   DOF  ... Scalar, global DOF for which corresponding base function
     %            should be plotted.
     %   fig_handle ... Handle to figure, that should be updated.
+    %   debugging  ... Logical, use same colors for basis functions
+    %                  [default = false]
     %
     % OUTPUT PARAMETER
     %   fig_handle ... Handle to the current figure.
@@ -29,7 +31,7 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
         'fe - struct, including all information to set up RT-FE, expected.');
     
     % Define possible input keys and its property checks.
-    input_keys = {'idx', 'type', 'DOF', 'fig_handle'};
+    input_keys = {'idx', 'type', 'DOF', 'fig_handle', 'debugging'};
     assertIdx = @(x) assert(isscalar(x), ...
         'idx - scalar, denoting cell index, expected.');
     assertType = @(x) assert(ischar(x) && any(strcmp(x, {'local', 'global'})), ...
@@ -38,6 +40,8 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
         'DOF - scalar, denoting global DOF, expected.');
     assertFig = @(x) assert(isa(x, 'matlab.ui.Figure'), ...
         'fig_handle - figure function handle expected.');
+    assertDebug = @(x) assert(islogical(x), ...
+        'debugging - logical, true if only one color should be used, expected');
     
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
@@ -45,6 +49,7 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
     parser_obj.addParameter(input_keys{2}, 'local', assertType);
     parser_obj.addParameter(input_keys{3}, [], assertDOF);
     parser_obj.addParameter(input_keys{4}, [], assertFig);
+    parser_obj.addParameter(input_keys{5}, false, assertDebug);
    
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
@@ -124,7 +129,11 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
     
     % Add base function evaluation.
     hold on
-    colors = {'yellow', 'black', 'green'}; % color for base functions
+    if args.debugging
+        colors = {'black', 'black', 'black'};
+    else
+        colors = {'yellow', 'black', 'green'}; % colors for base functions
+    end
     if strcmp(args.type, 'global')
         % Set length of vectors to be plotted.
         scale = pick(2, 1, 1/7);
