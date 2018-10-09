@@ -66,11 +66,11 @@ function map = getAffineMap(cell_num, mesh, point)
     %   [(0),0,1] = point 3
     %   |    \
     %   |     \
-    %   3^     2^
+    %   3^     2^ <-- (local) edge 2 with its orientation
     %   |       \
     %   |        \
     %    - - 1> - - [(0),1,0] = point 2  
-    %   [(1),0,0] = point 1
+    %   [(1),0,0] = (local) point 1
     %
     %   With the definitions for B and b: 
     %      reference             global

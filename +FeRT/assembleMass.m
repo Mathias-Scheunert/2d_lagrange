@@ -9,8 +9,9 @@ function M = assembleMass(fe, mesh, verbosity)
     %     shift to reference simplex):
     %   \sum_k
     %       \sum_l ( w_l ...
-    %           (\phi_i({x,y}_l)^T B_k^T) * (B_k \phi_j({x,y}_l))
-    %              ) * 1/\det(B_k)^2
+    %           (1/\abs(\det(B_k) B_k \phi_i({x,y}_l))^T * ...
+    %           (1/\abs(\det(B_k) B_k \phi_j({x,y}_l))
+    %              )
     %   * \abs(\det(B_k))
     %
     % k   - num simplices
@@ -75,8 +76,8 @@ function M = assembleMass(fe, mesh, verbosity)
     % Iterate over all simplices.
     for ii = 1:n_cell
         % Set up fix (related to coordinate transformation) quantity.
-        BkTBk = (mesh.maps{ii}.B * 1/mesh.maps{ii}.detB).' * ...
-                (mesh.maps{ii}.B * 1/mesh.maps{ii}.detB);
+        BkTBk = (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB)).' * ...
+                (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB));
         
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions by itselfe

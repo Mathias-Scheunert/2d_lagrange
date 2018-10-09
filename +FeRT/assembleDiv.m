@@ -7,8 +7,8 @@ function D = assembleDiv(fe, mesh, verbosity)
     % (i.e. piece-wise evaluation w.r.t. simplices including the  
     %     numerical quadrature approx for integral evaluation and coord.
     %     shift to reference simplex):
-    %   \sum_k \sum_l ( w_l q_k div(\phi_i({x,y}_l)) 1/\det(B_k) ) 
-    %   * abs(\det(B_k))
+    %   \sum_k \sum_l ( w_l q_k div(\phi_i({x,y}_l)) 1/\abs(\det(B_k)) ) 
+    %   * \abs(\det(B_k))
     % with
     %   q_k = 1 for all parameters in the triangle k and
     %   q_k = 0 elsewhere
@@ -83,7 +83,7 @@ function D = assembleDiv(fe, mesh, verbosity)
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions with the
         % reference/source function.
-        quad_kern = cellfun(@(x, y) {x * y * 1/mesh.maps{ii}.detB;}, ...
+        quad_kern = cellfun(@(x, y) {x * y * 1/abs(mesh.maps{ii}.detB)}, ...
             basis_eval, gauss_weights);
         
         % Evaluate numerical integration and incorporate the norm of the 
