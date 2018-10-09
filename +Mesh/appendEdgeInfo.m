@@ -33,7 +33,7 @@ function mesh = appendEdgeInfo(mesh)
     
     % Make sure that cell2vtx list is orderd ascendingly.
     % (May not be the case if loaded externaly)
-    if any(strcmp(mesh.type, {'gmsh_create', 'gmsh_create'}))
+    if any(strcmp(mesh.type, {'gmsh_create', 'gmsh_load'}))
         mesh.cell2vtx = sort(mesh.cell2vtx, 2);
     end
     
