@@ -43,7 +43,7 @@ function DOF_map = getDOFMap(mesh)
         % follows the same principle, both vectors coincide.
         % (See Mesh.appendElementInfo for derivation of the edge 
         % index and definititions in Mesh.getAffineMap.m)
-        %                          ind_node, ind_edge
+        %                 ind_node, ind_edge
         glob_edg = cell2DOF_glo(ii, mesh.loc2glo);
         cell2DOF{ii} = glob_edg(:);                
     end

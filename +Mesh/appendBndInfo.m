@@ -63,7 +63,7 @@ function mesh = appendBndInfo(mesh)
 
             % Clean up.
             mesh = rmfield(mesh, {'gmsh_bnd_edge2total_edge', ...
-                'gmsh_bnd_edge2total_edge_map'});
+                                  'gmsh_bnd_edge2total_edge_map'});
             
         otherwise
             error('Unkown mesh type');

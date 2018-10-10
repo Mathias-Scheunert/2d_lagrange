@@ -16,6 +16,10 @@ function fe = initFiniteElement(mesh, verbosity)
     %
     % REMARKS
     %   Please note the ordering of edge indices within Fe.getDOFMap.m!
+    %   Basis function definitions and their (Piola)transform from local to
+    %   global coordinates are obtained from:
+    %       Computational Bases for RTk and BDMk on Triangles;
+    %       Ervin, V.J.; 2012
     
     %% Check input
     
