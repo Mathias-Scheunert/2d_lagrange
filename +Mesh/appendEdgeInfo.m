@@ -61,15 +61,16 @@ function mesh = appendEdgeInfo(mesh)
     switch mesh.type
         case {'gmsh_create', 'gmsh_load'}
             % Ascendingly sort given bnd edge list.
-            mesh.bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
+%             mesh.bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
+            sort_bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
 
             % Find predetermined boundary edges in total edge list;
             [edge2vtx_in_edge_list, idx_edge2vtx_in_edge_list] = ...
-                ismember(edge_list, mesh.bnd_edge2vtx, 'rows');                
+                ismember(edge_list, sort_bnd_edge2vtx, 'rows');                
             
             % Check if every boundary edge is included in total edge list.
             assert(length(find(edge2vtx_in_edge_list)) == ...
-                size(mesh.bnd_edge2vtx, 1), ...
+                size(sort_bnd_edge2vtx, 1), ...
                 ['Not all given boundary edges could be found in grid. ', ...
                 'Make sure that all (straight) lines are associated ', ...
                 'with a physical line within the Gmsh input file.']);
