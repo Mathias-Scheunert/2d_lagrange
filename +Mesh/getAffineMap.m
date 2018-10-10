@@ -78,10 +78,17 @@ function map = getAffineMap(cell_num, mesh, point)
     %       point 2   maps to  [x_1, y_1]
     %       point 3   maps to  [x_2, y_2]
     %   And definitions from Mesh.appendElementInfo.m
-    %       edge 1    maps to   edge 3
-    %       edge 2    maps to   edge 1
-    %       edge 3    maps to   edge 2
-
+    %       edge 1    maps to   edge 3 (antiparallel)
+    %       edge 2    maps to   edge 1 (    parallel)
+    %       edge 3    maps to   edge 2 (antiparallel)
+    %   Note the shifts w.r.t. the orientation:
+    %       edge 1 (  point 1 -> point 2 )
+    %               [x_3, y_3]->[x_1, y_1] -edge 3
+    %       edge 2 (  point 2 -> point 3 )
+    %               [x_1, y_1]->[x_2, y_2]  edge 1
+    %       edge 3 (  point 1 -> point 3 )
+    %               [x_3, y_3]->[x_2, y_2] -edge 2
+    
     %% Check input.
     
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord'})), ...
@@ -124,6 +131,10 @@ function map = getAffineMap(cell_num, mesh, point)
     % local/reference simplex vertices to the global/mapped ones.
     loc2glo = [3, 1, 2];
     
+    % Set association between the edge orientation within the
+    % local/reference simplex to the global/mapped ones.
+    loc2glo_orientation = [-1, 1, -1];
+    
     % Summarize infos.
     map = struct();
     map.B = B;
@@ -131,6 +142,7 @@ function map = getAffineMap(cell_num, mesh, point)
     map.detB = det(B);
     map.BinvT = BinvT;
     map.loc2glo = loc2glo;
+    map.loc2glo_edge_dir = loc2glo_orientation;
     
     %% Create mapping from cartesian to barycentric coordinates.
  
