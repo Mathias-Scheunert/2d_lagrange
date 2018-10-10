@@ -53,7 +53,7 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
    
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
-    args = parser_obj.Results;
+    args = parser_obj.Results;   
     
     % Check if desired DOF is related to cell.
     if ~isempty(args.DOF) && ...
@@ -67,8 +67,8 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
         DOF_plot = find(fe.DOF_maps.cell2DOF{args.idx} == args.DOF);
     end
     
-    % Create figure if empty.
-    if isempty(args.fig_handle)
+    % Create figure if required.
+    if isempty(args.fig_handle) || strcmp(args.type, 'local')
         fig_handle = figure();
     else
         fig_handle = args.fig_handle;
@@ -92,7 +92,8 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
     %% Evaluate base functions.
     
     if strcmp(args.type, 'global')
-        trafo = 1 / mesh.maps{args.idx}.detB * mesh.maps{args.idx}.B;
+%         trafo = 1/abs(mesh.maps{args.idx}.detB) * mesh.maps{args.idx}.B;
+        trafo = 1/(mesh.maps{args.idx}.detB) * mesh.maps{args.idx}.B;
         Phi = arrayfun(@(x, y) {trafo * fe.base.Phi(x, y)}, ...
                   points_hat(1,:), points_hat(2,:)).';
     else
@@ -129,10 +130,10 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
     
     % Add base function evaluation.
     hold on
-    if args.debugging
+    if args.debugging && ~strcmp(args.type, 'local')
         colors = {'black', 'black', 'black'};
     else
-        colors = {'yellow', 'black', 'green'}; % colors for base functions
+        colors = {'yellow', 'black', 'red'}; % colors for base functions
     end
     if strcmp(args.type, 'global')
         % Set length of vectors to be plotted.
