@@ -119,6 +119,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
             reshape(x(cell_list_local_tmp), 3, 4).', ...
             ind_glob2loc_tmp, 'UniformOutput', false);
         cell_list = cell2mat(cell_list);
+        
+        % Make sure, that cell2vtx is sorted ascendingly.
+        cell_list = sort(cell_list, 2);
 
         if strcmp(mesh.type, 'basic')
             % Initialize new (avoid mixing of refined and unrefined info).
