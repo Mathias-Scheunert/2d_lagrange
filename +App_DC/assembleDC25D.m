@@ -5,9 +5,9 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %   [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %
     % INPUT PARAMETER
-    %   mesh       ... Struct, containing mesh information, i.e. 
-    %                  coordinates of vertices and its relation to the
-    %                  triangles and edges.
+    %   mesh       ... Struct, containing the mesh information.
+    %                  For a detailed description of the content of the
+    %                  mesh struct please read header of Mesh.initMesh.
     %   param      ... Vector of constant cell parameter values.
     %   fwd_params ... Struct, containing initial parameters that define
     %                  the forward problem.

@@ -8,9 +8,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
     %   mesh = refineMeshUniform(mesh, ref_num)
     %
     % INPUT PARAMETER
-    %   mesh    ... Struct, containing mesh information, i.e. coordinates
-    %               of vertices and its relation to the triangles and 
-    %               edges.
+    %   mesh    ... Struct, containing the mesh information.
+    %               For a detailed description of the content of the mesh
+    %               struct please read header of Mesh.initMesh.
     %   ref_num ... Scalar, denoting the number of refinement steps.
     %
     % OUTPUT PARAMETER

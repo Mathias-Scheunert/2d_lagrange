@@ -8,8 +8,9 @@ function W = getWMatrix(mesh)
     %   W = getWMatrix(mesh)
     %
     % INPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OUTPUT PARAMETER
     %   W ... Matrix representation of the smoothness operator acting on 

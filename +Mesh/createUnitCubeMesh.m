@@ -13,7 +13,9 @@ function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
     %   verbosity ... Logical, denoting if verbose output is desired.
     %
     % OUTPUT PARAMETER
-    %   mesh      ... Structure with basic topoogy and geometry data.
+    %   mesh ... Struct, containing vertex2coordinates (vertices), 
+    %            simplex2vertex (cell2vtx), and simplex parameter domains 
+    %            (parameter_domains).
     %
     % REMARKS
     %

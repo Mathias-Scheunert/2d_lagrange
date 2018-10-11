@@ -6,6 +6,8 @@ function DOF_map = getDOFMap(mesh)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OUTPUT PARAMETER
     %   DOF_map ... Struct, containing the DOF map information.

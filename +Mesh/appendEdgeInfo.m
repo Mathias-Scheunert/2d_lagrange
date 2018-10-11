@@ -5,8 +5,10 @@ function mesh = appendEdgeInfo(mesh)
     %   mesh = appendEdgeInfo(mesh[, refine])
     %
     % INPUT PARAMETER
-    %   mesh   ... Struct, containing mesh information, i.e. coordinates of
-    %              vertices and it's relation to the triangles.
+    %   mesh ... Struct, containing the mesh information.
+    %            -> no edge information contained.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the edge information.

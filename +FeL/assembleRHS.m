@@ -20,10 +20,11 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     %   b = assembleRHS(fe, mesh, TX[, verbosity])
     %
     % INPUT PARAMETER
-    %   fe ... Struct, including all information to set up Lagrange FE.
-    %   mesh  ... Struct, containing mesh information, i.e. coordinates
-    %             of vertices and its relation to the triangles and edges.
-    %   TX ... Struct, containing the source information.
+    %   fe    ... Struct, including all information to set up Lagrange FE.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
+    %   TX    ... Struct, containing the source information.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be

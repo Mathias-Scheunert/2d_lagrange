@@ -7,8 +7,9 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
     %            as well as the linear system components.
-    %   mesh ... Struct, containing mesh information, i.e. coordinates
-    %            of vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %   sol  ... Struct, containing the information of the current physical
     %            problem to be solved numerically, i.e. rhs vector, system 
     %            matrix, interpolation operator.

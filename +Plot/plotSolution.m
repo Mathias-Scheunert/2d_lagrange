@@ -7,8 +7,9 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
     %            as well as the linear system components.
-    %   mesh ... Struct, containing mesh information, i.e. coordinates
-    %            of vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %   u    ... Vector, providing the solution of the FE fwd problem at
     %            the DOF.
     %

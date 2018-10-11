@@ -21,6 +21,7 @@ function mesh = initMesh(var, varargin)
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges
     %            as well as the relation between triangles and edges.
+    % TODO: add description (especially of the sizes) of all mesh elements.
     
     %% Check input.
     

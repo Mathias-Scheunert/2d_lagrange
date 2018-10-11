@@ -10,9 +10,9 @@ function map = getAffineMap(cell_num, mesh, point)
     %
     % INPUT PARAMETER
     %   cell_num ... Scalar, denoting the cell number.
-    %   mesh     ... Struct, containing mesh information, i.e. coordinates
-    %                of vertices and its relation to the triangles and 
-    %                edges.
+    %   mesh     ... Struct, containing the mesh information.
+    %                For a detailed description of the content of the mesh
+    %                struct please read header of Mesh.initMesh.
     %
     % OPTIONAL PARAMETER
     %   point ... Matrix nx2, containing coordinates of observation points.

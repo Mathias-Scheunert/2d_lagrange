@@ -5,7 +5,9 @@ function fe = initFiniteElement(mesh, verbosity)
     %   fe = initFiniteElement(mesh, point[, verbosity])
     %
     % INPUT PARAMETER
-    %   mesh  ... Struct, containing the mesh information.
+    %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be

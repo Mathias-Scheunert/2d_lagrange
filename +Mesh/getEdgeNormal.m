@@ -1,13 +1,15 @@
 function n = getEdgeNormal(mesh, edge_idx)
     % Calculates the normal vector of a (list of) edge(es).
     %
-    % The normal vector is oriented outwards w.r.t. the consideres simplex.
+    % The normal vector is oriented outwards w.r.t. the considered simplex.
     %
     % SYNTAX
     %    n = getEdgeNormal(mesh, edge_idx)
     %
     % INPUT PARAMETER
-    %   mesh     ... Struct, containiing the appended mesh information.
+    %   mesh     ... Struct, containing the mesh information.
+    %                For a detailed description of the content of the mesh
+    %                struct please read header of Mesh.initMesh.
     %   edge_idx ... Vector [n x 1] of the desired edges indices.
     %
     % OUTPUT PARAMETER

@@ -9,8 +9,9 @@ function mesh = createRhombMesh(bnd, verbosity)
     %           [xmin, xmax, ymin, ymax].
     %
     % OUTPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing vertex2coordinates (vertices), 
+    %            simplex2vertex (cell2vtx), and simplex parameter domains 
+    %            (parameter_domains).
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if verbose output is desired.

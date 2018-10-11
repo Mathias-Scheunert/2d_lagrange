@@ -6,6 +6,8 @@ function [] = plotMesh(mesh, params, debug)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OPTIONAL PARAMETER
     %   params ... Vector, containing the piecewise constant parameter

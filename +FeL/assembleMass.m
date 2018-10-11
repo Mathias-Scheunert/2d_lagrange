@@ -25,9 +25,10 @@ function [M, TM] = assembleMass(fe, mesh, param, verbosity)
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
-    %   mesh  ... Struct, containing mesh information, i.e. coordinates
-    %             of vertices and its relation to the triangles and edges.
-    %   param      ... Vector of constant cell parameter values.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
+    %   param ... Vector of constant cell parameter values.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be

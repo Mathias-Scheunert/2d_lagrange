@@ -5,12 +5,13 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     %   bnd = assignBC(bnd, fe, mesh[, verbosity])
     %
     % INPUT PARAMETER
-    %   bnd  ... Struct, containing the preset of the BC types.
-    %   fe   ... Struct, including all information to set up Lagrange FE,
-    %            as well as the linear system components.
-    %   mesh ... Struct, containing mesh information, i.e. coordinates
-    %            of vertices and its relation to the triangles and edges.
-    %   param      ... Vector of constant cell parameter values.
+    %   bnd   ... Struct, containing the preset of the BC types.
+    %   fe    ... Struct, including all information to set up Lagrange FE,
+    %             as well as the linear system components.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
+    %   param ... Vector of constant cell parameter values.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be

@@ -5,9 +5,11 @@ function DOF_map = getDOFMap(mesh, fe)
     %   fe = getDOFMap(mesh, fe)
     %
     % INPUT PARAMETER
-    %   mesh ... Struct, containing the mesh information.
-    %   fe   ... Struct, including affine maps and Lagrange basis
-    %            information.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
+    %   fe    ... Struct, including affine maps and Lagrange basis
+    %             information.
     %
     % OUTPUT PARAMETER
     %   DOF_map ... Struct, containing the DOF map information.

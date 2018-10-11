@@ -7,6 +7,8 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     % INPUT PARAMETER
     %   order ... Scalar, denoting the order of elements.
     %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
     %   point ... Matrix nx2, containing coordinates of observation points.
     %
     % OPTIONAL PARAMETER
