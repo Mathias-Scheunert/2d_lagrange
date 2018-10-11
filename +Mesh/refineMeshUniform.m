@@ -29,10 +29,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
         'ref_num - integer, denoting number of refinements, expected.');
     
     if ~any(strcmp(mesh.type, {'cube', 'rhomb', 'basic'}))
-        warning(['Uniform refinement not supported for external meshes. ',...
+        error(['Uniform refinement not supported for external meshes. ',...
             'Rather use the functionality of the external mesh generator.']);
         % TODO: Handle splitting up the boundary edge info.
-        return;
     end
            
     %% Split up triangles.

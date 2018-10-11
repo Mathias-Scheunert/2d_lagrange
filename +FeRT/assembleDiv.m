@@ -77,7 +77,7 @@ function D = assembleDiv(fe, mesh, verbosity)
     % Get divergence of basis functions for all quadrature nodes referred 
     % to the reference simplex.
     basis_eval = arrayfun(@(x,y) {fe.base.div_Phi(x, y)}, ...
-        gauss_cords(:,1), gauss_cords(:,2)).';
+                    gauss_cords(:,1), gauss_cords(:,2)).';
         
     % Iterate over all simplices.
     for ii = 1:n_cell            
@@ -85,7 +85,7 @@ function D = assembleDiv(fe, mesh, verbosity)
         % By multiplying the vector of basis functions with the
         % reference/source function.
         quad_kern = cellfun(@(x, y) {x * y * 1/(mesh.maps{ii}.detB)}, ...
-            basis_eval, gauss_weights);
+                        basis_eval, gauss_weights);
         
         % Evaluate numerical integration and incorporate the norm of the 
         % Jacobi-determinat due to mapping back from reference simplex to 
@@ -94,7 +94,7 @@ function D = assembleDiv(fe, mesh, verbosity)
                   
         % Fill up index and value vectors.
         j_loc = fe.DOF_maps.cell2DOF{ii};
-        glob_idx_start = ((ii-1) * n_entry_loc) + 1;
+        glob_idx_start = ((ii - 1) * n_entry_loc) + 1;
         glob_idx_end = glob_idx_start + n_entry_loc - 1;
         j(glob_idx_start:glob_idx_end) = j_loc(:);
         i(glob_idx_start:glob_idx_end) = ii + (0 * j_loc(:));

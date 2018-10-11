@@ -1,5 +1,13 @@
 function DOF_map = getDOFMap(mesh, fe)
-    % Provides mapping of local DOF from reference simplex to a global DOF.
+    % Provides the (re)ordered global DOF list w.r.t. the local2global map.
+    %
+    % First, all global DOF are listed: DOF = [vertices, n_vtx + edges]
+    % Hence, DOF is just a list of all indices:
+    %     vertices = 1:n_vtx
+    %     edges    = n_vtx + (1:n_edge)
+    %
+    % Than, for each cell, these indices are shifted in the order that is 
+    % given by map.loc2glo (see Mesh.getAffineMap).
     %
     % SYNTAX
     %   fe = getDOFMap(mesh, fe)
@@ -15,8 +23,24 @@ function DOF_map = getDOFMap(mesh, fe)
     %   DOF_map ... Struct, containing the DOF map information.
     %
     % REMARKS
-    %   The global DOF indices are associated with 
-    %   index_of_DOF = [indes_of_verticies, index_of_edges].'
+    %   The mapping relation will be used within the assembling routines:
+    %
+    %       local DOF, i.e. the basis functions in local coords
+    %       related to local positions, i.e. to vertices or edge midpoints
+    %       in the reference simplex
+    %                                |
+    %                                v
+    %                     vertices        edges
+    %                    [1, 2, 3,       1, 2, 3]
+    %
+    %                             map to
+    %                                |
+    %                                v
+    %       global DOF, i.e. the basis function in global coords
+    %       related to global positions, i.e. to vertices or edge midpoints
+    %       in the mesh
+    %                     vertices        edges
+    %                 [[mesh.loc2glo], [mesh.loc2glo]]
     
     %% Check input.
     
@@ -25,7 +49,7 @@ function DOF_map = getDOFMap(mesh, fe)
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, containing cells info, expected.');
     
-    %% Define map.
+    %% Collect global DOF from geometry/mesh definition.
     
     n_vtx = size(mesh.vertices, 1);
     n_cell = size(mesh.cell2vtx, 1);
@@ -50,7 +74,7 @@ function DOF_map = getDOFMap(mesh, fe)
             error('Unsupported order of Lagrangian elements.');
     end
     
-    %% Reshape map.
+    %% Reorder global DOF to match loc2glo mapping from affine map definition.
         
     cell2DOF = cell(n_cell, 1);
     switch fe.order
@@ -81,6 +105,7 @@ function DOF_map = getDOFMap(mesh, fe)
 
     %% Get DOF coordinates.
     
+    % Note, that the coords have to refer to the initial DOF ordering.
     switch fe.order
         case 1
             coords = mesh.vertices;

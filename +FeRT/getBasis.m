@@ -11,17 +11,18 @@ function base = getBasis()
     %% Get function and divergence.
     
     % Define basis functions.
-    % TODO: check whether a sqrt(2) has to be added to [y_hat;z_hat].
-    % -> Ensures the normal component of the function to have length 1,
+    % TODO: check whether a sqrt(2) has to be added to [x_hat; y_hat].
+    % -> I.g. Ensures the normal component of the function to have norm=1,
     % like it is the case for the other two functions.
     % (but makes the transition to the other functions inconsistent at the
     %  corners of the edge).
-    base.Phi = @(y_hat, z_hat) ...
-                   [y_hat,     y_hat, y_hat - 1;
-                    z_hat - 1, z_hat, z_hat];
+    % In practice however, all normal components are already similar?!
+    base.Phi = @(x_hat, y_hat) ...
+                   [x_hat,     x_hat, x_hat - 1;
+                    y_hat - 1, y_hat, y_hat];
 
     % Define basis function divergence.
-    base.div_Phi = @(y_hat, z_hat) ...
+    base.div_Phi = @(x_hat, y_hat) ...
                       [2, 2, 2];
 
     % Set local DOF coordinates for the basis functions.

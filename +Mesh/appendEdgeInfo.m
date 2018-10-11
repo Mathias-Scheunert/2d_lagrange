@@ -22,6 +22,7 @@ function mesh = appendEdgeInfo(mesh)
     %     /            \
     %    /_ _ _ 3>_ _ _ \
     % point1          point 3
+    %  The same relation is used on local coords (see Mesh.getAffineMap)
     %
     % Note that this relation can only be achieved if vertices in cell2vtx
     % are sorted in acending order!
@@ -41,9 +42,6 @@ function mesh = appendEdgeInfo(mesh)
     
     % Line number = number of edges.
     % colums 1 and 2 = first and second vertex.
-    % (Note: the current order equals the DOF order for second order
-    % Lagrange elements by using the Vandermonde matrix for their
-    % definition.)
     n_cells = size(mesh.cell2vtx, 1);
     edge_list_full = zeros(3*n_cells, 2);
     for ii = 1:n_cells
