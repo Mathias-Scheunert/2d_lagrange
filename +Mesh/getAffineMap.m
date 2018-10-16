@@ -146,6 +146,11 @@ function map = getAffineMap(cell_num, mesh, point)
     % local/reference simplex to the global/mapped ones.
     loc2glo_orientation = [-1, 1, -1];
     
+    % Set local edge normals.
+    loc_normals = [[0,  1];
+                   [-1, -1] / sqrt(2);
+                   [-1,  0]];
+    
     % Summarize infos.
     map = struct();
     map.B = B;
@@ -154,6 +159,7 @@ function map = getAffineMap(cell_num, mesh, point)
     map.BinvT = BinvT;
     map.loc2glo = loc2glo;
     map.loc2glo_edge_dir = loc2glo_orientation;
+    map.loc_normals = loc_normals;
     
     %% Create mapping from cartesian to barycentric coordinates.
  
@@ -162,11 +168,15 @@ function map = getAffineMap(cell_num, mesh, point)
         % Use short explicit formulation from wikipadia.org. to obtain the
         % two barycentric coordinates (coordinates in reference simplex)
         % w.r.t. the given point(s).
-        map = @(input) [(vert_cord(2,2) - vert_cord(3,2)) * (input(1) - vert_cord(3,1)) ...
-                + (vert_cord(3,1) - vert_cord(2,1)) * (input(2) - vert_cord(3,2)); ...
-                  (vert_cord(3,2) - vert_cord(1,2)) * (input(1) - vert_cord(3,1)) ...
-                + (vert_cord(1,1) - vert_cord(3,1)) * (input(2) - vert_cord(3,2))] ...
-                * 1/map.detB; 
+        % explicit variant:
+%         map = @(input) [(vert_cord(2,2) - vert_cord(3,2)) * (input(1) - vert_cord(3,1)) ...
+%                 + (vert_cord(3,1) - vert_cord(2,1)) * (input(2) - vert_cord(3,2)); ...
+%                   (vert_cord(3,2) - vert_cord(1,2)) * (input(1) - vert_cord(3,1)) ...
+%                 + (vert_cord(1,1) - vert_cord(3,1)) * (input(2) - vert_cord(3,2))] ...
+%                 * 1/map.detB;
+        % implicit:
+        map = @(input) BinvT.' * [input(1) - vert_cord(3,1); ...
+                                  input(2) - vert_cord(3,2)];
         if size(point, 1) == 1
             lambda = map(point).';
         else
