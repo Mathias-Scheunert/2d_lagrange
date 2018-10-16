@@ -57,7 +57,7 @@ function map = getAffineMap(cell_num, mesh, point)
     %   Resulting coordinates in reference simplex:
     %   -> lambda_1 = y_hat, lambda_2 = z_hat
     %
-    %   local
+    %   On the local element:
     %
     %   z_hat
     %   ^
@@ -73,6 +73,7 @@ function map = getAffineMap(cell_num, mesh, point)
     %   [(1),0,0] = (local) point 1
     %
     %   With the definitions for B and b: 
+    %
     %      reference             global
     %       point 1   maps to  [x_3, y_3]
     %       point 2   maps to  [x_1, y_1]
@@ -88,6 +89,16 @@ function map = getAffineMap(cell_num, mesh, point)
     %               [x_1, y_1]->[x_2, y_2]  edge 1
     %       edge 3 (  point 1 -> point 3 )
     %               [x_3, y_3]->[x_2, y_2] -edge 2
+    %
+    %   Edge normal direction follows right-hand-rule:
+    %
+    %                ^
+    %                |
+    %   point i -----------> point (i+1); i < (i+1)
+    %
+    %       n_(edge 1) = [0,   1]
+    %       n_(edge 2) = [-1, -1] / sqrt(2)
+    %       n_(edge 3) = [-1,  0]
     
     %% Check input.
     

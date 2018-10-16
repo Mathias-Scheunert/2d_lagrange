@@ -98,8 +98,6 @@ function [] = plotMesh(mesh, params, debug)
         
     % Plot normal vectors.
     if isfield(mesh, 'edge2cord') && debug
-
-        % In the 
         
         % Get bnd edge indices and its normal vectors.
         bnd_edge_idx = find(mesh.bnd_edge);

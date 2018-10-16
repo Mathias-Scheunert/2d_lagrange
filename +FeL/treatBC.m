@@ -209,7 +209,9 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % Set up recurring quantity:
         basis_eval_all = cell(3, 1);        
         % Evaluate basis functions for all quadrature nodes referred to
-        % the reference simplex edges (see Mesh.affineMap for relations).
+        % the reference simplex edges (see Mesh.getAffineMap for relations).
+        % TODO: check if this hard coded relation should be removed
+        % -> May bugs occur if definition in Mesh.getAffineMap is changed?
         basis_eval_all{1} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords(1,:), gauss_cords(2,:)).';
         gauss_cords_2 = [1 - gauss_cords(1,:); gauss_cords(1,:)];
@@ -284,7 +286,10 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 basis_eval = basis_eval_all{cur_cell_loc_edge};
 
                 % Get affine maps for current edge (represents a 1D barycentric
-                % coordinate system for 2D space).                
+                % coordinate system for 2D space).
+                % global maps to local
+                %  vtx_1    ->   1
+                %  vtx_2    ->   0
                 Bk = [bnd_edge_coo{ii}(1,1) - bnd_edge_coo{ii}(2,1);
                       bnd_edge_coo{ii}(1,2) - bnd_edge_coo{ii}(2,2)];
                 bk = bnd_edge_coo{ii}(2, :).';

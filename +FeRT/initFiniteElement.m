@@ -43,8 +43,8 @@ function fe = initFiniteElement(mesh, verbosity)
     fe.dim = mesh.dim;
 
     % Get quadrature rules.
-    % Note: For lowest-order RT-elements, quadrature order == 2 is used.
-    % TODO: Why? Adapted from Jan Blechta, curl-curl toolbox, 2018
+    % Note: For lowest-order RT-elements, assembling of mass matrix 
+    % requires order == 2.
     if verbosity
        fprintf('Set up quadrature rule ... '); 
     end

@@ -40,7 +40,7 @@ function D = assembleDiv(fe, mesh, verbosity)
     %   As the basis (q_k) of the parameter space is 1 for all points
     %   within a triangle, i.e. for all quadrature nodes used within 
     %   assembling loop, it is not incorporated in the code below.
-    %   TODO: Implement in order to have a accurate/consistent description.
+    % TODO: Implement in order to have a accurate/consistent description.
     
     %% Check input.
     
@@ -78,7 +78,7 @@ function D = assembleDiv(fe, mesh, verbosity)
     % to the reference simplex.
     basis_eval = arrayfun(@(x,y) {fe.base.div_Phi(x, y)}, ...
                     gauss_cords(:,1), gauss_cords(:,2)).';
-        
+                
     % Iterate over all simplices.
     for ii = 1:n_cell            
         % Set up kernel for integral (quadrature summation).

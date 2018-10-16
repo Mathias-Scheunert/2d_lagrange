@@ -21,7 +21,32 @@ function mesh = initMesh(var, varargin)
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges
     %            as well as the relation between triangles and edges.
-    % TODO: add description (especially of the sizes) of all mesh elements.
+    %
+    % Elemental information contained in mesh:
+    % (Note that further relations can be obtained by append... routines in 
+    %  +Mesh folder)
+    % dim      ... Scalar, denoting the geometrical dimension.
+    % vertices ... Matrix [n x 2], containing the x,y coordinates the n
+    %              vertices in mesh.
+    % cell2vtx ... Matrix [m x 3], containting the list of vertices each of
+    %              the m cells is formed of, respectively.
+    % parameter_domain      ... Vector [m x 1], containing k different
+    %                           parameter domain indices, each of the m 
+    %                           cells is related to.
+    % parameter_domain_name ... Cell of chars [k x 1], containing the
+    %                           names/tags for each of the k parameter 
+    %                           domains.
+    % bnd_edge_part         ... Vector [l x 1], containing p different
+    %                           boundary indices, each of the l boundary  
+    %                           edges is related to.
+    % bnd_edge_part_name    ... Cell of chars [p x 1], containing the
+    %                           names/tags for each of the p boundary 
+    %                           parts.
+    % bnd_edge2vtx          ... Matrix [l x 2], containting the list of 
+    %                           vertices each of l boundary edges is
+    %                           formed of, respectively.
+    % -> To be able to use external meshes for solving PDEs, these
+    %    information sould be provided.
     
     %% Check input.
     
