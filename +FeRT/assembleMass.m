@@ -67,15 +67,43 @@ function M = assembleMass(fe, mesh, verbosity)
         
     % Initialize index and value vector for sparse matrix assembling.
     [i, j, m] = deal(zeros(n_cell * n_entry_loc, 1));
-    
-    % Set up recurring quantity.
+        
     % Get basis functions for all quadrature nodes referred to
     % the reference simplex.
     quad_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
-        gauss_cords(:,1), gauss_cords(:,2));      
-        
+        gauss_cords(:,1), gauss_cords(:,2));
+    
     % Iterate over all simplices.
     for ii = 1:n_cell
+        % W.r.t. global coords:
+        % To achive normal component of basis functions of adjacent cells
+        % to be consistent, check if the related edge normal is parallel 
+        % (or antiparallel) oriented with the global normal of the edge
+        % (see FeRt.initFiniteElement for its definition).
+        %     parallel: Nothing to do. 
+        % antiparallel: Switch sign of the basis function.
+        % Note: At first, normals are ordered w.r.t. to the mesh.cell2edge 
+        % ordering (referred to the relations of cells and edges in global 
+        % coords)
+        % Get all edges global normal of current cell.
+        cur_edge_global_normals = fe.glo_edge_normals(mesh.cell2edg(ii,:), :);
+        % Get current edge local normal.
+        cur_edge_normals = Mesh.getEdgeNormal(mesh, ...
+                               mesh.cell2edg(ii,:), ii);
+        cur_edge_normals = cell2mat([cur_edge_normals{:}].');
+        % Obtain sign function.
+        Phi_sign = dot(cur_edge_global_normals, cur_edge_normals, 2);
+        % Change ordering such that sign function can be applied on (local)
+        % basis functions for reference simplex.
+        Phi_sign = Phi_sign(mesh.loc2glo).';
+        
+        % To achive normal component of basis functions of adjacent cells
+        % to be consistent (i.e. by using the sign of the determinant in
+        % the next step) local basis functions need to be oriented parallel
+        % to the edge normals (obtained by right-hand-rule, based on the
+        % edge orientation assumed in Mesh.getAffineMap (or created in 
+        % Mesh.appendEdgeInfo)
+        
         % Set up fix (related to coordinate transformation) quantity.
         BkTBk = (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB)).' * ...
                 (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB));
@@ -85,8 +113,11 @@ function M = assembleMass(fe, mesh, verbosity)
         % using the outer (tensor / dyadic) product the 
         % n_DOF_loc x n_DOF_loc local mass matrix can be obtained in
         % only one step.
-        quad_kern = cellfun(@(x, y) {y * (x.' * BkTBk * x)}, ...
-            quad_eval, gauss_weights);
+%         quad_kern = cellfun(@(x, y) {y * (x.' * BkTBk * x)}, ... 
+%             quad_eval, gauss_weights);
+        quad_kern = cellfun(@(x, y) {...
+                        y * ((Phi_sign.*x).' * BkTBk * (Phi_sign.*x))}, ...
+                        quad_eval, gauss_weights);
         
         % Apply quadrature summation of the integral over the current
         % simplex.

@@ -80,11 +80,36 @@ function D = assembleDiv(fe, mesh, verbosity)
                     gauss_cords(:,1), gauss_cords(:,2)).';
                 
     % Iterate over all simplices.
-    for ii = 1:n_cell            
+    for ii = 1:n_cell
+        % W.r.t. global coords:
+        % To achive normal component of basis functions of adjacent cells
+        % to be consistent, check if the related edge normal is parallel 
+        % (or antiparallel) oriented with the global normal of the edge
+        % (see FeRt.initFiniteElement for its definition).
+        %     parallel: Nothing to do. 
+        % antiparallel: Switch sign of the basis function.
+        % Note: At first, normals are ordered w.r.t. to the mesh.cell2edge 
+        % ordering (referred to the relations of cells and edges in global 
+        % coords)
+        % Get all edges global normal of current cell.
+        cur_edge_global_normals = fe.glo_edge_normals(mesh.cell2edg(ii,:), :);
+        % Get current edge local normal.
+        cur_edge_normals = Mesh.getEdgeNormal(mesh, ...
+                               mesh.cell2edg(ii,:), ii);
+        cur_edge_normals = cell2mat([cur_edge_normals{:}].');
+        % Obtain sign function.
+        Phi_sign = dot(cur_edge_global_normals, cur_edge_normals, 2);
+        % Change ordering such that sign function can be applied on (local)
+        % basis functions for reference simplex.
+        Phi_sign = Phi_sign(mesh.loc2glo).';
+        
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions with the
         % reference/source function.
-        quad_kern = cellfun(@(x, y) {x * y * 1/(mesh.maps{ii}.detB)}, ...
+%         quad_kern = cellfun(@(x, y) {x * y * 1/(mesh.maps{ii}.detB)}, ... 
+%                         basis_eval, gauss_weights); 
+        quad_kern = cellfun(@(x, y) ...
+                        {(Phi_sign.*x) * y * 1/abs(mesh.maps{ii}.detB)}, ...
                         basis_eval, gauss_weights);
         
         % Evaluate numerical integration and incorporate the norm of the 

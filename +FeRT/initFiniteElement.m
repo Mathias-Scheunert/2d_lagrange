@@ -18,14 +18,16 @@ function fe = initFiniteElement(mesh, verbosity)
     %
     % REMARKS
     %   Please note the ordering of edge indices within Fe.getDOFMap.m!
-    %   Basis function definitions and their (Piola)transform from local to
-    %   global coordinates are obtained from:
+    %   Basis function definitions from local to global coordinates 
+    %   (ommitting the scaling factor) and Piola transformation 
+    %   (preserving orthogonality of vectors) are obtained from:
     %       Computational Bases for RTk and BDMk on Triangles;
     %       Ervin, V.J.; 2012
     
     %% Check input
     
-    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'dim', ...
+                                     'edge2vtx', 'vertices'})), ...
         'mesh - appended struct, containing cells info, expected.');
     if mesh.dim ~= 2
         error('Only 2D problem supported yet.');
@@ -70,6 +72,15 @@ function fe = initFiniteElement(mesh, verbosity)
     if verbosity
        fprintf('done.\n'); 
     end
+    
+    % Get unique edge normal for all edges in mesh.
+    % Note: this will be used to ensure the basis function normal 
+    % components to be continuous across an edge shared by two cells.
+    % TODO: consider to move this somewhere else, as fe should not include
+    % explicit mesh-related stuff.
+    glo_edge_normals = Mesh.getEdgeNormal(mesh, 1:size(mesh.edge2vtx, 1));
+    glo_edge_normals = cell2mat(cellfun(@(x) {x{1}}, glo_edge_normals));
+    fe.glo_edge_normals = glo_edge_normals;
     
     % Get common sizes.
     fe.sizes.quad_point = size(fe.quad.nodes, 1);
