@@ -9,6 +9,10 @@ function base = getBasis()
     %            functions and their divergence.
         
     %% Get function and divergence.
+        
+    % Set up struct.
+    base = struct();
+    base.name = 'Raviart-Thomas';
     
     % Define basis functions.
     % TODO: check whether a sqrt(2) has to be added to [x_hat; y_hat].
@@ -20,6 +24,9 @@ function base = getBasis()
     base.Phi = @(x_hat, y_hat) ...
                    [x_hat,     x_hat, x_hat - 1;
                     y_hat - 1, y_hat, y_hat];
+%     base.Phi = @(x_hat, y_hat) ...
+%                    [x_hat,     sqrt(2) * x_hat, x_hat - 1;
+%                     y_hat - 1, sqrt(2) * y_hat, y_hat];
 
     % Define basis function divergence.
     base.div_Phi = @(x_hat, y_hat) ...
@@ -31,7 +38,7 @@ function base = getBasis()
                 0,   0.5];
     
     % Set local DOF direction (normal vector).
-    base.DOF_orient = [ 0, -1;
-                        1,  1;
-                       -1,  0];
+    base.DOF_normals = [[0, -1];
+                        [1,  1] / sqrt(2);
+                       [-1,  0]];
 end

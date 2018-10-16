@@ -48,6 +48,10 @@ function base = getBasis(order)
     
     %% Get Coefficients, functions, gradients.
     
+    % Set up struct.
+    base = struct();
+    base.name = 'Lagrange';
+    
     switch order
         case 1
             % First order Vandermonde matrix.
