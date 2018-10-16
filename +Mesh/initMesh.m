@@ -159,17 +159,12 @@ function mesh = initMesh(var, varargin)
     % Get maps.
     mesh.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, ...
                     num2cell(1:size(mesh.cell2vtx, 1)).');
-                
-    % Check consistency.
-	maps = [mesh.maps{:}].';
-    maps = reshape([maps(:).loc2glo], ...
-        size(maps(1).loc2glo, 2), size(maps, 1)).';
-    all((maps(:,1) == maps(:,:)));
-    assert(size(unique(maps, 'rows'), 1) == 1, ...
-        'Affine maps have different local to global vertex relations.');
-    
-    % Exclude vertex relations.
-    mesh.loc2glo = maps(1,:);
+                   
+    % Exclude vertex and edge relations.
+    mesh.loc2glo = mesh.maps{1}.loc2glo;
+    [~, mesh.glo2loc] = ismember(1:3, mesh.loc2glo);
+    mesh.loc_normals = mesh.maps{1}.loc_normals;
+    mesh.loc2glo_orient = mesh.maps{1}.loc2glo_edge_dir;
     if args.verbosity
        fprintf('done.\n'); 
     end
