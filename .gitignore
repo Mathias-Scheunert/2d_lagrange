@@ -2,6 +2,7 @@
 *~
 .nfs*
 tmp_*
+*_tmp.*
 *.geo
 *.msh
 test_*
