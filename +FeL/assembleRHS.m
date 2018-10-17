@@ -2,15 +2,16 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     % Assembles the rhs vector for different source types.
     %
     % continuous:
-    %  f(v) = \int_Omega f v d(x,y) = ...
+    % f(v) = \int_Omega f v d(x,y) = ...
     % Galerkin approx. 
     % (i.e. piece-wise evaluation w.r.t. simplices including the  
     %     numerical quadrature approx for integral evaluation and coord.
     %     shift to reference simplex):
+    % f(v_i) = ...
     %   \sum_k \sum_l ( w_l ( ...
     %              \phi_i({x,y}_l) f({x,y}_l))
     %                 )
-    %   \abs(\det(B_k))
+    %   * \abs(\det(B_k))
     %
     % k - num simplices
     % l - num quadrature nodes

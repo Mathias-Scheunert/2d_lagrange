@@ -188,10 +188,19 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % except the fact that the integrals are only along the edges (1D).
         % See Fe.assembleRHS, Fe.getInterpolation
         %
-        % Quadrature summation along the edge elements of the boundary.
-        % \delta(u) / \delta(n) = g(x, y)
-        % \int param(x,y) g(x,y) = \sum_k param_k ...
-        %           \sum_j w_j g(x_j,y_j) \sum_i \phi_i(x_j, y_j)
+        % continuous:
+        % f(v) = \int_dOmega_N param(x,y) g(x,y) v ds
+        % where
+        % \delta(u) / \delta(n) = g(x,y)
+        % Galerkin approx. 
+        % (i.e. piece-wise evaluation w.r.t. simplices including the  
+        %     numerical quadrature approx for integral evaluation and coord.
+        %     shift to reference simplex):
+        % \sum_k param_k ...
+        %     \sum_j w_j g(x_j,y_j) \phi_i(x_j, y_j)
+        % * \det(Bk)_1D
+        % where
+        %   \det(Bk)_1D = \sqrt(\abs(\det(Bk_1D^T Bk_1D)))
         %
         % k - number of edges (== number of simplices related to those)
         % j - number of quadrature nodes
@@ -208,10 +217,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         
         % Set up recurring quantity:
         basis_eval_all = cell(3, 1);        
-        % Evaluate basis functions for all quadrature nodes referred to
-        % the reference simplex edges (see Mesh.getAffineMap for relations).
-        % TODO: check if this hard coded relation should be removed
-        % -> May bugs occur if definition in Mesh.getAffineMap is changed?
+        % Evaluate all basis functions for all quadrature nodes referred to
+        % all edges of the reference simplex (see Mesh.getAffineMap).
         basis_eval_all{1} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords(1,:), gauss_cords(2,:)).';
         gauss_cords_2 = [1 - gauss_cords(1,:); gauss_cords(1,:)];
@@ -243,12 +250,12 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             bnd_edge_coo = mesh.edge2cord(edge_idx);
 
             % Get edge normal vectors.
-            % (Reshape output, as only one normal direction can be obtained
-            % for bnd edges).
             bnd_edge_n = Mesh.getEdgeNormal(mesh, edge_idx);
             bnd_edge_n = vertcat(bnd_edge_n{:});
+            % Check if more than one normal was obtained 
+            % (must not be the case for bnd edges).
             assert(length(bnd_edge_n) == n_edge, ...
-                ['Some considered edges are no boundary edge ', ...
+                ['Some considered edges aren`t boundary edges ', ...
                 '(multiple normals obtained).']);
             
             %% Assemble Neumann rhs vector.
@@ -281,12 +288,12 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 % Get the local edge index for the current edge.
                 cur_cell_loc_edge = mesh.loc2glo == cur_cell_glob_edge;
                 
-                % Get the basis function evaluation for the current edge in
-                % local coordinates.
+                % Get the basis function evaluations for the current edge 
+                % in local coordinates (and local ordering).
                 basis_eval = basis_eval_all{cur_cell_loc_edge};
 
-                % Get affine maps for current edge (represents a 1D barycentric
-                % coordinate system for 2D space).
+                % Get affine map for current edge (represents a 1D 
+                % barycentric coordinate system for 2D space).
                 % global maps to local
                 %  vtx_1    ->   1
                 %  vtx_2    ->   0
@@ -295,8 +302,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 bk = bnd_edge_coo{ii}(2, :).';
                 detBk = sqrt(abs(Bk.' * Bk));
 
-                % Get quadrature nodes position in general form (here gauss 
-                % coords in 1D edge related coordinates are required).
+                % Get quadrature nodes position in global coords (gauss 
+                % nodes in 1D edge related coordinates are required).
                 gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;               
                 
                 % Set Neumann BC at the quadrature nodes.
