@@ -96,14 +96,7 @@ function M = assembleMass(fe, mesh, verbosity)
         % Change ordering such that sign function can be applied on (local)
         % basis functions for reference simplex.
         Phi_sign = Phi_sign(mesh.loc2glo).';
-        
-        % To achive normal component of basis functions of adjacent cells
-        % to be consistent (i.e. by using the sign of the determinant in
-        % the next step) local basis functions need to be oriented parallel
-        % to the edge normals (obtained by right-hand-rule, based on the
-        % edge orientation assumed in Mesh.getAffineMap (or created in 
-        % Mesh.appendEdgeInfo)
-        
+               
         % Set up fix (related to coordinate transformation) quantity.
         BkTBk = (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB)).' * ...
                 (mesh.maps{ii}.B * 1/abs(mesh.maps{ii}.detB));

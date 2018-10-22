@@ -126,7 +126,7 @@ function D = assembleDiv(fe, mesh, verbosity)
         s(glob_idx_start:glob_idx_end) = m_loc(:);
     end
     
-    % Create sparse rhs vector.
+    % Create sparse divergence matrix.
     D = sparse(i, j, s, n_cell, n_DOF_glob);
     
     if verbosity
