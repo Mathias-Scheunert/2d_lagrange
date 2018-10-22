@@ -47,7 +47,7 @@ function mesh = appendEdgeInfo(mesh)
     for ii = 1:n_cells
         edge_list_full(3*ii-2,:) = [mesh.cell2vtx(ii, 1), mesh.cell2vtx(ii, 2)];
         edge_list_full(3*ii-1,:) = [mesh.cell2vtx(ii, 2), mesh.cell2vtx(ii, 3)];
-        edge_list_full(3*ii,:) = [mesh.cell2vtx(ii, 1), mesh.cell2vtx(ii, 3)];
+        edge_list_full(3*ii,:)   = [mesh.cell2vtx(ii, 1), mesh.cell2vtx(ii, 3)];
     end
     
     %% Reduce edge list in order to comprise only unique edges.

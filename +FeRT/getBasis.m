@@ -15,7 +15,7 @@ function base = getBasis()
     base.name = 'Raviart-Thomas';
     
     % Define basis functions.
-    % TODO: check whether a sqrt(2) has to be added to [x_hat; y_hat].
+    % TODO: Debug! Check if sqrt(2) has to be added to [x_hat; y_hat].
     % -> I.g. Ensures the normal component of the function to have norm=1,
     % like it is the case for the other two functions.
     % (but makes the transition to the other functions inconsistent at the

@@ -15,8 +15,8 @@ function params = getInvFTParam(TX, RX, type)
     %              information. See respective subfunctions for further
     %              details.
     %
-    % TODO: Debug the Bing-variant (there is still an offset w.r.t. 
-    % analytic solution for homog. HR).
+    % TODO: Debug! Bing-variant still hase an offset w.r.t. analytic
+    %       solution for homog. HR.
     
     %% Check input.
     
