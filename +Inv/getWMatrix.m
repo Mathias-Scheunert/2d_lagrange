@@ -30,8 +30,7 @@ function W = getWMatrix(mesh)
     feRT = FeRT.initFiniteElement(mesh);
     
     % Assemble mass and divergence operator matrices.
-    M = FeRT.assembleMass(feRT, mesh);
-    D = FeRT.assembleDiv(feRT, mesh);
+    [M, D] = FeRT.assembleMassDiv(feRT, mesh);
     
     %% Derive weighting matrix.
     

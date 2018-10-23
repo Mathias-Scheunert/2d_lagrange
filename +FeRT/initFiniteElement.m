@@ -73,16 +73,6 @@ function fe = initFiniteElement(mesh, verbosity)
        fprintf('done.\n'); 
     end
     
-    % Get unique edge normal for all edges in mesh.
-    % Note: this will be used to ensure the basis function normal 
-    % components to be continuous across an edge shared by two cells.
-    % TODO: Remove this from here and directly handle this within the
-    % assembling routines (first it requires much computational time,
-    % second mesh related info should not be stored in fe struct.)
-    glo_edge_normals = Mesh.getEdgeNormal(mesh, 1:size(mesh.edge2vtx, 1));
-    glo_edge_normals = cell2mat(cellfun(@(x) {x{1}}, glo_edge_normals));
-    fe.glo_edge_normals = glo_edge_normals;
-    
     % Get common sizes.
     fe.sizes.quad_point = size(fe.quad.nodes, 1);
     fe.sizes.cell = size(mesh.cell2vtx, 1);
