@@ -9,8 +9,9 @@ function mesh = createRhombMesh(bnd, verbosity)
     %           [xmin, xmax, ymin, ymax].
     %
     % OUTPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing vertex2coordinates (vertices), 
+    %            simplex2vertex (cell2vtx), and simplex parameter domains 
+    %            (parameter_domains).
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if verbose output is desired.
@@ -75,10 +76,10 @@ function mesh = createRhombMesh(bnd, verbosity)
     % Sorted by a lexocigraphic order of the triangles center.
     cell_list = [1, 2, 6;
                  2, 3, 7;
-                 3, 4, 7;
-                 4, 5, 8;
                  2, 6, 9;
                  2, 7, 9;
+                 3, 4, 7;
+                 4, 5, 8;
                  4, 7, 10;
                  4, 8, 10;               
                  6, 9, 11;

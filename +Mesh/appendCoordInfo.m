@@ -5,12 +5,14 @@ function mesh = appendCoordInfo(mesh)
     %   mesh = appendCoordInfo(mesh)
     %
     % INPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing the mesh information.
+    %            -> no coordinate information contained.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the mappings between
-    %            the vertices coordinates and the edges and triangles.
+    %            cells to vtx coords and edges to vtx coords.
     %
     % REMARKS
     %              

@@ -1,20 +1,31 @@
 function b = assembleRHS(fe, mesh, TX, verbosity)
     % Assembles the rhs vector for different source types.
     %
-    %  f(v) = \int_Omega f v d(x,y) = ...
-    %   \sum_k \abs(\det(B_k)) \sum_l w_l ( \sum_i u_i \phi_i({x,y}_l) ...
-    %                                           v({x,y}_l))
-    % k   - num simplices
-    % l   - num quadrature nodes
+    % continuous:
+    % f(v) = \int_Omega f v d(x,y) = ...
+    % Galerkin approx. 
+    % (i.e. piece-wise evaluation w.r.t. simplices including the  
+    %     numerical quadrature approx for integral evaluation and coord.
+    %     shift to reference simplex):
+    % f(v_i) = ...
+    %   \sum_k \sum_l ( w_l ( ...
+    %              \phi_i({x,y}_l) f({x,y}_l))
+    %                 )
+    %   * \abs(\det(B_k))
+    %
+    % k - num simplices
+    % l - num quadrature nodes
+    % i - num basis functions   
     %
     % SYNTAX
     %   b = assembleRHS(fe, mesh, TX[, verbosity])
     %
     % INPUT PARAMETER
-    %   fe ... Struct, including all information to set up Lagrange FE.
-    %   mesh  ... Struct, containing mesh information, i.e. coordinates
-    %             of vertices and its relation to the triangles and edges.
-    %   TX ... Struct, containing the source information.
+    %   fe    ... Struct, including all information to set up Lagrange FE.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
+    %   TX    ... Struct, containing the source information.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
@@ -172,8 +183,9 @@ function b = getFunctionRHS(fe, mesh, TX)
         quad_kern = cellfun(@(x, y, z) {x * (y * z)}, ...
             basis_eval, fun_eval, gauss_weights);
         
-        % Evaluate numerical integration and incorporate Jacobi-determinat 
-        % due to mapping back from reference simplex to global coordinates.
+        % Evaluate numerical integration and incorporate the norm of the 
+        % Jacobi-determinat due to mapping back from reference simplex to 
+        % global coordinates.
         m_loc = abs(mesh.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
                   
         % Fill up index and value vectors.

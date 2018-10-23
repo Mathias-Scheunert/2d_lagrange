@@ -8,9 +8,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
     %   mesh = refineMeshUniform(mesh, ref_num)
     %
     % INPUT PARAMETER
-    %   mesh    ... Struct, containing mesh information, i.e. coordinates
-    %               of vertices and its relation to the triangles and 
-    %               edges.
+    %   mesh    ... Struct, containing the mesh information.
+    %               For a detailed description of the content of the mesh
+    %               struct please read header of Mesh.initMesh.
     %   ref_num ... Scalar, denoting the number of refinement steps.
     %
     % OUTPUT PARAMETER
@@ -29,10 +29,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
         'ref_num - integer, denoting number of refinements, expected.');
     
     if ~any(strcmp(mesh.type, {'cube', 'rhomb', 'basic'}))
-        warning(['Uniform refinement not supported for external meshes. ',...
+        error(['Uniform refinement not supported for external meshes. ',...
             'Rather use the functionality of the external mesh generator.']);
         % TODO: Handle splitting up the boundary edge info.
-        return;
     end
            
     %% Split up triangles.
@@ -119,6 +118,9 @@ function mesh = refineMeshUniform(mesh, ref_num)
             reshape(x(cell_list_local_tmp), 3, 4).', ...
             ind_glob2loc_tmp, 'UniformOutput', false);
         cell_list = cell2mat(cell_list);
+        
+        % Make sure, that cell2vtx is sorted ascendingly.
+        cell_list = sort(cell_list, 2);
 
         if strcmp(mesh.type, 'basic')
             % Initialize new (avoid mixing of refined and unrefined info).

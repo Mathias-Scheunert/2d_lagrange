@@ -152,23 +152,23 @@ param(cell_dist) = dist;
 
 %% Set up FE structure.
 
-fe = Fe.initFiniteElement(order, mesh, RX, verbosity);
+fe = FeL.initFiniteElement(order, mesh, RX, verbosity);
 
 %% Set up BC.
 
-bnd = Fe.assignBC(bnd, fe, mesh, param);
+bnd = FeL.assignBC(bnd, fe, mesh, param);
 
 %% Set up FEM linear System.
 
 % Set up system matrix.
 % (for Poisson/Laplace, this only comprises the stiffness matrix)
-sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
 
 % Set up rhs vector.
-sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
+sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
 % Handle boundary conditions.
-sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
 if verbosity
    fprintf('... Linear system and BC set up.\n \n'); 
 end
@@ -176,7 +176,7 @@ end
 %% Solve fwd problem.
 
 % Get solution at DOF.
-u = Fe.solveFwd(sol, fe, verbosity);
+u = FeL.solveFwd(sol, fe, verbosity);
 
 %% Plot solution.
 

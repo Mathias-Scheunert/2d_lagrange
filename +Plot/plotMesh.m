@@ -6,6 +6,8 @@ function [] = plotMesh(mesh, params, debug)
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OPTIONAL PARAMETER
     %   params ... Vector, containing the piecewise constant parameter
@@ -18,7 +20,7 @@ function [] = plotMesh(mesh, params, debug)
     assert(isstruct(mesh) && isfield(mesh, 'cell2vtx'), ...
         'mesh - Struct - containing information for a 2D mesh expected.');
     
-    n_cells = length(mesh.cell2vtx);
+    n_cells = size(mesh.cell2vtx, 1);
     if nargin < 3
         debug = false;
         assert(islogical(debug), ...
@@ -26,6 +28,8 @@ function [] = plotMesh(mesh, params, debug)
     end
     if nargin < 2
         params = NaN * zeros(n_cells, 1);
+    elseif isempty(params)
+        params = NaN * ones(n_cells, 1);
     end
         
     %% Create figure.
@@ -94,8 +98,6 @@ function [] = plotMesh(mesh, params, debug)
         
     % Plot normal vectors.
     if isfield(mesh, 'edge2cord') && debug
-
-        % In the 
         
         % Get bnd edge indices and its normal vectors.
         bnd_edge_idx = find(mesh.bnd_edge);

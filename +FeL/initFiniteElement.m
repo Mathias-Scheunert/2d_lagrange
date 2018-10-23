@@ -7,6 +7,8 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     % INPUT PARAMETER
     %   order ... Scalar, denoting the order of elements.
     %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
     %   point ... Matrix nx2, containing coordinates of observation points.
     %
     % OPTIONAL PARAMETER
@@ -55,7 +57,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Set up Lagrange basis ... '); 
     end
-    fe.base = Fe.getLagrangeBasis(fe.order);
+    fe.base = FeL.getBasis(fe.order);
     if verbosity
        fprintf('done.\n'); 
     end
@@ -64,7 +66,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Obtain DOF maps ... '); 
     end
-    fe.DOF_maps = Fe.getDOFMap(mesh, fe);
+    fe.DOF_maps = FeL.getDOFMap(mesh, fe);
     if verbosity
        fprintf('done.\n'); 
     end
@@ -80,7 +82,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     if verbosity
        fprintf('Obtain interpolation operator ... '); 
     end
-    fe.I = Fe.getInterpolation(fe, mesh, point);
+    fe.I = FeL.getInterpolation(fe, mesh, point);
     if verbosity
        fprintf('done.\n');
        fprintf('... FE struct initialized.\n \n');

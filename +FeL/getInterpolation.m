@@ -6,8 +6,9 @@ function I = getInterpolation(fe, mesh, point)
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
-    %   mesh  ... Struct, containing mesh information, i.e. coordinates
-    %             of vertices and its relation to the triangles and edges.
+    %   mesh  ... Struct, containing the mesh information.
+    %             For a detailed description of the content of the mesh
+    %             struct please read header of Mesh.initMesh.
     %   point ... Matrix nx2, containing coordinates of observation points.
     %
     % OUTPUT PARAMETER

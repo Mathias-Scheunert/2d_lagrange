@@ -157,27 +157,27 @@ for cur_order = order
 
         %% Set up FE structure.
 
-        fe = Fe.initFiniteElement(cur_order, mesh, RX, verbosity);
+        fe = FeL.initFiniteElement(cur_order, mesh, RX, verbosity);
 
         %% Set up BC.
         
         bnd = bnd_basic;
-        bnd = Fe.assignBC(bnd, fe, mesh, param);
+        bnd = FeL.assignBC(bnd, fe, mesh, param);
 
         %% Set up FEM linear System.
 
         % Set up system matrix.
         % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = Fe.assembleStiff(fe, mesh, param, verbosity);
+        sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
         if strcmp(TX.type, 'reference')
-            sol.A = sol.A + Fe.assembleMass(fe, mesh, param, verbosity);
+            sol.A = sol.A + FeL.assembleMass(fe, mesh, param, verbosity);
         end
 
         % Set up rhs vector.
-        sol.b = Fe.assembleRHS(fe, mesh, TX, verbosity);
+        sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
         % Handle boundary conditions.
-        sol = Fe.treatBC(fe, mesh, sol, bnd, verbosity);
+        sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
 
         if verbosity
            fprintf('... Linear system and BC set up.\n \n'); 
@@ -186,7 +186,7 @@ for cur_order = order
         %% Solve fwd problem.
 
         % Get solution at DOF.
-        u = Fe.solveFwd(sol, fe, verbosity);
+        u = FeL.solveFwd(sol, fe, verbosity);
 
         %% Calculate errors.
 

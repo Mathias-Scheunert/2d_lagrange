@@ -2,8 +2,10 @@
 *~
 .nfs*
 tmp_*
+*_tmp.*
 *.geo
 *.msh
+test_*
 
 # folders
 /test

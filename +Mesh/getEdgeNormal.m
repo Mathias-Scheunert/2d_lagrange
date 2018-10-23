@@ -1,14 +1,17 @@
-function n = getEdgeNormal(mesh, edge_idx)
+function n = getEdgeNormal(mesh, edge_idx, cell_idx)
     % Calculates the normal vector of a (list of) edge(es).
     %
-    % The normal vector is oriented outwards w.r.t. the consideres simplex.
+    % The normal vector is oriented outwards w.r.t. the considered simplex.
     %
     % SYNTAX
-    %    n = getEdgeNormal(mesh, edge_idx)
+    %    n = getEdgeNormal(mesh, edge_idx[, cell_idx])
     %
     % INPUT PARAMETER
-    %   mesh     ... Struct, containiing the appended mesh information.
+    %   mesh     ... Struct, containing the mesh information.
+    %                For a detailed description of the content of the mesh
+    %                struct please read header of Mesh.initMesh.
     %   edge_idx ... Vector [n x 1] of the desired edges indices.
+    %   cell_idx ... Scalar, denoting a concrete cell.
     %
     % OUTPUT PARAMETER
     %   n ... Cell, {n x 2} containing matrix [k x 2]:
@@ -18,7 +21,7 @@ function n = getEdgeNormal(mesh, edge_idx)
 
     %% Check imput.
     
-    assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'cell2edg'})), ...
+    assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'cell2edg', 'edge2cord'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isvector(edge_idx), ...
         'edge_idx - vector containing edge indices, expected.');
@@ -44,11 +47,24 @@ function n = getEdgeNormal(mesh, edge_idx)
         % Get current simplex number(s).
         cell_num = edge2cell_idx_map{ii};
         
+        if exist('cell_idx', 'var')
+           demand_in_avail = ismember(cell_num, cell_idx);
+           if all(~demand_in_avail)
+               error('Desired edge does not belong to desired cell.');
+           else
+               cell_num = cell_num(demand_in_avail);
+           end
+        end
+        
         % Get current simplices coordinates.
         cell_cords = {mesh.cell2cord{cell_num}}.';
         
         % Get edge number within the corresponding simplices.
         edge_num = edge2cell_edge_num{ii};
+        
+        if exist('cell_idx', 'var')
+            edge_num = edge_num(demand_in_avail);
+        end
                 
         % Get all edges of current simplices.
         all_cell_edges = arrayfun(@(x) {mesh.cell2edg(x, :)}, ...

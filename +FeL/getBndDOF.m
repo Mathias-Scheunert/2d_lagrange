@@ -7,8 +7,9 @@ function bnd = getBndDOF(fe, mesh, bnd)
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
     %            as well as the linear system components.
-    %   mesh ... Struct, containing mesh information, i.e. coordinates
-    %            of vertices and its relation to the triangles and edges.
+    %   mesh ... Struct, containing the mesh information.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %   bnd  ... Struct, containing the preset of the BC types.
     %
     % OUTPUT PARAMETER

@@ -7,9 +7,10 @@ function mesh = appendBndInfo(mesh)
     %   mesh = appendBndInfo(mesh)
     %
     % INPUT PARAMETER
-    %   mesh ... Struct, containing mesh information, i.e. coordinates of
-    %            vertices and its relation to the triangles and edges as 
-    %            well as the coordinate-edge relation.
+    %   mesh ... Struct, containing the mesh information.
+    %            -> no edge2boundary information contained.
+    %            For a detailed description of the content of the mesh
+    %            struct please read header of Mesh.initMesh.
     %
     % OUTPUT PARAMETER
     %   mesh ... Struct, mesh information appended by the boundary
@@ -63,7 +64,7 @@ function mesh = appendBndInfo(mesh)
 
             % Clean up.
             mesh = rmfield(mesh, {'gmsh_bnd_edge2total_edge', ...
-                'gmsh_bnd_edge2total_edge_map'});
+                                  'gmsh_bnd_edge2total_edge_map'});
             
         otherwise
             error('Unkown mesh type');

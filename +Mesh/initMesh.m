@@ -21,6 +21,32 @@ function mesh = initMesh(var, varargin)
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges
     %            as well as the relation between triangles and edges.
+    %
+    % Elemental information contained in mesh:
+    % (Note that further relations can be obtained by append... routines in 
+    %  +Mesh folder)
+    % dim      ... Scalar, denoting the geometrical dimension.
+    % vertices ... Matrix [n x 2], containing the x,y coordinates the n
+    %              vertices in mesh.
+    % cell2vtx ... Matrix [m x 3], containting the list of vertices each of
+    %              the m cells is formed of, respectively.
+    % parameter_domain      ... Vector [m x 1], containing k different
+    %                           parameter domain indices, each of the m 
+    %                           cells is related to.
+    % parameter_domain_name ... Cell of chars [k x 1], containing the
+    %                           names/tags for each of the k parameter 
+    %                           domains.
+    % bnd_edge_part         ... Vector [l x 1], containing p different
+    %                           boundary indices, each of the l boundary  
+    %                           edges is related to.
+    % bnd_edge_part_name    ... Cell of chars [p x 1], containing the
+    %                           names/tags for each of the p boundary 
+    %                           parts.
+    % bnd_edge2vtx          ... Matrix [l x 2], containting the list of 
+    %                           vertices each of l boundary edges is
+    %                           formed of, respectively.
+    % -> To be able to use external meshes for solving PDEs, these
+    %    information sould be provided.
     
     %% Check input.
     
@@ -66,7 +92,7 @@ function mesh = initMesh(var, varargin)
         case 'rhomb'
             mesh = Mesh.createRhombMesh(args.bnd, args.verbosity);
         case 'cube'
-            mesh = Mesh.createUnitCubeMesh(args.bnd, [3, 3], args.verbosity);
+            mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
         case 'gmsh_create'
             mesh = Mesh.createGmsh(args.bnd, args);
         case 'gmsh_load'
@@ -132,18 +158,13 @@ function mesh = initMesh(var, varargin)
     end
     % Get maps.
     mesh.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, ...
-                    num2cell(1:length(mesh.cell2vtx)).');
-                
-    % Check consistency.
-	maps = [mesh.maps{:}].';
-    maps = reshape([maps(:).loc2glo], ...
-        size(maps(1).loc2glo, 2), size(maps, 1)).';
-    all((maps(:,1) == maps(:,:)));
-    assert(size(unique(maps, 'rows'), 1) == 1, ...
-        'Affine maps have different local to global vertex relations.');
-    
-    % Exclude vertex relations.
-    mesh.loc2glo = maps(1,:);
+                    num2cell(1:size(mesh.cell2vtx, 1)).');
+                   
+    % Exclude vertex and edge relations.
+    mesh.loc2glo = mesh.maps{1}.loc2glo;
+    [~, mesh.glo2loc] = ismember(1:3, mesh.loc2glo);
+    mesh.loc_normals = mesh.maps{1}.loc_normals;
+    mesh.loc2glo_orient = mesh.maps{1}.loc2glo_edge_dir;
     if args.verbosity
        fprintf('done.\n'); 
     end
