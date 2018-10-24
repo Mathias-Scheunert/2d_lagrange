@@ -30,7 +30,7 @@ if convergence
     [debuging, verbosity, plotting] = deal(false);
 end
 
-%% Set up disctrete Laplace fwd problem.
+% Set up disctrete Laplace fwd problem.
 
 if debuging
     profile on
@@ -130,7 +130,7 @@ if verbosity
    fprintf('... FE-FWP set up.\n \n'); 
 end
 
-%% Set up mesh.
+% Set up mesh.
 
 % Iterate (if required) over different Lagrange orders.
 for cur_order = order
@@ -149,16 +149,16 @@ for cur_order = order
         mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
             'ref', cur_ref, 'verbosity', verbosity);
 
-        %% Set up Parameter.
+        % Set up Parameter.
 
         % Set const. background parameter for grid.
         param = 1 + zeros(length(mesh.cell2vtx), 1);
 
-        %% Set up FE structure.
+        % Set up FE structure.
 
         fe = FeL.initFiniteElement(cur_order, mesh, RX, verbosity);
 
-        %% Set up BC.
+        % Set up BC.
         
         bnd = bnd_basic;
         bnd = FeL.assignBC(bnd, fe, mesh, param);
@@ -182,12 +182,12 @@ for cur_order = order
            fprintf('... Linear system and BC set up.\n \n'); 
         end
 
-        %% Solve fwd problem.
+        % Solve fwd problem.
 
         % Get solution at DOF.
         u = FeL.solveFwd(sol, fe, verbosity);
 
-        %% Calculate errors.
+        % Calculate errors.
 
         if convergence
             cur_idx = cur_ref - ref_steps(1) + 1;
