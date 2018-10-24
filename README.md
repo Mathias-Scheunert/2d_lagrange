@@ -41,13 +41,15 @@ Raviart-Thomas elements:
 - 2D zeroth order
 
 Assembling of:
-- Lagrange mass and stiffness matrix
-- Lagrange mass and divergence matrix
-- tensor representation for derivative of these matrices w.r.t. the parameter
+- Lagrange:
+    - mass and stiffness matrix
+    - tensor representation for derivative of these matrices w.r.t. the parameter
+    - interpolation operator for observing solution at arbitrary points within the domain
+- Raviart-Thomas:
+    - mass and divergence matrix
+    - regularization matrix representing smoothness conatraints for unstructured grids
 - rhs vector for point source(es)
 - rhs vector for given reference function
-- Lagrange interpolation operator for observing solution at arbitrary points within the domain
-- Regularization matrix representing smoothness conatraints for unstructured grids
 
 Boundary conditions:
 - homogeneous and inhomogeneous Dirichlet
@@ -59,6 +61,13 @@ Visualization:
 - Raviart-Thomas elements/basis functions (on local, reference simplex and in global mesh)
 
 # Applications:
+
+The following driver files are available for application:
+- DRIVE_DC: 2.5D DC problem (modelling of electrical potential)
+    - 1 TX (3D-point source), n RX (arbitrary position in mesh)
+    - 3 types of spatial inverse FT
+    - in-/homogeneous Dirichlet/Neumann boundary conditions
+    - mesh generation via Gmsh (incorporating TX/RX positions, topography)
 
 The following driver files are available for testing:
 - DRIVE_TestMesh: Visualization of the underlying unstructured grid and derived information.
@@ -72,10 +81,3 @@ The following driver files are available for testing:
     - 2.5D DC problem with a 3D-point source
     - homogeneous Dirichlet BC at boundaries in subsurface, homogeneous Neumann BC at boundary on surface
     - incorporation of an external mesh, created by Gmsh
-
-The following driver files are available for application:
-- DRIVE_DC: 2.5D DC problem (modelling of electrical potential)
-    - 1 TX (3D-point source), n RX (arbitrary position in mesh)
-    - 3 types of spatial inverse FT
-    - in-/homogeneous Dirichlet/Neumann boundary conditions
-    - mesh generation via Gmsh (incorporating TX/RX positions, topography)
