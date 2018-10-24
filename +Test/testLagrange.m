@@ -140,7 +140,7 @@ classdef testLagrange < matlab.unittest.TestCase
                        fprintf(sprintf('- "%d" mesh refinements\n', cur_ref));
                        fprintf(sprintf('- "%s" source\n', TX.type));
                        if length(bnd.type) > 1
-                           fprintf('- mixed boundary conditions\n');
+                           fprintf('- mixed boundary conditions\n\n');
                        else
                            fprintf(sprintf('- "%s" boundary conditions\n\n', bnd.type{1}));
                        end
