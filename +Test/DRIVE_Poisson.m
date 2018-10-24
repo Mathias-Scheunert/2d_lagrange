@@ -17,7 +17,7 @@
 %% Set up script.
 
 % Clean up and set verbosity.
-kill();
+clean();
 warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);

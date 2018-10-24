@@ -3,7 +3,7 @@
 %% Prepare Script.
 
 % Clean up and set verbosity.
-kill();
+clean();
 warning('on');
 debug = pick(2, false, true);
 

@@ -56,7 +56,7 @@
 %% Set up script.
 
 % Clean up and set verbosity.
-kill();
+clean();
 warning('on');
 verbosity = pick(2, false, true);
 
