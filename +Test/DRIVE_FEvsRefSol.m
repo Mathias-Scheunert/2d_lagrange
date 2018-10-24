@@ -26,10 +26,6 @@ warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
 plotting = pick(2, false, true);
-convergence = pick(2, false, true); % iterate a sequence of refinements
-if convergence
-    [debuging, verbosity, plotting] = deal(false);
-end
 
 %% Set up disctrete Laplace fwd problem.
 
@@ -41,19 +37,10 @@ if verbosity
 end
 
 % Set up order of Lagrange elements.
-if convergence
-    order = [1, 2];
-else
-    order = pick(2, 1, 2);
-end
+order = pick(2, 1, 2);
 
 % Set number of grid refinements.
-if convergence
-    ref_steps = 1:4;
-    [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
-else
-    ref_steps = 2;
-end
+ref_steps = 4;
 
 % Define source.
 [TXp, TXr] = deal(struct());
@@ -105,15 +92,9 @@ RX = pick(3, ...
     [zeros(n_obs, 1), linspace(y(1), y(end), n_obs).'], ... % axis parallel profile
     [linspace(x(1), x(end), n_obs).', min(y) + zeros(n_obs, 1)], ... % profile on axis
     []);                                                    % none
-if convergence
-    RX = [];
-end
 
 % Choose basic grid type.
 mesh_type = pick(2, 'rhomb', 'cube');
-if convergence
-    mesh_type = 'cube';
-end
 
 % Print status.
 if verbosity
@@ -133,119 +114,48 @@ end
 
 %% Run fwp.
 
-% Iterate (if required) over different Lagrange orders.
-for cur_order = order
-    % Preallocate variables.
-    [err_L2{cur_order}, err_H1{cur_order}, err_num_DOF{cur_order}] = ...
-        deal(zeros(length(ref_steps), 1));
-    % Iterate (if required) over different uniform refinement steps.
-    for cur_ref = ref_steps
-        % Print status.
-        if convergence
-            fprintf('Test "%d" order with "%d" refinements ...', ...
-                cur_order, cur_ref);
-        end
-        
-        % Init mesh.
-        mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
-            'ref', cur_ref, 'verbosity', verbosity);
+% Init mesh.
+mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
+    'ref', ref_steps, 'verbosity', verbosity);
 
-        %% Set up Parameter.
+%% Set up Parameter.
 
-        % Set const. background parameter for grid.
-        param = 1 + zeros(length(mesh.cell2vtx), 1);
+% Set const. background parameter for grid.
+param = 1 + zeros(length(mesh.cell2vtx), 1);
 
-        %% Set up FE structure.
+%% Set up FE structure.
 
-        fe = FeL.initFiniteElement(cur_order, mesh, RX, verbosity);
+fe = FeL.initFiniteElement(order, mesh, RX, verbosity);
 
-        %% Set up BC.
-        
-        bnd = bnd_basic;
-        bnd = FeL.assignBC(bnd, fe, mesh, param);
+%% Set up BC.
 
-        %% Set up FEM linear System.
+bnd = bnd_basic;
+bnd = FeL.assignBC(bnd, fe, mesh, param);
 
-        % Set up system matrix.
-        % (for Poisson/Laplace, this only comprises the stiffness matrix)
-        sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
-        if strcmp(TX.type, 'reference')
-            sol.A = sol.A + FeL.assembleMass(fe, mesh, param, verbosity);
-        end
+%% Set up FEM linear System.
 
-        % Set up rhs vector.
-        sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
-
-        % Handle boundary conditions.
-        sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
-
-        if verbosity
-           fprintf('... Linear system and BC set up.\n \n'); 
-        end
-
-        %% Solve fwd problem.
-
-        % Get solution at DOF.
-        u = FeL.solveFwd(sol, fe, verbosity);
-
-        %% Calculate errors.
-
-        if convergence
-            cur_idx = cur_ref - ref_steps(1) + 1;
-            [err_L2{cur_order}(cur_idx), err_H1{cur_order}(cur_idx)] = ...
-                Test.getError(mesh, fe, u, TX.ref_sol_u);
-            err_num_DOF{cur_order}(cur_idx) = fe.sizes.DOF;  
-        end
-        
-        if convergence
-            fprintf(' done. \n');
-        end
-    end
+% Set up system matrix.
+% (for Poisson/Laplace, this only comprises the stiffness matrix)
+sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
+if strcmp(TX.type, 'reference')
+    sol.A = sol.A + FeL.assembleMass(fe, mesh, param, verbosity);
 end
 
-%% Print statistics.
+% Set up rhs vector.
+sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
-if convergence
-    for kk = 1:length(order)
-        fprintf(sprintf('Order %d: \n Num DOF  L2 error \t H1 error \n', ...
-            order(kk)));
-        for ii = 1:length(ref_steps)
-            fprintf(sprintf('%d \t %d \t %d \n', ...
-                err_num_DOF{kk}(ii), err_L2{kk}(ii), err_H1{kk}(ii)));
-        end
-    end
-   Test.getConvRates('L2', err_num_DOF, err_L2, true);
-   Test.getConvRates('H1', err_num_DOF, err_H1, true);
+% Handle boundary conditions.
+sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
+
+if verbosity
+   fprintf('... Linear system and BC set up.\n \n'); 
 end
+
+%% Solve fwd problem.
+
+% Get solution at DOF.
+u = FeL.solveFwd(sol, fe, verbosity);
     
-%% Plot convergence.
-
-if convergence
-   figure(1);
-   for kk = 1:length(order)
-       subplot(2, 1, kk)
-           h_x = logspace(log10(err_num_DOF{kk}(1)), ref_steps(end) + 1, 100);
-           h = fliplr(h_x);
-           loglog(err_num_DOF{kk}, err_L2{kk}/err_L2{kk}(1), 'x-', ...
-               err_num_DOF{kk}, err_H1{kk}/err_H1{kk}(1), 'o-', ...
-               h_x, ones(size(h)), '-b', ...
-               h_x, h/h(1), '-k' ...
-               );
-           x_lim = vertcat(err_num_DOF{:});
-           x_lim = [10^(floor(log10(min(x_lim)))), ...
-               10^(ceil(log10(max(x_lim))))];
-           xlim(x_lim);
-           ylim([1e-3, 1e1]);
-           title(sprintf('u_{FE} vs. u_{ref} w.r.t. DOF (%d. order Lagrange)', ...
-               order(kk)));
-           ylabel('error');
-           xlabel('DOF');
-           legend('||u_{FE} - u_{ref}||_{L2}', '||u_{FE} - u_{ref}||_{H1}', ...
-               'const', 'O(h)', ...
-               'Location', 'EastOutside');
-   end
-end
-
 %% Plot against reference solution.
 
 % Get reference solution at all DOF.
@@ -283,8 +193,7 @@ if plotting
         hold off
         drawnow();
     end
-
-
+    
     % Visualize both w.r.t. profile path.
     if ~isempty(RX)
         x = sqrt((RX(:,1) - RX(1,1)) .^2 + (RX(:,2) - RX(1,2)) .^2);
@@ -310,9 +219,6 @@ if plotting
             xlabel('profile length [m]');
     end
 end
-
-%% Profile end.
-
 if debuging
     profile viewer
 end
