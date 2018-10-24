@@ -72,12 +72,15 @@ The following driver files are available for application:
 The following driver files are available for testing:
 - DRIVE_TestMesh: Visualization of the underlying unstructured grid and derived information.
 - DRIVE_Poisson: FE solution of the Poission equation for homogeneous/point source and in-/homogeneous Dirichlet/Neumann boundary conditions.
-- DRIVE_Convergence: 
+- DRIVE_FEvsRefSol: 
     - FE reference solution for an arbitrary polynomial function whose analytic derivative act as rhs of the problem.
     - FE reference solution for a 2D-point source with known analytic solution
     - in-/homogeneous Dirichlet/Neumann boundary conditions
-    - L2 and H1 error convergence test
 - DRIVE_DCExternal: 
     - 2.5D DC problem with a 3D-point source
     - homogeneous Dirichlet BC at boundaries in subsurface, homogeneous Neumann BC at boundary on surface
     - incorporation of an external mesh, created by Gmsh
+- testLagrange:
+    - class for matlab unittest runner
+    - uses reference solutions from DRIVE_FEvsRefSol and checks convergence rates for different source and BC types
+    - provides L2 and H1 error

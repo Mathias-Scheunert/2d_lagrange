@@ -43,17 +43,19 @@ function [fit, last_rate] = getConvRates(errtype, num_dofs, errs, verbosity)
             errtype, dim);
     end
     
+    [fit, last_rate] = deal(cell(size(num_dofs, 1), 1));
     for order = 1:size(num_dofs, 1)
         % Calculate mean convergance rate.
-        fit = polyfit(log10(num_dofs{order}), dim*log10(errs{order}), 1);
+        cur_fit = polyfit(log10(num_dofs{order}), dim*log10(errs{order}), 1);
+        fit{order} = cur_fit(1);
         
         % Calculate rate of two last refninement steps.
-        last_rate = dim * log(errs{order}(end)/errs{order}(end-1)) ...
+        last_rate{order} = dim * log(errs{order}(end)/errs{order}(end-1)) ...
           / log(num_dofs{order}(end)/num_dofs{order}(end-1));
       
         if verbosity
             fprintf('    order %d, LS %1.2f, last %1.2f\n', ...
-                order, fit(1), last_rate);
+                order, fit{order}, last_rate{order});
         end
     end
 end
