@@ -20,7 +20,8 @@
 
 %% Set up script.
 
-% Set verbosity and script.
+% Clean up, set verbosity and script.
+clean();
 warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
@@ -30,7 +31,7 @@ if convergence
     [debuging, verbosity, plotting] = deal(false);
 end
 
-% Set up disctrete Laplace fwd problem.
+%% Set up disctrete Laplace fwd problem.
 
 if debuging
     profile on
@@ -78,7 +79,7 @@ switch TX.type
         y = [-1, 1];
 end
 
-% Define (inhomogeneous Dirichlet) boundary conditions.
+% Define boundary conditions.
 % Note: Detailed preparation follows after setting up the FE system.
 bnd_D = struct();
 bnd_D.type = {'dirichlet'};
@@ -119,10 +120,10 @@ if verbosity
    fprintf(sprintf('- use "%s" basic mesh\n', mesh_type));
    fprintf(sprintf('- use "%d" mesh refinements\n', ref_steps));
    fprintf(sprintf('- use "%s" source\n', TX.type));
-   if length(bnd_D.type) > 1
+   if length(bnd_basic.type) > 1
        fprintf('- use mixed boundary conditions\n');
    else
-       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_D.type{1}));
+       fprintf(sprintf('- use "%s" boundary conditions\n', bnd_basic.type{1}));
    end
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
@@ -130,7 +131,7 @@ if verbosity
    fprintf('... FE-FWP set up.\n \n'); 
 end
 
-% Set up mesh.
+%% Run fwp.
 
 % Iterate (if required) over different Lagrange orders.
 for cur_order = order
@@ -149,16 +150,16 @@ for cur_order = order
         mesh = Mesh.initMesh(mesh_type, 'bnd', [x, y], ...
             'ref', cur_ref, 'verbosity', verbosity);
 
-        % Set up Parameter.
+        %% Set up Parameter.
 
         % Set const. background parameter for grid.
         param = 1 + zeros(length(mesh.cell2vtx), 1);
 
-        % Set up FE structure.
+        %% Set up FE structure.
 
         fe = FeL.initFiniteElement(cur_order, mesh, RX, verbosity);
 
-        % Set up BC.
+        %% Set up BC.
         
         bnd = bnd_basic;
         bnd = FeL.assignBC(bnd, fe, mesh, param);
@@ -182,12 +183,12 @@ for cur_order = order
            fprintf('... Linear system and BC set up.\n \n'); 
         end
 
-        % Solve fwd problem.
+        %% Solve fwd problem.
 
         % Get solution at DOF.
         u = FeL.solveFwd(sol, fe, verbosity);
 
-        % Calculate errors.
+        %% Calculate errors.
 
         if convergence
             cur_idx = cur_ref - ref_steps(1) + 1;

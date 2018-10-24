@@ -7,6 +7,9 @@ function mesh = createGmsh(bnd, args)
     %   3) information from .msh is converted
     %   4) .geo and .msh files are deleted
     %
+    % SYNTAX
+    %   mesh = createGmsh(bnd, args)
+    %
     % INPUT PARAMETER
     %   bnd  ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
     %   args ... Struct, may containing further vectorized (TX, Rx, topo)
@@ -24,7 +27,7 @@ function mesh = createGmsh(bnd, args)
     % Not required, as already done in Mesh.initMesh()
     
     %% Create Gmsh input file.
-    
+
     gmsh_file = 'tmp_mesh';
     createGmshInput([gmsh_file, '.geo'], bnd, ...
         args.TX, args.RX, args.topo, args.dom_name, args.verbosity);

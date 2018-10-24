@@ -48,7 +48,7 @@ function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
     %% Create mesh.
     
     if verbosity
-       fprintf('Create basic mesh ... \n'); 
+       fprintf('Create basic mesh ... '); 
     end
 
     mesh = generate_unit_2cube_mesh(bnd, divisions(1), divisions(2));

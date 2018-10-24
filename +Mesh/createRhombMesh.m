@@ -38,7 +38,7 @@ function mesh = createRhombMesh(bnd, verbosity)
     %% Create vertex (point) list.
     
     if verbosity
-       fprintf('Create basic mesh ... \n'); 
+       fprintf('Create basic mesh ... '); 
     end
     
     % Line number = number of vertex
