@@ -1,3 +1,3 @@
-result = runtests({'Test.TEST_pick', 'Test.DRIVE_Convergence', 'Test.DRIVE_Mesh'});
+result = runtests({'Test.testLagrange', 'Test.testRaviartThomas'});
 disp(result.table);
 exit(any([result.Failed]));
