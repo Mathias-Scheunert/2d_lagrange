@@ -6,7 +6,7 @@ classdef testRaviartThomas < matlab.unittest.TestCase
 
     properties (TestParameter)
                
-        factory = {};
+        factory = {[]};
     end
 
     methods (Test)
