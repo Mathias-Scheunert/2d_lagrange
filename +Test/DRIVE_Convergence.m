@@ -20,8 +20,7 @@
 
 %% Set up script.
 
-% Clean up, set verbosity and script.
-clean();
+% Set verbosity and script.
 warning('on');
 debuging = pick(1, false, true);
 verbosity = pick(2, false, true);
