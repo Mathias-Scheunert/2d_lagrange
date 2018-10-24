@@ -106,15 +106,34 @@ function [fig_handle] = plotRTElement(mesh, fe, varargin)
        
     if strcmp(args.type, 'global')
         % Get all edges global normal of current cell (in global ordering).
-        cur_cell_global_normals = fe.glo_edge_normals(...
+        glo_edge_normals = Mesh.getEdgeNormal(mesh, 1:size(mesh.edge2vtx, 1)); 
+        glo_edge_normals = cell2mat(cellfun(@(x) {x{1}}, glo_edge_normals));
+        cur_cell_global_normals = glo_edge_normals(...
                                       mesh.cell2edg(args.cell_idx,:), :);
         % Get current edge local normal (in global ordering).
         cur_cell_normals = Mesh.getEdgeNormal(mesh, ...
                                mesh.cell2edg(args.cell_idx,:), args.cell_idx);
         cur_cell_normals = cell2mat([cur_cell_normals{:}].');
-        % Obtain sign function, i.e. if global and local normal are
-        % antiparallel, Phi_sign = -1.
-        Phi_sign = dot(cur_cell_global_normals, cur_cell_normals, 2).';
+        
+        % Get edge indices to search for.
+        cur_edge_idx = mesh.cell2edg(args.cell_idx,:);
+
+        % Search for occurence of current edge(s) in cell2edge list.
+        edge_1_occur = mesh.cell2edg == cur_edge_idx(1);
+        edge_2_occur = mesh.cell2edg == cur_edge_idx(2);
+        edge_3_occur = mesh.cell2edg == cur_edge_idx(3);
+        
+        % Obtain indes for first occurence.
+        [edge_1_2_cell, ~] = find(edge_1_occur, 1, 'first');
+        [edge_2_2_cell, ~] = find(edge_2_occur, 1, 'first');
+        [edge_3_2_cell, ~] = find(edge_3_occur, 1, 'first');
+
+        % Derive sign from position w.r.t current cell index.
+        Phi_sign = [2 * (edge_1_2_cell == args.cell_idx) - 1, ...
+                    2 * (edge_2_2_cell == args.cell_idx) - 1, ...
+                    2 * (edge_3_2_cell == args.cell_idx) - 1];
+        % -> as Phi_sign will act on the local basis functions no mapping
+        % is incorporated here (see FeRT.assembleMassDiv)
         
         % By using abs(), the basis functions are always pointing outwards. 
         % (Note the local ordering here!).

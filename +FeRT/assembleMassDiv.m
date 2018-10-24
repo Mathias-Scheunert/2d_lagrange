@@ -141,6 +141,9 @@ function [M, D] = assembleMassDiv(fe, mesh, verbosity)
         Phi_sign = [2 * (edge_1_2_cell == ii) - 1, ...
                     2 * (edge_2_2_cell == ii) - 1, ...
                     2 * (edge_3_2_cell == ii) - 1];
+                
+        % As sign function will act on the basis functions in global coords
+        % incorporate appropriate DOF mapping.
         Phi_sign = Phi_sign(mesh.loc2glo);
 
         % Set up fix (related to coordinate transformation) quantity.
