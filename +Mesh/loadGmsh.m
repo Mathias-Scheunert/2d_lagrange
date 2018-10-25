@@ -4,6 +4,8 @@ function mesh = loadGmsh(name, varargin)
     % Additionally, an uniform mesh refinement can be applied before data
     % import.
     %
+    % Supported Gmsh version: 3.x
+    %
     % The function supports two operation modes:
     %   1) .msh file includes physical entities:
     %       - only the entities which are additionally equipped with a
@@ -110,15 +112,23 @@ function mesh = loadGmsh(name, varargin)
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
     
+    %% Check Gmsh version.
+    
+    gmsh_path = dir('**/gmsh');
+    [~, version] = system([gmsh_path.folder, '/gmsh -version']);
+    version = textscan(version, '%s', 'delimiter', '\n', ...
+                       'whitespace', '');
+    version = version{1}{end};
+    assert(strcmp(version(1), '3'), ...
+        'Wrong Gmsh version detected - please use version 3.x.');
+    
     %% Refine uniformly.
     
     if args.verbosity
         fprintf('Refine mesh ... '); 
     end
-    
     name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
     copyfile(name, name_tmp);
-    gmsh_path = dir('**/gmsh');
     for i = 1:args.ref
         system([gmsh_path.folder, '/gmsh -refine -v 0 ', ...
             name_tmp]);

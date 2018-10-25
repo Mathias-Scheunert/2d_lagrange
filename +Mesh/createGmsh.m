@@ -1,6 +1,8 @@
 function mesh = createGmsh(bnd, args)
     % Stores mesh information of a mesh created by Gmsh.
     %
+    % Supported Gmsh version: 3.x
+    %
     % Therefore, 
     %   1) a .geo input file is created 
     %   2) a .msh output file is obtained from running Gmsh
@@ -26,6 +28,16 @@ function mesh = createGmsh(bnd, args)
     
     % Not required, as already done in Mesh.initMesh()
     
+    %% Check Gmsh version.
+    
+    gmsh_path = dir('**/gmsh');
+    [~, version] = system([gmsh_path.folder, '/gmsh -version']);
+    version = textscan(version, '%s', 'delimiter', '\n', ...
+                       'whitespace', '');
+    version = version{1}{end};
+    assert(strcmp(version(1), '3'), ...
+        'Wrong Gmsh version detected - please use version 3.x.');
+    
     %% Create Gmsh input file.
 
     gmsh_file = 'tmp_mesh';
@@ -34,7 +46,6 @@ function mesh = createGmsh(bnd, args)
     
     %% Run Gmsh.
     
-    gmsh_path = dir('**/gmsh');
     system([gmsh_path.folder, '/gmsh -2 ', gmsh_file, '.geo -v 0']);
 
     %% Import mesh information from .msh file.
