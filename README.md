@@ -1,7 +1,7 @@
 # Install
 
 - clone the repository: `git clone git@git.tu-freiberg.de:ng/2d-lagrange.git`
-- get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file to `<repo_path>/+Mesh/External`
+- get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file somewhere to you repo, e.g. `<repo_path>/+Mesh/`
 
 Note that the code was developed at MATLAB 2017b on an Ubuntu 16.04.1 using Gmsh 3.0.6.
 <br/>
