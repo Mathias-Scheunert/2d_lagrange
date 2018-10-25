@@ -1,10 +1,11 @@
 # Install
 
 - clone the repository: `git clone git@git.tu-freiberg.de:ng/2d-lagrange.git`
+- get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file to `<repo_path>/+Mesh/External`
 
-Note that the code was developed at MATLAB 2017b.
+Note that the code was developed at MATLAB 2017b on an Ubuntu 16.04.1 using Gmsh 3.0.6.
 <br/>
-Hence, there might be some issues w.r.t. to missing MATLAB builtin functions at older version.
+Hence, there might be some issues w.r.t. to missing MATLAB builtin functions at older version or conflicts with new Gmsh versions.
 <br/>
 <br/>
 Update: MATLAB 2015 and 2016 supported
@@ -84,3 +85,14 @@ The following driver files are available for testing:
     - class for matlab unittest runner
     - uses reference solutions from DRIVE_FEvsRefSol and checks convergence rates for different source and BC types
     - provides L2 and H1 error
+
+# License
+
+Copyright 2018 Mathias Scheunert <mathias.scheunert@math.tu-freiberg.de>.
+This work is free. You can redistribute it and/or modify it under the terms of the Do What The Fuck You Want To Public License, Version 2, as published by Sam Hocevar.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# CI
+
+[![pipeline status](https://git.tu-freiberg.de/ng/2d-lagrange/badges/master/pipeline.svg)](https://git.tu-freiberg.de/ng/2d-lagrange/commits/master)
