@@ -1,7 +1,7 @@
 function mesh = createGmsh(bnd, args)
     % Stores mesh information of a mesh created by Gmsh.
     %
-    % Supported Gmsh version: 3.x
+    % Supported (tested) Gmsh version: 3.x, MSH file format version 2
     %
     % Therefore, 
     %   1) a .geo input file is created 
@@ -35,8 +35,12 @@ function mesh = createGmsh(bnd, args)
     version = textscan(version, '%s', 'delimiter', '\n', ...
                        'whitespace', '');
     version = version{1}{end};
-    assert(strcmp(version(1), '3'), ...
-        'Wrong Gmsh version detected - please use version 3.x.');
+    if ~strcmp(version(1), '3')
+        warning('Gmsh:versionNum', ...
+            sprintf(['Gmsh version %s.x detected - ', ...
+            'Function was tested only for version 3.x.'], version(1)));
+        warning('off', 'Gmsh:versionNum');
+    end
     
     %% Create Gmsh input file.
 
@@ -46,7 +50,8 @@ function mesh = createGmsh(bnd, args)
     
     %% Run Gmsh.
     
-    system([gmsh_path.folder, '/gmsh -2 ', gmsh_file, '.geo -v 0']);
+    system([gmsh_path.folder, '/gmsh -2 ', ...
+            gmsh_file, '.geo -v 0 -format msh2']);   
 
     %% Import mesh information from .msh file.
 

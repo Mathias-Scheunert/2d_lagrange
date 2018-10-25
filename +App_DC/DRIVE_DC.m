@@ -121,7 +121,7 @@ bnd.quad_ord = 1;
 
 %% Set up FEM.
 
-% Define number of grid refinements.
+% Define number of uniform grid refinements.
 refinement = 0;
 
 % Set order of Lagrange elements.

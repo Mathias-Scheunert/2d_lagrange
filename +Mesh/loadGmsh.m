@@ -4,7 +4,7 @@ function mesh = loadGmsh(name, varargin)
     % Additionally, an uniform mesh refinement can be applied before data
     % import.
     %
-    % Supported Gmsh version: 3.x
+    % Supported (tested) Gmsh version: 3.x, MSH file format version 2
     %
     % The function supports two operation modes:
     %   1) .msh file includes physical entities:
@@ -119,8 +119,12 @@ function mesh = loadGmsh(name, varargin)
     version = textscan(version, '%s', 'delimiter', '\n', ...
                        'whitespace', '');
     version = version{1}{end};
-    assert(strcmp(version(1), '3'), ...
-        'Wrong Gmsh version detected - please use version 3.x.');
+    if ~strcmp(version(1), '3')
+        warning('Gmsh:versionNum', ...
+            sprintf(['Gmsh version %s.x detected - ', ...
+            'Function was tested only for version 3.x.'], version(1)));
+        warning('off', 'Gmsh:versionNum');
+    end
     
     %% Refine uniformly.
     
@@ -130,7 +134,7 @@ function mesh = loadGmsh(name, varargin)
     name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
     copyfile(name, name_tmp);
     for i = 1:args.ref
-        system([gmsh_path.folder, '/gmsh -refine -v 0 ', ...
+        system([gmsh_path.folder, '/gmsh -refine -format msh2 -v 0 ', ...
             name_tmp]);
     end
     if args.verbosity
@@ -189,8 +193,9 @@ function mesh = loadGmsh(name, varargin)
     format_content = strsplit(format_content{:});
     if sscanf(format_content{1}, '%d') ~= 2 ...
         % As in principal all keywords were found, import may work.
-        warning(['File format differs from version 2. Import from ', ...
-                'different versions may lead to wrong results.']);
+        error(sprintf(['MSH file format version %s.x detected. ', ...
+            'Only MSH file format version 2.x is supported yet.'], ...
+            format_content{1}));
     end
        
     %% Get element information.
