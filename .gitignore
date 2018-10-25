@@ -11,3 +11,5 @@ test_*
 /test
 
 tests\.m
+
+\+Mesh/External/
