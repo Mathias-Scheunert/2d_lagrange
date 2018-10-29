@@ -77,8 +77,8 @@ mesh_type = 'gmsh_load';
 file_name = [pwd, '/+Test/', '2D_circ_complex.msh'];
 
 % Set up domain parameter.
-param.val = [1e0, 1e-2];
-param.name = {'inner_part', 'outer_part'};
+params.val = [1e0, 1e-2];
+params.name = {'inner_part', 'outer_part'};
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
@@ -104,7 +104,7 @@ fwd_params.bnd = bnd;
 fwd_params.FT_type = FT_type;
 fwd_params.FE_order = FE_order;
 fwd_params.ref = refinement;
-fwd_params.param = param;
+fwd_params.param = params;
 clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
       'refinement', 'param');
   
