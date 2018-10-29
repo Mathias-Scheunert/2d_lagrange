@@ -56,30 +56,38 @@ function mesh = appendEdgeInfo(mesh)
     [edge_list, ~, red2full] = unique(edge_list_full, ...
                                   'rows', 'first');
     
-    %% Check consistency with external mesh.
+    %% Handle external mesh.
     
     switch mesh.type
         case {'gmsh_create', 'gmsh_load'}
+            % As Gmsh only provides those edges, which are part of
+            % predefined boundary segments, they need to be related to the
+            % total list of edges in mesh.
+            
             % Ascendingly sort given bnd edge list.
-%             mesh.bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
             sort_bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
 
             % Find predetermined boundary edges in total edge list;
-            [edge2vtx_in_edge_list, idx_edge2vtx_in_edge_list] = ...
+            [bnd_edge2vtx_in_edge_list, idx_bnd_edge2vtx_in_edge_list] = ...
                 ismember(edge_list, sort_bnd_edge2vtx, 'rows');                
             
             % Check if every boundary edge is included in total edge list.
-            assert(length(find(edge2vtx_in_edge_list)) == ...
+            assert(length(find(bnd_edge2vtx_in_edge_list)) == ...
                 size(sort_bnd_edge2vtx, 1), ...
                 ['Not all given boundary edges could be found in grid. ', ...
                 'Make sure that all (straight) lines are associated ', ...
                 'with a physical line within the Gmsh input file.']);
             mesh = rmfield(mesh, 'bnd_edge2vtx');
             
-            % Expand mesh struct with mapping from gmsh bnd edge list to
-            % total edge list.
-            mesh.gmsh_bnd_edge2total_edge = edge2vtx_in_edge_list;
-            mesh.gmsh_bnd_edge2total_edge_map = idx_edge2vtx_in_edge_list;
+            % Expand gmsh bnd_edge logicals to comprise total edge number.
+            mesh.bnd_edge = bnd_edge2vtx_in_edge_list;
+            [~, ~, map_order] = find(idx_bnd_edge2vtx_in_edge_list);
+                        
+            % Expand domain boundary ids.
+            bnd_edge_part = zeros(length(mesh.bnd_edge), 1);
+            bnd_edge_part(bnd_edge2vtx_in_edge_list) = ...
+                mesh.bnd_edge_part(map_order);
+            mesh.bnd_edge_part = bnd_edge_part;
             
         case {'cube', 'rhomb'}
             % Nothing to do.

@@ -46,25 +46,8 @@ function mesh = appendBndInfo(mesh)
                                    (1:length(mesh.bnd_edge_part_name)).';
             
         case {'gmsh_create', 'gmsh_load'}
-            % Check input.
-            assert(isfield(mesh, 'gmsh_bnd_edge2total_edge'), ...
-                ['Mapping bewteen the boundary edges given by Gmsh ', ...
-                'and the entire edge list is missing. Make sure to ', ...
-                'apply Mesh.appendEdgeInfo() after loading a Gmsh mesh.']);
-            
-            % Expand gmsh bnd_edge logicals to comprise total edge number.
-            mesh.bnd_edge = mesh.gmsh_bnd_edge2total_edge;
-            [~, ~, map_order] = find(mesh.gmsh_bnd_edge2total_edge_map);
-                        
-            % Expand domain boundary ids.
-            bnd_edge_part = zeros(length(mesh.bnd_edge), 1);
-            bnd_edge_part(mesh.gmsh_bnd_edge2total_edge) = ...
-                mesh.bnd_edge_part(map_order);
-            mesh.bnd_edge_part = bnd_edge_part;
-
-            % Clean up.
-            mesh = rmfield(mesh, {'gmsh_bnd_edge2total_edge', ...
-                                  'gmsh_bnd_edge2total_edge_map'});
+            % Nothing to do, as these information are already part of the
+            % imported mesh.
             
         otherwise
             error('Unkown mesh type');
