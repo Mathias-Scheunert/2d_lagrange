@@ -534,6 +534,7 @@ function mesh = loadGmsh(name, varargin)
         % Summarize.
         % Note: The name definitions are adapted to the 2d-lagrange project.
         mesh = struct();
+        mesh.type = 'gmsh_load';
         mesh.dim = dim;
         mesh.vertices = vertices;
         if ~isempty(point_id_map)

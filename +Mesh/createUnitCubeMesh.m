@@ -93,6 +93,8 @@ function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
 
     % Summarize.
     mesh = struct();
+    mesh.type = 'cube';
+    mesh.bnd = bnd;
     mesh.dim = 2;    
     mesh.vertices = vertex_coords.';
     mesh.cell2vtx = cells.';

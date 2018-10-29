@@ -98,6 +98,8 @@ function mesh = createRhombMesh(bnd, verbosity)
     %% Summarize information.
     
     mesh = struct();
+    mesh.type = 'rhomb';
+    mesh.bnd = bnd;
     mesh.dim = 2;
     mesh.vertices = vert_list;
     mesh.cell2vtx = cell_list;

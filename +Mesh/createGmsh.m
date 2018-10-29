@@ -58,6 +58,10 @@ function mesh = createGmsh(bnd, args)
     mesh = Mesh.loadGmsh([gmsh_file, '.msh'], ...
         'verbosity', args.verbosity, ...
         'ref', args.ref);
+    
+    % Override type.
+    % TODO: may remove this type completely.
+    mesh.type = 'gmsh_create';
 
     %% Clean up.
     

@@ -105,7 +105,6 @@ function mesh = initMesh(var, varargin)
         otherwise 
             error('Unknown mesh type.');
     end
-    mesh.type = var;
     
     % Append edge information.
     if args.verbosity
@@ -129,7 +128,6 @@ function mesh = initMesh(var, varargin)
     if args.verbosity
        fprintf('Append BND info ... '); 
     end
-    mesh.bnd = args.bnd;
     mesh = Mesh.appendBndInfo(mesh);
     if args.verbosity
        fprintf('done.\n'); 
