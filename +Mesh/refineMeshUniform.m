@@ -149,10 +149,12 @@ function mesh = refineMeshUniform(mesh, ref_num)
             % Add mapping.
             if isfield(mesh, 'cell_loc2glob')
                 mesh.cell_loc2glob = [mesh.cell_loc2glob, cell_loc2glob];
-                mesh.edge_loc2glo = [mesh.edge_loc2glo; edge_loc2glo];
+                mesh.edge_loc2glo = [mesh.edge_loc2glo, {edge_loc2glo}];
             else
                 mesh.cell_loc2glob = {cell_loc2glob};
                 % TODO: check if this info is really required to be stored.
+                %       Consider to rather replace with a actual mapping, 
+                %       c.f. cell_loc2glob.
                 mesh.edge_loc2glo = {edge_loc2glo};
             end
 
