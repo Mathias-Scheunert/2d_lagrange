@@ -70,9 +70,9 @@ function bnd = getBndDOF(fe, mesh, bnd)
     end
     
     % Sort remaining information of bnd to match the order of mesh.
-    [~, name_bnd_in_mesh] = ismember(bnd.name, mesh.bnd_edge_part_name);
-    bnd.name = bnd.name(name_bnd_in_mesh);
-    bnd.val = cellfun(@(x) {x(name_bnd_in_mesh)}, bnd.val);
+    [~, sort_like_in_mesh] = ismember(mesh.bnd_edge_part_name, bnd.name);
+    bnd.name = bnd.name(sort_like_in_mesh);
+    bnd.val = cellfun(@(x) {x(sort_like_in_mesh)}, bnd.val);
     
     %% Obtain all DOF, belonging to the boundaries.
     
