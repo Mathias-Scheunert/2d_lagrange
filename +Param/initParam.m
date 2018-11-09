@@ -8,7 +8,8 @@ function param = initParam(mesh, info)
     %   mesh ... Struct, containing the mesh information.
     %            For a detailed description of the content of the mesh
     %            struct please read header of Mesh.initMesh.
-    %   info ... Struct, containing initial parameter info to be mapped.
+    %   info ... Struct, containing initial parameter name (Cell) and its 
+    %            conductivity value (Vector).
     %
     % OUTPUT PARAMETER
     %   param ... Vector [m x 1] of constant cell parameter values.
