@@ -66,6 +66,16 @@ function mesh = appendEdgeInfo(mesh)
             
             % Ascendingly sort given bnd edge list.
             sort_bnd_edge2vtx = sort(mesh.bnd_edge2vtx, 2);
+            check_gmsh_edges = sort_bnd_edge2vtx(:,1) == sort_bnd_edge2vtx(:,2);
+            if ~isempty(find(check_gmsh_edges, 1))
+                corrupt_edges = find(check_gmsh_edges);
+                warning(sprintf(['Corrupt edge detected: edge ', ...
+                    repmat('%d ', 1, length(corrupt_edges)), ...
+                    'has zero length. Ignoring that edge.'], ...
+                    corrupt_edges));
+                mesh.bnd_edge2vtx(corrupt_edges, :) = [];
+                sort_bnd_edge2vtx(corrupt_edges, :) = [];
+            end
 
             % Find predetermined boundary edges in total edge list;
             [bnd_edge2vtx_in_edge_list, idx_bnd_edge2vtx_in_edge_list] = ...
