@@ -97,7 +97,7 @@ function b = getDistributionRHS(fe, mesh, TX)
         % Use 'own' functionality to obtain cell index for corrupt points.
         % Get point coordinates w.r.t. the reference simplex.
         maps_fail = arrayfun(@(x) ...
-        {(Mesh.getAffineMap(x, mesh, TX(cell_idx_fail(ii),:)))}, ...
+        {(Mesh.getAffineMap(x, mesh, TX.coo(cell_idx_fail(ii),:)))}, ...
         (1:fe.sizes.cell).');
 
         % Check if point(s) is/are inside simplex.
@@ -110,9 +110,12 @@ function b = getDistributionRHS(fe, mesh, TX)
     
         % Obtain cell indices w.r.t to each TX point.
         % (For multiple hits just take the first cell)
-        cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
-        if isempty(cell_idx(cell_idx_fail(ii)))
-            error('No cell for observation point could be found.');
+        if isempty(find(cells_fit, 1, 'first'))
+            error(sprintf(['No cell for TX at x = %.3f, y = %.3f could ', ...
+                'be found. TX may lie outside the modeling domain.'], ...
+                TX.coo(cell_idx_fail(ii),1), TX.coo(cell_idx_fail(ii),2)));%#ok
+        else
+            cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
         end
     end
     
