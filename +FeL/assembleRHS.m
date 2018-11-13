@@ -64,6 +64,9 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
         case 'point_exact'
             getRHS = @getDistributionRHS;
             
+        case 'none'
+            getRHS = @(x, y, z) zeros(x.sizes.DOF, 1);
+            
         otherwise
             error('Unknown soure type.');
     end
