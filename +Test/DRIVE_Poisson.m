@@ -1,7 +1,7 @@
 % Script for setting up the 2D Poisson problem.
 %
 % Problem:
-%   -\grad(\sigma\grad(u)) = ...
+%   -\div(\sigma\grad(u)) = ...
 %   -\sigma\nabla²(u) = [0,f] in Omega = ([-1,1] x [-1,1])
 %              u(x,y) = g     at d_Omega
 %
