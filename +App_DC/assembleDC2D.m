@@ -2,7 +2,7 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     % Set up and assemble the 2D DC linear system and inverse FT info.
     %
     % SYNTAX
-    %   [fe, sol] = assembleDC25D(mesh, param, fwd_params, verbosity)
+    %   [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     %
     % INPUT PARAMETER
     %   mesh       ... Struct, containing the mesh information.
@@ -50,15 +50,13 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     fe = FeL.initFiniteElement(order, mesh, RX.coo, verbosity);
     bnd = FeL.assignBC(bnd, fe, mesh, param);
 
-    %% Treat 2.5D wavenumber domain handling and set up DC-FE system.
+    %% Set up 2D DC-FE system.
 
     % Set up invariant rhs vector.
     sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
-    A_GradDiv = FeL.assembleStiff(fe, mesh, param, verbosity);
-    A_Mass = FeL.assembleMass(fe, mesh, param, verbosity);
-    sol.A = A_GradDiv + A_Mass;
+    sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
     
     % Handle BC..
     sol = FeL.treatBC(fe, mesh, sol, bnd);
