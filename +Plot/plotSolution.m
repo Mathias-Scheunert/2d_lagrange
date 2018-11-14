@@ -1,8 +1,8 @@
-function [] = plotSolution(fe, mesh, u, param, verbosity)
+function [] = plotSolution(fe, mesh, u, varargin)
     % Visualize the solution of the 2D FE fwd problem.
     % 
     % SYNTAX
-    %   [] = plotSolution(fe, mesh, u, param, verbosity)
+    %   [] = plotSolution(fe, mesh, u[, varargin])
     %
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
@@ -15,11 +15,13 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
     %
     % OPTIONAL PARAMETER
     %   param     ... Vector, including the constant parameter value for
-    %                 each cell.
+    %                 each cell. [default = false]
     %   verbosity ... Logical, denoting if current status should be
-    %                 printed.
-    
-    debug = pick(1, false, true);
+    %                 printed.   [default = false]
+    %   debug     ... Logical, denoting if additional info to debug will be
+    %                 printed.   [default = false]
+    %   style     ... Character, denoting if solution will be plotted in
+    %                 '2D' or '3D'. [default = '2D']
     
     %% Check input
     
@@ -29,29 +31,38 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isvector(u) && length(u) == fe.sizes.DOF, ...
         'u - vector, containing the solution for at all DOF, expected.');
-    if nargin < 5
-        verbosity = false;
-    else
-        assert(islogical(verbosity), ...
-            'verbosity - logical, denoting if status should be printed, expected');
-    end
-    if nargin < 4
-        param = zeros(fe.sizes.cell, 1);
-    else
-        assert(isvector(param) && length(param) == fe.sizes.cell, ...
-            'param - vector, including the constant parameter values, expected');
-    end
+    
+    % Define optional input keys and its properties checks.
+    input_keys = {'param', 'verbosity', 'debug', 'style'};
+    assertParam = @(x) assert(isvector(x) && length(x) == fe.sizes.cell, ...
+        'param - vector, including the constant parameter values, expected');
+    assertVerbose = @(x) assert(islogical(x), ...
+        'verbosity - logical, denoting if status should be printed, expected');
+    assertDebug = @(x) assert(islogical(x), ...
+        'debug - logical, denoting if debug stuff is printed, expected');
+    assertStyle = @(x) assert(ischar(x) && any(strcmp(x, {'2D', '3D'})), ...
+        'style - character, denoting if figure is plotted in 2D or 3D, expected');
+    
+    % Create inputParser object and set possible inputs with defaults.
+    parser_obj = inputParser();
+    parser_obj.addParameter(input_keys{1}, zeros(fe.sizes.cell, 1), assertParam);
+    parser_obj.addParameter(input_keys{2}, false, assertVerbose);
+    parser_obj.addParameter(input_keys{3}, false, assertDebug);
+    parser_obj.addParameter(input_keys{4}, '2D', assertStyle);
+   
+    % Exctract all properties from inputParser.
+    parse(parser_obj, varargin{:});
+    args = parser_obj.Results;
     
     %% Get coordinates for all DOF.
 
     x = fe.DOF_maps.DOF_coo(:,1);
     y = fe.DOF_maps.DOF_coo(:,2);
-    if debug
+    if args.debug
         
-        if verbosity
+        if args.verbosity
            fprintf('Print mesh and nodes ... '); 
         end
-        
         % Plot mesh.
         Plot.plotMesh(mesh);
         hold on
@@ -71,37 +82,54 @@ function [] = plotSolution(fe, mesh, u, param, verbosity)
         cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
         patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
         hold off
-        
-        pause();
-        close(gcf);
+        if args.verbosity
+           fprintf('done.\n'); 
+        end
     end
     
     %% Add solution.
     
-    if verbosity
+    if args.verbosity
        fprintf('Print solution ... '); 
     end
     figure();
-    set(gca, 'Ydir', 'reverse');
+    axis('equal');
+    set(gca, 'Ydir', 'reverse') % As y should point downwards.
+    xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
+    ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
+    caxis('auto');
     % Display the solution for all DOF (at an adapted triangulation).
     switch fe.order
         case 1
-            trisurf(mesh.cell2vtx, x, y, u, 'edgecolor', 'none');
+            if strcmp(args.style, '3D')
+                trisurf(mesh.cell2vtx, x, y, u, 'edgecolor', 'none');
+            else
+                patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
+                      'FaceVertexCData', u, ...
+                      'FaceColor', 'flat', 'edgecolor', 'none');
+            end
         case 2
             mesh_plot = mesh;
             mesh_plot.type = 'basic';
             mesh_plot = Mesh.refineMeshUniform(mesh_plot, 1);
             [~, DOF2vtx_map] = ismember(mesh_plot.vertices, ...
                 fe.DOF_maps.DOF_coo, 'rows');
-            trisurf(mesh_plot.cell2vtx, ...
-                x(DOF2vtx_map), y(DOF2vtx_map), u(DOF2vtx_map), ...
-                'edgecolor', 'none');
+            if strcmp(args.style, '3D')
+                trisurf(mesh_plot.cell2vtx, ...
+                    x(DOF2vtx_map), y(DOF2vtx_map), u(DOF2vtx_map), ...
+                    'edgecolor', 'none');
+            else
+                patch('Faces', mesh_plot.cell2vtx, ...
+                      'Vertices', mesh_plot.vertices, ...
+                      'FaceVertexCData', u(DOF2vtx_map), ...
+                      'FaceColor', 'flat', 'edgecolor', 'none');
+            end
     end
     xlabel('x');
     ylabel('y');
-    view(3);
-    colorbar();
-    if verbosity
+    h = colorbar();
+    ylabel(h, 'solution amplitude');
+    if args.verbosity
        fprintf('done.\n'); 
     end
 end
