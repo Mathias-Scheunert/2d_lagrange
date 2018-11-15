@@ -95,8 +95,13 @@ if debugging
     topo = [];
 else
     % Add some arbitrary topography.
-    % (Including the TX RY positions)
-    topo = [TX.coo(1:2); RX.coo];
+    % (Including some TX/RX positions and points above TX/RX positions)
+    % Inculde all TX/RX points
+%     topo = [TX.coo; RX.coo];
+    % Inculde all TX/RX points with shift in y-dir.
+%     topo = [TX.coo; RX.coo(1:8, :); [RX.coo(9:end, 1), RX.coo(9:end, 2)-2]];
+    % Inculde only several TX/RX points with shift in y-dir.
+    topo = [TX.coo; RX.coo(1:8, :); [RX.coo(9:end-3, 1), RX.coo(9:end-3, 2)-2]];
     topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]; ...
             topo;
             [linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]
@@ -177,10 +182,11 @@ else
             cell_mid);
 
     % Set parameter for disturbed area.
-    params(cell_dist) = sig_anomaly;
+    param(cell_dist) = sig_anomaly;
+    mesh.parameter_domain(cell_dist) = 2;
 
     % Update parameter domain vector.
-    parameter_domain(cell_dist) = parameter_domain(cell_dist) + 1;
+    mesh.parameter_domain_name = [mesh.parameter_domain_name, 'anomaly'];
 end
 
 %% Assemble 2.5D DC problem.
