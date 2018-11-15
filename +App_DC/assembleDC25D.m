@@ -1,6 +1,33 @@
 function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     % Set up and assemble the 2.5D DC linear system and inverse FT info.
     %
+    % Problem in 3D:
+    %      x = [x, y, z]
+    %   \phi = \phi(x)
+    %           
+    %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
+    %                       \phi = 0             at d_Omega_1 (earth interior)
+    %               d_\phi / d_n = 0             at d_Omega_2 (surface)
+    %
+    % Problem in 2.5D (at z = 0!):
+    %       x = [x, y]
+    %   \phi' = \phi'(x, k_Z)
+    %
+    %   -\div(\sigma\grad(\phi')) + k_z^2 \sigma \phi' = I/2 \dirac(x_0)
+    %                    \phi' = 0             at d_Omega_1 (earth interior)
+    %            d_\phi' / d_n = 0             at d_Omega_2 (surface)
+    %
+    % such that
+    %    \phi = 2/pi \int_{0}^{\inf} \phi' dk_z
+    %
+    % 2.5D Variational problem:
+    %   a(u,v,k_z) = \int_Omega \grad(\phi') * \sigma \grad(v) + ...
+    %                k_z^2 \int_Omega \phi' * \sigma v
+    %   f(v)        = I \int_{Omega} \dirac(x_0) v
+    %
+    % Numerical integration over wavenumbers:
+    %   \phi = \sum_{l = 1}^{N} w_l \phi'(k_{z,l})
+    %
     % SYNTAX
     %   [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %

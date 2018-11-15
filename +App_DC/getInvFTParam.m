@@ -15,6 +15,24 @@ function params = getInvFTParam(TX, RX, type)
     %              information. See respective subfunctions for further
     %              details.
     %
+    % REMARKS
+    %   The 2.5D approach uses the bahavior of a known analytic solution
+    %   (e.g. point source in 3D half-space) to set up the numerical 
+    %   integration of the seperate 2D solutions (including choice of 
+    %   wavenumbers and weights) which forms the 2.5D solution.
+    %   This can only act as an approximation for the solution of an 
+    %   arbitrary shaped underground!
+    %   -> I.e. the solutions should be veryfied by comparing them to a 
+    %   full 3D simulation.
+    %   Furthermore, this implies that only one single point source can be 
+    %   treated by this approach such that multi-pole arrangements have to
+    %   be simulated by adding up solutions for several sources.
+    %
+    %   2.5D approach derived from:    Dey A., Morrison H.F.; 1979
+    %   num. integration derived from: Ralph-Uwe Börner (per.communication)
+    %                                  Bing Z.; 1998 (Dissertation)
+    %                                  Xu S.; 2000
+    %
     % TODO: Debug! Bing-variant still hase an offset w.r.t. analytic
     %       solution for homog. HR.
     

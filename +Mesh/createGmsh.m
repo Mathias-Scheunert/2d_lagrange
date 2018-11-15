@@ -14,7 +14,7 @@ function mesh = createGmsh(bnd, args)
     %
     % INPUT PARAMETER
     %   bnd  ... Boundaries of modeling area [xmin, xmax, ymin, ymax].
-    %   args ... Struct, may containing further vectorized (TX, Rx, topo)
+    %   args ... Struct, may containing further vectorized (TX, RX, topo)
     %            and scalar (ref) information.
     %
     % OUTPUT PARAMETER

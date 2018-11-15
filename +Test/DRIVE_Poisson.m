@@ -6,8 +6,8 @@
 %              u(x,y) = g     at d_Omega
 %
 % Variational problem:
-%   a(u,v) = \int_Omega \grad(u) * \sigma \grad(v) d(x,y)
-%   f(v)   = \int_Omega f v               d(x,y)
+%   a(u,v) = \int_Omega \grad(u) * \sigma \grad(v)
+%   f(v)   = \int_Omega f v
 %
 % Galerkin discretization:
 %   \sum_i^num(DOF) u_i \int_Omega \grad(u_i) * \sigma(x,y) \grad(v_j) d(x,y) 

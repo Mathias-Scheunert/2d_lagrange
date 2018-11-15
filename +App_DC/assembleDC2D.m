@@ -1,6 +1,20 @@
 function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     % Set up and assemble the 2D DC linear system and inverse FT info.
     %
+    % Problem in 2D:
+    %      x = [x, y]
+    %   \phi = \phi(x)
+    %           
+    %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
+    %                       \phi = phi_1         at d_Omega_1 (left)
+    %                       \phi = phi_2         at d_Omega_2 (right)
+    %               d_\phi / d_n = 0             at d_Omega_3 (top, bottom)
+    %
+    % 2D Variational problem:
+    %   a(u,v) = \int_Omega \grad(\phi') * \sigma \grad(v) + ...
+    %                \int_Omega \phi' * \sigma v
+    %   f(v)   = I \int_{Omega} \dirac(x_0) v
+    %
     % SYNTAX
     %   [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     %
