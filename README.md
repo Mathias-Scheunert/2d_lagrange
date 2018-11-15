@@ -1,7 +1,7 @@
 # Install
 
 - clone the repository: `git clone git@git.tu-freiberg.de:ng/2d-lagrange.git`
-- get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file somewhere to you repo, e.g. `<repo_path>/+Mesh/`
+- get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file somewhere to your repo, e.g. `<repo_path>/+Mesh/`
 
 Note that the code was developed at MATLAB 2017b on an Ubuntu 16.04.1 using Gmsh 3.0.6.
 <br/>
@@ -30,8 +30,7 @@ Mesh:
 - initial mesh variants: uniform splitted rectangle and rectangle domain including a rhombus
 - uniform mesh refinement
 - Gmsh: 
-    - workable Gmsh binary
-	- routine to create default DC Gmsh .geo input file (including topography, TX/RX positions)
+	- routine to create default Gmsh .geo input file (rectangular domain including topography, TX/RX positions) originally written for 2.5D DC problem
 	- routine to load arbitrary mesh from Gmsh .msh output files (2D and 3D supported)
 	- using Gmsh physical tags to identify parameter domains (surfaces) and boundary parts (lines) from .msh
 
