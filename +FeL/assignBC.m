@@ -141,9 +141,12 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
                 % As Neumann values needs to be evaluated at
                 % quadrature nodes leave everything untouched.
                 % See Fe.treatBC.m for its handling.
-                assert(isfield(bnd, 'quad_ord'), ...
-                    ['field "quad_ord" - Quadrature order for bnd ', ...
-                    'integral evaluation required.']);
+                if ~isfield(bnd, 'quad_ord')
+                    warning(['field "quad_ord" - Quadrature order ', ...
+                        'for bnd integral evaluation may be required. ', ...
+                        'Set order to 1.']);
+                    bnd.quad_ord = 1;
+                end
 
             otherwise
                 error('Bnd type: "%s" not supported yet.', bnd.type{ii});
