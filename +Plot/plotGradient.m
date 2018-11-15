@@ -1,5 +1,5 @@
 function [] = plotGradient(fe, mesh, u, varargin)
-    % Visualize the gradient of the solution at all cell midpoints.
+    % Visualize the normalized gradient of the solution at cell midpoints.
     %
     % Gradient of the solution at the midpoint of the cell k is given by:
     %   \grad Phi_k = \sum_i(k) ( B_k^(-T) \grad(\phi_i(k)(x_mid)) * u_i(k))
