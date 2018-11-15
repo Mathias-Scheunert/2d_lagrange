@@ -50,6 +50,7 @@ function mesh = createGmsh(bnd, args)
     
     %% Run Gmsh.
     
+    % TODO: if it occurs, catch error (message) and stop.
     system([gmsh_path.folder, '/gmsh -2 ', ...
             gmsh_file, '.geo -v 0 -format msh2']);   
 
@@ -110,16 +111,15 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     if verbosity
        fprintf('Define Gmsh input ... '); 
     end
-        
-    %% Set up domain basic geometry entities (points, lines).
-        
-    % Set domain boundaries.
+               
+    %% Set domain boundaries.
+    
     % If TX/RX positions are known, rather use an adapted offset to the
     % domain boundary.
-    if ~isempty([TX; RX])
+    TXRX = [TX; RX];
+    if ~isempty(TXRX)
         % Prepare.
         coo_offset = pick(1, 3500);
-        TXRX = [TX; RX];
         
         % Get specific extentions.
         min_x = min(TXRX(:,1));
@@ -141,7 +141,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
             'numerical solution.']));
     end
     
-    % Transform boundary cooridnates.
+    % Transform boundary coordinates.
     X = [bnd(1:2), fliplr(bnd(1:2))]; 
     Y = [bnd(3:4); bnd(3:4)];
     Y = Y(:).';
@@ -163,6 +163,8 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
         Y([1, 2]) = [min_x_y, max_x_y];
     end
     
+    %% Set up domain basic geometry entities (points, lines).
+    
     % Set maximal element size.
     %                  geometry based                  fix
     h_domain = pick(1, 5 * round(diff(bnd(1:2)) / 25), 10);
@@ -178,7 +180,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
        point_domain(i, 5) = h_domain; % element size around current point
     end
     
-    % Add topography.
+    % Add topography points to point list.
     if ~isempty(topo)
         
         % Set maximal element size.
@@ -199,46 +201,75 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     end
     
     % Add TX/RX positions.
-    if ~isempty([TX; RX])
+    if ~isempty(TXRX)
         % Initialize.
         %                geometry based               fix
         h_TXRX = pick(1, round(diff(bnd(1:2)) / 500), 0.1);
         
-        % Just reduce h, if points are already part of point_domain.
+        % Just reduce h, for those points that are already part of 
+        % point_domain (i.e. TX/RX coincides with topo).
         [txrx_in_pd, idx_txrx_in_pd] = ismember(... 
             point_domain(:, [2, 4]), TXRX, 'rows');
-        point_domain(txrx_in_pd,5) = h_TXRX;
+        point_domain(txrx_in_pd, 5) = h_TXRX;
         idx_txrx_not_in_pd = ~ismember(...
             1:size(TXRX, 1), idx_txrx_in_pd(idx_txrx_in_pd ~= 0));
         
+        % Handle all TX/RX points that are not included in topo.
         if any(idx_txrx_not_in_pd)
-            % Check if left TX/RX points are horizontally aligned with
-            % topography information. 
+            n_TXRX = length(find(idx_txrx_not_in_pd));
+            % Check if left TX/RX points are at least horizontally aligned
+            % with topography information. 
             if ~isempty(topo) && any(ismember(...
                     TXRX(idx_txrx_not_in_pd, 1), ...
-                    topo(idx_txrx_not_in_pd, 1)))
-               
-                % Get point index.
-                idx_internal = find(ismember(...
-                                  TXRX(idx_txrx_not_in_pd, 1), ...
-                                  topo(idx_txrx_not_in_pd, 1))...
-                                );
-                % Check, if point lies above the surface.
-                if any(TXRX(idx_internal, 1) < topo(idx_internal, 1))
-                    warning('TX/RX-Point lies outside the model domain.');
+                    topo(:, 1)))               
+                % Get corresponding point index in topo.
+                [idx_in_topo, ~] = find(ismember(...
+                                        topo(:, 1), ...
+                                        TXRX(idx_txrx_not_in_pd, 1) ...
+                                        ));
+                % Get corresponding point index in TXRX.
+                [idx_in_TXRX, ~] = find(ismember(...
+                                        TXRX(idx_txrx_not_in_pd, 1), ...
+                                        topo(:, 1) ...
+                                        ));
+                % Check, if any TX/RX point lies above the surface.
+                if any(TXRX(idx_in_TXRX, 2) < topo(idx_in_topo, 2))
+                    error(['TX/RX-Point lies outside the model ', ...
+                        'domain which is specified by the topography.']);
                 end
                 
-                % Add points where finer mesh is needed to interior of 
-                % the model domain.
-                n_TXRX = length(idx_internal);
-                point_internal = [n_domain + (1:n_TXRX).', ...
-                    TXRX(idx_internal,1), ...
-                    zeros(n_TXRX, 1), ...
-                    TXRX(idx_internal,2), ...
-                    h_TXRX + zeros(n_TXRX, 1)];
+                % Otherwise add points to interior of the model domain.
+                % (finer mesh is needed)
+                n_TXRX_intern = length(idx_in_topo);
+                n_TXRX_add = n_TXRX - n_TXRX_intern;
+                tmp_idx = find(idx_txrx_not_in_pd);
+                idx_internal = tmp_idx(idx_in_TXRX);
+                % Make sure that the ongoing numbering for the internal
+                % points starts at the end of all points in point_domain
+                % list (also including those TX/RX which are not handled 
+                % yet)
+                n_domain = n_domain + n_TXRX_add;
+                point_internal = [n_domain + (1:n_TXRX_intern).', ...
+                    TXRX(idx_internal, 1), ...
+                    zeros(n_TXRX_intern, 1), ...
+                    TXRX(idx_internal, 2), ...
+                    h_TXRX + zeros(n_TXRX_intern, 1)];
                 
-                % Remove point(s) from index vector.
-                idx_txrx_not_in_pd(idx_internal) = false;
+                % Remove inerior point(s) from index vector.
+                idx_txrx_not_in_pd(tmp_idx(idx_in_TXRX)) = false;
+                
+                % Add all remaining points to the point_domain list.
+                % Get point coordinates.
+                TXRX_to_add = TXRX(idx_txrx_not_in_pd, :);
+                % Create input matrix (without numbering) for above points.
+                point_TXRX = [TXRX_to_add(:,1), zeros(n_TXRX_add, 1), ...
+                              TXRX_to_add(:,2), h_TXRX + zeros(n_TXRX_add, 1)];
+                % Add TX/RX input matrix to current point_domain list and
+                % sort w.r.t. x-coordinate.
+                tmp_point_domain = [sortrows([point_domain(1:end-2, 2:end); point_TXRX]); ...
+                                    point_domain(end-1:end, 2:end)];
+                % Prepend ongoing numbering.
+                point_domain = [(1:n_domain).', tmp_point_domain];    
                 
             else
                 % Set points where finer mesh is needed to be part of the 
@@ -262,9 +293,6 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
                 point_domain = point_domain(idx_sort_domain,:);
                 point_domain = [point_domain; point_tmp];
                 point_domain(:,1) = 1:n_domain;
-                
-                % Remove point(s) from index vector.
-                idx_txrx_not_in_pd(idx_txrx_on_domain) = false;
             end            
         end
     end
@@ -305,25 +333,23 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     fprintf(fileID, ...
         'Plane Surface(%d) = {%d};\n', id_plane_surface, id_line_loop);
     
-    if exist('idx_txrx_not_in_pd', 'var')
+    if exist('n_TXRX_intern', 'var')
         % Add detached points.
-        if any(idx_txrx_not_in_pd)
-            fprintf(fileID, '\n');
-            for i = 1:n_TXRX
-                fprintf(fileID, 'Point(%d) = {%d, %d, %d, %d};\n', ...
-                    point_internal(i,:));
-            end
+        fprintf(fileID, '\n');
+        for i = 1:n_TXRX_intern
+            fprintf(fileID, 'Point(%d) = {%d, %d, %d, %d};\n', ...
+                point_internal(i,:));
         end
 
         % Add detached points to surface.
         % (Only in this case they will be considered by the meshing routine.)
-        if any(idx_txrx_not_in_pd) && n_TXRX > 1
+        if n_TXRX_intern > 1
             fprintf(fileID, '\n');
             fprintf(fileID, ...
-                ['Point{', repmat('%d, ', 1, n_TXRX-1),'%d} In Surface{%d};\n'], ...
+                ['Point{', repmat('%d, ', 1, n_TXRX_intern-1),'%d} In Surface{%d};\n'], ...
                 point_internal(:, 1), id_plane_surface);
 
-        elseif any(idx_txrx_not_in_pd) && n_TXRX == 1
+        elseif n_TXRX_intern == 1
             fprintf(fileID, '\n');
             fprintf(fileID, ...
                 'Point{%d} In Surface{%d};\n', ...
