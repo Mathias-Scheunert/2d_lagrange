@@ -57,8 +57,9 @@ Boundary conditions:
 - homogeneous and inhomogeneous Neumann
 
 Visualization:
-- mesh with parameter and edge orientations and normals
-- Lagrange FE solution within domain and observations
+- mesh with parameter, edge orientations and normals
+- Lagrange FE solution within domain/mesh
+- Lagrange FE solution gradient within domain/mesh
 - Raviart-Thomas elements/basis functions (on local, reference simplex and in global mesh)
 
 # Applications:
@@ -85,6 +86,14 @@ The following driver files are available for testing:
     - class for matlab unittest runner
     - uses reference solutions from DRIVE_FEvsRefSol and checks convergence rates for different source and BC types
     - provides L2 and H1 error
+
+# Usage
+
+To be able to set up own FE problems and to (hopefully) understand how the code and occuring variables are structured, please have a look at
+- DRIVE_HowTo
+
+This script is considered to provide code snippets that can be copy&paste and explain their meaning.
+Most of them are themselves copy&paste from the above mentioned DRIVE_ files.
 
 # License
 
