@@ -163,7 +163,8 @@ u_ref = arrayfun(@(x, y) TX.ref_sol_u.f(x, y), ...
     fe.DOF_maps.DOF_coo(:, 1), fe.DOF_maps.DOF_coo(:, 2));
 
 if plotting
-    Plot.plotSolution(fe, mesh, u_ref, param, verbosity);
+    Plot.plotSolution(fe, mesh, u_ref, ...
+        'param', param, 'verbosity', verbosity, 'style', '3D');
         set(gcf, 'Units', 'normalized', 'Position', [0.05, 0.25, 0.45, 0.5]);
         title('Ref. sol.');
         drawnow();
@@ -180,7 +181,8 @@ if plotting
     z_lim = cur_fig.CurrentAxes.ZLim;
 
     % Get approx. FE-solution.
-    Plot.plotSolution(fe, mesh, u, param, verbosity);
+    Plot.plotSolution(fe, mesh, u, ...
+        'param', param, 'verbosity', verbosity, 'style', '3D');
         set(gcf, 'Units', 'normalized', 'Position', [0.5, 0.25, 0.45, 0.5]);
         title('FE sol.');
         zlim(z_lim);

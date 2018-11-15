@@ -181,7 +181,8 @@ u = FeL.solveFwd(sol, fe, verbosity);
 %% Plot solution.
 
 % Solution field.
-Plot.plotSolution(fe, mesh, u, param, verbosity);
+Plot.plotSolution(fe, mesh, u, ...
+    'param', param, 'verbosity', verbosity, 'style', '3D');
 
 % Add profile.
 % Get solution at RX positions.
