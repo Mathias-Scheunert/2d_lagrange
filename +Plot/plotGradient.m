@@ -8,7 +8,7 @@ function [] = plotGradient(fe, mesh, u, varargin)
     %   i = index of DOF of cell k
     %
     % SYNTAX
-    %   [] = plotSolution(fe, mesh, u[, varargin])
+    %   [] = plotGradient(fe, mesh, u[, varargin])
     %
     % INPUT PARAMETER
     %   fe   ... Struct, including all information to set up Lagrange FE,
@@ -25,7 +25,7 @@ function [] = plotGradient(fe, mesh, u, varargin)
     %   param     ... Vector [n x 1], denoting the cell parameters.
     %                 [default = NaN*[number_of_cells x 1]]
     %   sign      ... Character, denoting if gradient is oriented on 'pos'
-    %                 or 'neg' direction. [default = 'neg']
+    %                 or 'neg' direction. [default = 'pos']
     %
     % REMARKS
     %   Note that the length of the plotted gradient vector arrows in a 
