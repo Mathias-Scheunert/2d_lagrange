@@ -7,7 +7,8 @@ return;
 % Available/predefined problems:
 % (see respective DRIVE_ files)
 %   Poisson-eq for a point source in 2.5D         -> App_DC.DRIVE_DC
-%   Poisson-eq for a point source in 2D           -> Test.Drive_Poisson
+%   Poisson-eq for a point source in 2D           -> Test.DRIVE_Poisson
+%   Poisson-eq for a hom. background field in 2D  -> Test.DRIVE_DC2D
 %
 % Available rhs:
 % (see section "Define problem specific nodal geometry.")
@@ -15,7 +16,7 @@ return;
 %   Analytic reference solution                   -> 'reference'
 %   Point source (Dirac)                          -> 'point_exact'
 %   Approx. point source by Gaussian distribution -> 'point_approx'
-%       -> Don't use the last variant, as it is not properly tested yet!
+%       -> Don't use the last variant, as it is not properly tested!
 %
 % Available mesh-creation-routines:
 % (see section "Set up mesh.")
@@ -27,6 +28,9 @@ return;
 %       -> requires external software Gmsh
 %       -> TX/RX coordinates and topography info (x,y-coords) have to be
 %          set up in advance
+%       -> adapted to DC application (e.g. ymin is associated with the
+%          earth's surface, if TX/RX are detached from topography they will
+%          form the surface/boundary)
 %
 % Available boundary conditions:
 % (see section "Define problem specific domain information.")
