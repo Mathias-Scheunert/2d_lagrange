@@ -30,7 +30,8 @@ function I = getInterpolation(fe, mesh, point)
     assert(isempty(point) || (ismatrix(point) && size(point, 2) == 2), ...
         'point - matrix nx2, containing coordinates, expected.');
     if isempty(point)
-        I = [];
+        % Leave solution untouched.
+        I = eye(fe.sizes.DOF);
         return;
     end
     
