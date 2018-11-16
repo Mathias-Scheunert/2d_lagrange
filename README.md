@@ -81,6 +81,10 @@ The following driver files are available for testing:
     - 2.5D DC problem with a 3D-point source
     - homogeneous Dirichlet BC at boundaries in subsurface, homogeneous Neumann BC at boundary on surface
     - incorporation of an external mesh, created by Gmsh
+- DRIVE_DC2D:
+    - 2D problem for a homogeneous electrical background field
+    - rectangular domain including a conductive circle (equals infinit cylinder in homogenous halfspace)
+    - incorporation of an external mesh, created by Gmsh
 - testLagrange:
     - class for matlab unittest runner
     - uses reference solutions from DRIVE_FEvsRefSol and checks convergence rates for different source and BC types
