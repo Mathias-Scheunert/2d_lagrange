@@ -181,7 +181,9 @@ if plotting
     z_lim = cur_fig.CurrentAxes.ZLim;
 
     % Get approx. FE-solution.
-    Plot.plotSolution(fe, mesh, u, ...
+    % Note: in order to obtain a multipol solution, the solution vectors 
+    % are just summed up.
+    Plot.plotSolution(fe, mesh, sum(u, 2), ...
         'param', param, 'verbosity', verbosity, 'style', '3D');
         set(gcf, 'Units', 'normalized', 'Position', [0.5, 0.25, 0.45, 0.5]);
         title('FE sol.');
@@ -189,7 +191,7 @@ if plotting
         drawnow();
     % Add profile.
     if ~isempty(RX)
-        phi_FE = fe.I * u;
+        phi_FE = fe.I * sum(u, 2);
         hold on
             plot3(RX(:,1), RX(:,2), phi_FE, 'r', 'LineWidth', 2);
         hold off

@@ -56,13 +56,17 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     end
     
     switch TX.type
-        case {'reference', 'point_approx'}
+        case {'reference'}
             assert(all(isfield(TX, {'ref_sol'})), ...
                 'TX.ref_sol - function handle to ref. solution, expected.');
             getRHS = @getFunctionRHS;
             
         case 'point_exact'
             getRHS = @getDistributionRHS;
+            
+        case 'point_approx'
+            error(['Using approximate point source is not recommended. ', ...
+                'Please rather use "point_exact".']);
             
         case 'none'
             getRHS = @(x, y, z) zeros(x.sizes.DOF, 1);
@@ -79,10 +83,14 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
 end
 
 function b = getDistributionRHS(fe, mesh, TX)
-    % The assembling of the rhs vector for a distribution rhs (Dirac) 
+    % The assembling of the rhs vector(s) for a distribution rhs (Dirac) 
     % follows the same procedure as assembling the interpolation operator.
     % I.e. the evaluation of basisfunctions at the source location whereas
     % the source strengh acts as scaling.
+    %
+    % Multiple sources will be treated as separate monopol sources rather
+    % than a single multipol.
+    % Note that a multipol problem can easily be obtained by superposition.
 
     % Get common sizes.
     n_point = size(TX.coo, 1);
@@ -138,14 +146,14 @@ function b = getDistributionRHS(fe, mesh, TX)
         cur_base(:, kk) = TX.val(kk) * fe.base.Phi(cur_x_ref, cur_y_ref).';
     end
     
-    % Set up rhs vector for the linear combination of respective 
-    % basis functions.
+    % Set up rhs vector(s) for the linear combination of respective basis
+    % functions.
     n_DOF = fe.sizes.DOF;
     n_DOF_loc = fe.sizes.DOF_loc;
     i = cells2DOF(:);
-    j = ones(n_point * n_DOF_loc, 1);
+    j = kron((1:n_point).', ones(n_DOF_loc, 1));
     s = cur_base(:);
-    b = sparse(i, j, s, n_DOF, 1);
+    b = sparse(i, j, s, n_DOF, n_point);
 end
 
 function b = getFunctionRHS(fe, mesh, TX)

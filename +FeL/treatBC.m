@@ -115,30 +115,30 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
     % As the already known Dirichlet values and the linear equations for 
     % the respective DOF don't need to be considered in the FE linear 
     % system, they can be excluded.
-    b_dirichlet = zeros(fe.sizes.DOF ,1);
+    b_dirichlet = zeros(size(sol.b));
     if any(bnd.val ~= 0)
         % To couple the inhomogeneouse Dirichlet values with the other DOF
         % the rhs needs to be modyfied.
-        % Create a rhs vector which only includes Dirichlet values.
+        % Create rhs vector(s) which only includes Dirichlet values.
         % Pure edge DOF:
-        b_dirichlet(bnd.DOF) = bnd.val;
+        b_dirichlet(bnd.DOF,:) = repmat(bnd.val, 1, size(sol.b,2));
         
         % Map this vector with the full linear system.
         b_dirichlet_mod = sol.A * b_dirichlet;
         
         % Subtract the result from the original rhs vector
-        sol.b = sol.b - b_dirichlet_mod;        
+        sol.b = sol.b - b_dirichlet_mod;
     end
     % Reduce system.
     DOF_req = ~ismember(1:fe.sizes.DOF, bnd.DOF).';
     % RHS vector.
-    sol.b = sol.b(DOF_req);
+    sol.b = sol.b(DOF_req,:);
     % System matrix.
     sol.A = sol.A(DOF_req, DOF_req);
     
     %% Append Dirichlet bnd info.
     
-    sol.dirichlet.val = b_dirichlet(bnd.DOF);
+    sol.dirichlet.val = b_dirichlet(bnd.DOF,1);
     sol.dirichlet.DOF_req = DOF_req;
     sol.dirichlet.bnd_DOF = bnd.DOF;
     

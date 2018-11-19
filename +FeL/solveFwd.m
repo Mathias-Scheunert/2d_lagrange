@@ -47,9 +47,9 @@ function u = solveFwd(sol, fe, verbosity)
         if verbosity
            fprintf('Treat Dirichlet DOFs ... '); 
         end
-        u = zeros(fe.sizes.DOF, 1);
-        u(sol.dirichlet.DOF_req) = u_red;
-        u(sol.dirichlet.bnd_DOF) = sol.dirichlet.val;
+        u = zeros(fe.sizes.DOF, size(sol.b, 2));
+        u(sol.dirichlet.DOF_req,:) = u_red;
+        u(sol.dirichlet.bnd_DOF,:) = repmat(sol.dirichlet.val, 1, size(sol.b, 2));
         if verbosity
            fprintf('done.\n');
         end

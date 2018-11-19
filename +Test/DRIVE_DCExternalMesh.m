@@ -133,7 +133,5 @@ u_FE = App_DC.solveDC25D(fe, sol, FT_info, verbosity);
 
 Plot.plotMesh(mesh, param);
 colorbar;
-Plot.plotSolution(fe, mesh, u_FE);
-Plot.plotSolution(fe, mesh, u_FE);
-view(2);
-axis('equal');
+Plot.plotSolution(fe, mesh, sum(u_FE, 2));
+Plot.plotSolution(fe, mesh, sum(u_FE, 2), 'style', '3D');

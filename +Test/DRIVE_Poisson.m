@@ -181,12 +181,14 @@ u = FeL.solveFwd(sol, fe, verbosity);
 %% Plot solution.
 
 % Solution field.
-Plot.plotSolution(fe, mesh, u, ...
+% Note: in order to obtain a multipol solution, the solution vectors are
+% just summed up.
+Plot.plotSolution(fe, mesh, sum(u, 2), ...
     'param', param, 'verbosity', verbosity, 'style', '3D');
 
 % Add profile.
 % Get solution at RX positions.
-phi = fe.I * u;
+phi = fe.I * sum(u, 2);
 hold on
     plot3(RX(:,1), RX(:,2), phi, 'r', 'LineWidth', 2);
 hold off
