@@ -1,11 +1,16 @@
 function params = getInvFTParam(TX, RX, type)
     % Get weights and or nodes of the quadrature approach for inverse FT.
     %
+    % For multiple TX a general set of weights w and wavenumbers k is
+    % determined.
+    % (Note: w and k can be determined for each m TX positions but this 
+    % will lead to m unique linear systems.)
+    %
     % SYNTAX
     %   params = getInvFTParam(TX, RX, type)
     %
     % INPUT PARAMETER
-    %   TX   ... Vector [1 x 2], denoting the source position.
+    %   TX   ... Vector [m x 2], denoting the source positions.
     %   RX   ... Matrix [n x 2], denoting the receiver positions.
     %   type ... Char, denoting the quadrature type.
     %            type = {'Boerner', 'Bing', 'Xu'}
@@ -38,8 +43,8 @@ function params = getInvFTParam(TX, RX, type)
     
     %% Check input.
     
-    assert(isvector(TX) && length(TX) == 2, ...
-        ['TX - Vector [1 x 2] denoting source position, expected. ', ...
+    assert(ismatrix(TX) && size(TX, 2) == 2, ...
+        ['TX - Matrix [m x 2] denoting source position, expected. ', ...
         'This is required in order to derive propper spatial wave ', ...
         'number selection']);
     assert(ismatrix(RX) && size(RX, 2) == 2, ...
@@ -53,8 +58,9 @@ function params = getInvFTParam(TX, RX, type)
     
     % Define number od wavenubers.
     % TODO: find usefull approach to somehow predetermine numbers of k's.
-    n_k = pick(2, 8, 17);
+    n_k = pick(3, 8, 17, 25);
     
+    % Iterate over TX positions.
     params = struct();
     switch type
         case 'Boerner'
@@ -84,8 +90,8 @@ function [k, w, n] = getInvFTBoerner(TX, RX, n)
     %   [k, w, n] = getInvFTBoerner(TX, RX, n)
     %
     % INPUT PARAMETER
-    %   TX ... Vector of TX position coordinates.
-    %   RX ... Vector of RX position coordinates.
+    %   TX ... Matrix of TX position coordinates.
+    %   RX ... Matrix of RX position coordinates.
     %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
@@ -97,7 +103,17 @@ function [k, w, n] = getInvFTBoerner(TX, RX, n)
     %% Prepare parameter.
     
     % Get TX-RX offsets.
-    r_TX2RX = sqrt((TX(1) - RX(:,1)).^2 + (TX(2) - RX(:,2)).^2);
+    r_TX2RX = [];
+    for kk = 1:size (TX, 1)
+        cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
+        
+        % Exclude TX == RX.
+        cur_TX2RX(cur_TX2RX == 0) = [];
+        
+        % Summarize.
+        r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
+    end
+    r_TX2RX = unique(r_TX2RX);
     
     % Get critical wavenumber (transition of asymptotic behavior).
     k_crit = 1 / (2 * min(r_TX2RX));
@@ -133,8 +149,8 @@ function [k, n] = getInvFTBing(TX, RX, n)
     %   [k, n] = getInvFTBing(TX, RX)
     %
     % INPUT PARAMETER
-    %   TX ... Vector of TX position coordinates.
-    %   RX ... Vector of RX position coordinates.
+    %   TX ... Matrix of TX position coordinates.
+    %   RX ... Matrix of RX position coordinates.
     %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
@@ -144,7 +160,17 @@ function [k, n] = getInvFTBing(TX, RX, n)
     %% Prepare parameter.
     
     % Get TX-RX offsets.
-    r_TX2RX = sqrt((TX(1) - RX(:,1)).^2 + (TX(2) - RX(:,2)).^2);
+    r_TX2RX = [];
+    for kk = 1:size (TX, 1)
+        cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
+        
+        % Exclude TX == RX.
+        cur_TX2RX(cur_TX2RX == 0) = [];
+        
+        % Summarize.
+        r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
+    end
+    r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
     r_max = max(r_TX2RX);
 
@@ -184,8 +210,8 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     %   [k, n] = getInvFTXu(TX, RX)
     %
     % INPUT PARAMETER
-    %   TX ... Vector of TX position coordinates.
-    %   RX ... Vector of RX position coordinates.
+    %   TX ... Matrix of TX position coordinates.
+    %   RX ... Matrix of RX position coordinates.
     %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
@@ -197,7 +223,17 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     %% Prepare parameter.
     
     % Get TX-RX offsets.
-    r_TX2RX = sqrt((TX(1) - RX(:,1)).^2 + (TX(2) - RX(:,2)).^2);
+    r_TX2RX = [];
+    for kk = 1:size (TX, 1)
+        cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
+        
+        % Exclude TX == RX.
+        cur_TX2RX(cur_TX2RX == 0) = [];
+        
+        % Summarize.
+        r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
+    end
+    r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
     r_max = max(r_TX2RX);
     

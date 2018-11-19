@@ -75,12 +75,14 @@ TX.type = 'point_exact';
 TX.coo = [0, 0];                    % location [x, y]
 TX.val = 1;                         % source strengh
 % 2.2) multiple Dirac point sources
+%   -> Multiple source points will generate multiple rhs vectors 
+%      (block-rhs) which lead to a multiple solutions vectors.
 TX.type = 'point_exact';
 TX.coo = [0, 0; 1, 1];              % location [x_1, y_1; x_2, y_2; ...]
 TX.val = [1; -1];
 
 % 3) an analytic reference solution
-%   -> this source type was introduced to verify the code, as it allows for
+%   -> This source type was introduced to verify the code, as it allows for
 %   convergence studies.
 TX.type = 'reference';
 TX.ref_sol_u = RefSol.getSin(); 
@@ -140,6 +142,15 @@ mesh = Mesh.initMesh(mesh_type, 'bnd', domain_bnd, ...
     'RX', RX.coo, 'dom_name', '<name-of-halfspace>');
 
 % 3) load an external mesh (currently only Gmsh is supported)
+% Some information requirements are set, such that an arbitrary grid can be
+% used:
+% - All areas of same constant parameter (Gmsh: surface) have to be 
+%   associated with a name tag (Gmsh: physical surface name) as they will 
+%   be used to identify the parameter domains.
+% - All boundaries of the mesh (Gmsh: line loop, straight line) that should 
+%   be equipped with boundary conditions in the fwp (otherwise homogenous 
+%   Neumann are applied per default) have to be associated with a name tag 
+%   (Gmsh: physical line name)
 mesh_type = 'gmsh_load';
 msh_name = '<meshname>.msh';
 mesh = Mesh.initMesh('gmsh_load', 'name', msh_name);

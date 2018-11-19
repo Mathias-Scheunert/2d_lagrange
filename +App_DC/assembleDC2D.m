@@ -72,7 +72,7 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     % Set up invariant system matrix parts.
     sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
     
-    % Handle BC..
+    % Handle BC.
     sol = FeL.treatBC(fe, mesh, sol, bnd);
 
     if verbosity

@@ -86,7 +86,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     rhs = FeL.assembleRHS(fe, mesh, TX, verbosity);
 
     % Set up invariant system matrix parts.
-    A_GradDiv = FeL.assembleStiff(fe, mesh, param, verbosity);
+    A_DivGrad = FeL.assembleStiff(fe, mesh, param, verbosity);
     A_Mass = FeL.assembleMass(fe, mesh, param, verbosity);
 
     % Get parameter for inverse spatial Fourier transform.
@@ -97,12 +97,13 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
         fprintf('Assemble linear system and incorporate BC ... '); 
     end
     sol = cell(FT_info.n, 1);
+    % TODO: avoid storing redundand information.
     for ii = 1:(FT_info.n)
         % Set up system matrix
-        sol{ii}.A = A_GradDiv + FT_info.k(ii)^2 * A_Mass;
+        sol{ii}.A = A_DivGrad + FT_info.k(ii)^2 * A_Mass;
 
         % Set up rhs.
-        sol{ii}.b = (1 / 2) * rhs;
+        sol{ii}.b = (1 / 2) .* rhs;
 
         % Handle boundary conditions.
         sol{ii} = FeL.treatBC(fe, mesh, sol{ii}, bnd);

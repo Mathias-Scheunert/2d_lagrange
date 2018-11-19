@@ -119,7 +119,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     TXRX = [TX; RX];
     if ~isempty(TXRX)
         % Prepare.
-        coo_offset = pick(1, 3500);
+        coo_offset = pick(2, 3500, 5500);
         
         % Get specific extentions.
         min_x = min(TXRX(:,1));
