@@ -262,9 +262,19 @@ function all_info = readBERTData(name, verbosity)
         cur_text = 'Electrode or configuration data was missing in file.';
         warning(cur_text);
         warn_text = [warn_text; cur_text];
-    else 
-        dim = num2str(length(subhead_info{1}));
-        type = [dim, 'D'];
+    end
+    
+    % Set dimension of the measurement.
+    % I.e. if electrodes are placed along a profile a 2D problem and if
+    % they are arbitrarily distributed a 3D problem is discribed.
+    dim = num2str(length(subhead_info{1}));
+    type = [dim, 'D'];
+
+    % Check if 2D problem is given in 3 coordinates.
+    % Expect z-coordinated to refer to electrode height (as defined in 
+    % BERT format).
+    if all(block_info{1}(1,2) == block_info{1}(:,2))
+        type = '2D';
     end
     
     if ~isempty(block_info{3}) && ~isempty(block_info{1})
