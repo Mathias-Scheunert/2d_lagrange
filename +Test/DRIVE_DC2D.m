@@ -98,8 +98,8 @@ u_FE = FeL.solveFwd(sol, fe, verbosity);
 Plot.plotGradient(fe, mesh, u_FE(:,1), 'sign', 'neg', 'param', param);
 title('Normalized E-field for cylinder in a homogeneous media.');
 
-Plot.plotGradient(fe, mesh, u_FE(:,2), 'sign', 'neg', 'param', param);
-title('Normalized E-field for cylinder in a homogeneous media.');
+% Plot.plotGradient(fe, mesh, u_FE(:,2), 'sign', 'neg', 'param', param);
+% title('Normalized E-field for cylinder in a homogeneous media.');
 
 % Note: in order to obtain a multipol solution, the solution vectors are
 % just summed up.
