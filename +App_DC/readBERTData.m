@@ -65,15 +65,15 @@ function all_info = readBERTData(name, verbosity)
     n_head = length(head_str);
              
     % Predefine standardized data tokens.
-    % (These are the subheader column tokens).
+    % (These are the 'subheader' column tokens/names).
     data_token = ...
         {{'x', 'y', 'z'}; ...
-         {'a',  'b',  'm',  'n',  'rhoa', 'rho', 'err', 'ip', 'ipErr', 'u', 'i'}; ...
+         {'a',  'b',  'm',  'n',  'rhoa', 'rho', 'err', 'ip', 'ipErr', 'u', 'i', 'k', 'valid'}; ...
          {'x', 'h'} ...
         };
     data_token_alternative = ...
         {{'', '', ''}; ...
-         {'c1', 'c2', 'p1', 'p2', 'Ra',   'r',   '',    '',   '',      '',  ''}; ...
+         {'c1', 'c2', 'p1', 'p2', 'Ra',   'r',   '',    '',   '',      '',  '',  '',  ''}; ...
          {'', ''} ...
         };
     
@@ -93,10 +93,14 @@ function all_info = readBERTData(name, verbosity)
     % TODO: check if there might be further strange formatting issues to
     %       handle here.
     file_content = regexprep(file_content, char(9), ' ');
+
     
     % Store each line of the input file in a seperate cell.    
     file_content = textscan(file_content,  '%s', 'Delimiter', '\n');
     file_content = file_content{1};
+    
+    % Delet leading and tailing whitspaces.
+    file_content = strtrim(file_content);
     
     % Check file.
     assert(~isempty(file_content), 'Empty or corrupt file detected.');
@@ -106,11 +110,32 @@ function all_info = readBERTData(name, verbosity)
     
     head_line_idx = false(n_line, n_head);
     for ii = 1:n_head
-        % Find header line index.
-        % TODO: add variant, if no header string is set - use a single
-        %       double at a single line as indicator for a block header.
+        % Find header line index by searching for token.
         head_line_idx(:,ii) = contains(file_content, head_str{ii}, ...
                                        'IgnoreCase', true);
+                                   
+        % If no token was provided, search for the subheader lines,
+        % starting with a comment, instead.
+        if all(~head_line_idx(:,ii))           
+           % Search for comment token in every line.
+           if ~exist('subhead_line_idx', 'var')
+               subhead_line_idx = cellfun(@(x) strcmp(x(1), comment_tok), file_content);
+               subhead_line_idx = find(subhead_line_idx);
+               n_subhead_line = length(subhead_line_idx);
+               
+               % Check consistency to expected BERT format.
+               assert(n_subhead_line == 2 || n_subhead_line == 3, ...
+                   ['Expect file to contain at least two information ', ...
+                   'blocks. That are positions of electrodes and the ', ...
+                   'configuration/measurement data.']);
+           end
+           
+           % Set current headline index.
+           % (Only where subheader line indices where found)
+           if ii <= n_subhead_line
+            head_line_idx(subhead_line_idx(ii) - 1, ii) = true;
+           end
+        end
     end
     
     %% Read out header information.
