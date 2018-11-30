@@ -22,15 +22,16 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     %                 printed.
     %
     % OUTPUT PARAMETER
-    % TODO: finish description!
     %   dc_conf ... Struct, containing 
     %               - TX and RX position vectors, 
-    %               - mapping matrix from TX (i.e. rhs) to ...
-    %               - mapping matrix from RX (i.e. lines in interpolation
-    %                 matrix I) to ...
-    %               - configuration factor
+    %               - mapping matrix for TX (i.e. appropriate summing up 
+    %                 the columns in the block rhs for each observation),
+    %               - mapping matrix for RX (i.e. appropriate summing up 
+    %                 lines in interpolation matrix I for each
+    %                 observation),
+    %               - configuration factor k,
     %               - observed data vector, defined as apparent resistivity
-    %                 rhoa
+    %                 rhoa.
     
     %% Check input.
     

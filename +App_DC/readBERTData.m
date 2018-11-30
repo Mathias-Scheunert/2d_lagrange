@@ -38,8 +38,8 @@ function all_info = readBERTData(name, verbosity)
     %   ...
     %   6# Number of data
     %   # a b m n rhoa/Ohmm
-    %   1   2   3   4  231.2            <- for a pol, the second electrode
-    %   ...                                is set to 0
+    %   1   2   3   4  231.2            <- for a pol configuration, the 
+    %   ...                                second electrode is set to 0
     %   4# Number of topo points
     %   # x h
     %   0 353.2
@@ -159,6 +159,7 @@ function all_info = readBERTData(name, verbosity)
                 {strcmpi(cur_token, x)}, subhead_info{ii});
             alt_token_in_subhead = cellfun(@(x) ...
                 {strcmpi(cur_alt_token, x)}, subhead_info{ii});
+            % TODO: may weaken this assert and just give a warning here.
             assert(all(cellfun(@(x, y) any(x) || any(y), ...
                 token_in_subhead, alt_token_in_subhead)), ...
                 sprintf(['Some column names of "%s" info are not part of ', ...
@@ -194,8 +195,8 @@ function all_info = readBERTData(name, verbosity)
             
             % Exclude numerical data and comment string.
             % Loop through lines.
-            % TODO: speed up.
-            %       As we expect only a moderate number of lines, this 
+            % TODO: may speed up.
+            %       -> As we expect only a moderate number of lines, this 
             %       brute force approach might be ok for now.
             for ll = 1:n_cur_line
                 % Separate the entries of the current line.
@@ -255,6 +256,8 @@ function all_info = readBERTData(name, verbosity)
            warn_text = [warn_text; cur_text];
            ele_in_topo(ele_in_topo == 0) = [];
        end
+       
+       % Check if topography (z-)location matches electrode positions.
        ele_z = block_info{1}(ele_in_topo, z_in_ele);
        match_z = topo_z(ele_z ~= 0) == ele_z(ele_z ~= 0);
        if ~all(match_z)
