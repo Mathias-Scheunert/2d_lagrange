@@ -116,9 +116,7 @@ function dc_conf = createConfigBERT(ele, type, varargin)
     
     %% Read in complete configuration information.
 
-    warning('off', 'App_DC:getConfigFromBERTData:dataMissing');
     info = App_DC.getConfigFromBERTData(args.name);
-    warning('on', 'App_DC:getConfigFromBERTData:dataMissing');
     if ~args.store
         delete(args.name);
     end

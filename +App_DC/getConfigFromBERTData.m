@@ -62,12 +62,12 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     % (These are the subheader column tokens).
     data_token = ...
         {{'x', 'y', 'z'}; ...
-         {'a',  'b',  'm',  'n',  'rhoa', 'rho', 'u', 'i'}; ...
+         {'a',  'b',  'm',  'n',  'rhoa', 'rho', 'u', 'i', 'k'}; ...
          {'x', 'h'} ...
         };
     data_token_alternative = ...
         {{'', '', ''}; ...
-         {'c1', 'c2', 'p1', 'p2', 'Ra',   'r',    '',   ''}; ...
+         {'c1', 'c2', 'p1', 'p2', 'Ra',   'r',   '',  '' , ''}; ...
          {'', ''} ...
         };
     
@@ -94,8 +94,14 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     % Find columns including electrodes x and z coordinates.
     conf_ele_x = strcmpi(data_token{1}{1}, all_info.line_header{1}) | ...
                  strcmpi(data_token_alternative{1}{1}, all_info.line_header{1});
+    conf_ele_y = strcmpi(data_token{1}{2}, all_info.line_header{1}) | ...
+                 strcmpi(data_token_alternative{1}{2}, all_info.line_header{1});
     conf_ele_z = strcmpi(data_token{1}{3}, all_info.line_header{1}) | ...
                  strcmpi(data_token_alternative{1}{3}, all_info.line_header{1});
+    if any(conf_ele_y) && ~all(all_info.data_block{1}(:,conf_ele_y) == 0)
+        warning(['Data set comprises data from 3D coordinate system. ', ...
+            'Only 2D problem supported yet. Ingnoring y-coordinate.']);
+    end
                       
     % Get indices for each TX electrode.
     idx_A = all_info.data_block{2}(:,conf_A);
@@ -140,6 +146,8 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     % Check if supported data tokens can be found.
     data_rhoa = strcmp(data_token{2}{5}, all_info.line_header{2}) | ...
                 strcmp(data_token_alternative{2}{5}, all_info.line_header{2});
+    data_k = strcmp(data_token{2}{9}, all_info.line_header{2}) | ...
+                strcmp(data_token_alternative{2}{9}, all_info.line_header{2});
     data_rho = strcmp(data_token{2}{6}, all_info.line_header{2}) | ...
                strcmp(data_token_alternative{2}{6}, all_info.line_header{2});
     data_U = strcmp(data_token{2}{7}, all_info.line_header{2}) | ...
@@ -147,74 +155,104 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     data_I = strcmp(data_token{2}{8}, all_info.line_header{2}) | ...
              strcmp(data_token_alternative{2}{8}, all_info.line_header{2});
     empty_measure = ~any([data_rhoa, data_rho, data_U, data_I]);
-    if empty_measure
-        warning('App_DC:getConfigFromBERTData:dataMissing', ...
-            ['No supported data type (rhoa, rho, U, I) was found ', ...
-            'in file.']);
+    empty_k = (~any(data_k) || all(all_info.data_block{2}(:,data_k) == 0));
+    if any(data_rhoa) && empty_k
+        warning(['Data set provides rhoa but no configuration factor k. ', ...'
+            'Obtaining k from Neumann formula using actual offsets r ', ...
+            'between ekectrodes. If rhoa data is based on a e.g. ', ...
+            'topography-corrected k, a systematic error will be introduced.']);
     end
 
     %% Set up configuration factor k.
     
-    % A           M  N        B
-    % |-----------|--|--------|
-    %  <--------->             r1
-    %  <------------>          r2
-    %              <---------> r3
-    %                 <------> r4
-    % dU = (I rhoa)/2 pi * ((1/r1 - 1/r2) - (1/r3 - 1/r4)) = (I rhoa) / k
-    
-    % Obtain RX electrode positions.
-    M_coo = [all_info.data_block{1}(idx_M, conf_ele_x), ...
-             all_info.data_block{1}(idx_M, conf_ele_z)];
-    N_coo = [all_info.data_block{1}(idx_N, conf_ele_x), ...
-             all_info.data_block{1}(idx_N, conf_ele_z)];
-    
-    % Calculate k for respective configutation type.
-    getR = @(x) sqrt(x(:,1).^2 + x(:,2).^2);
+    if empty_k
+        % A           M  N        B
+        % |-----------|--|--------|
+        %  <--------->             r1
+        %  <------------>          r2
+        %              <---------> r3
+        %                 <------> r4
+        % dU = (I rhoa)/2 pi * ((1/r1 - 1/r2) - (1/r3 - 1/r4)) = (I rhoa) / k
 
-    % Obtain TX electrodes positions.
-    [A_coo, B_coo] = deal(zeros(n_data, 2));
-    A_coo(~idx_A_at_inf,:) = ...
-        [all_info.data_block{1}(idx_A(~idx_A_at_inf), conf_ele_x), ...
-         all_info.data_block{1}(idx_A(~idx_A_at_inf), conf_ele_z)];
-    B_coo(~idx_B_at_inf,:) = ...
-        [all_info.data_block{1}(idx_B(~idx_B_at_inf), conf_ele_x), ...
-         all_info.data_block{1}(idx_B(~idx_B_at_inf), conf_ele_z)];
-    
-    % Set position for electrodes at infinity.
-    A_coo(idx_A_at_inf,:) = inf(length(find(idx_A_at_inf)), 2);
-    B_coo(idx_B_at_inf,:) = inf(length(find(idx_B_at_inf)), 2);
+        % Obtain RX electrode positions.
+        M_coo = [all_info.data_block{1}(idx_M, conf_ele_x), ...
+                 all_info.data_block{1}(idx_M, conf_ele_z)];
+        N_coo = [all_info.data_block{1}(idx_N, conf_ele_x), ...
+                 all_info.data_block{1}(idx_N, conf_ele_z)];
 
-    % Obtain spacings.
-    r1 = getR(M_coo - A_coo); % AM
-    r2 = getR(N_coo - A_coo); % AN
-    r3 = getR(M_coo - B_coo); % BM
-    r4 = getR(N_coo - B_coo); % BN
+        % Calculate k for respective configutation type.
+        getR = @(x) sqrt(x(:,1).^2 + x(:,2).^2);
 
-    % Define k.
-    k = (2*pi) * 1./((1./r1 - 1./r2) - (1./r3 - 1./r4));
-    
+        % Obtain TX electrodes positions.
+        [A_coo, B_coo] = deal(zeros(n_data, 2));
+        A_coo(~idx_A_at_inf,:) = ...
+            [all_info.data_block{1}(idx_A(~idx_A_at_inf), conf_ele_x), ...
+             all_info.data_block{1}(idx_A(~idx_A_at_inf), conf_ele_z)];
+        B_coo(~idx_B_at_inf,:) = ...
+            [all_info.data_block{1}(idx_B(~idx_B_at_inf), conf_ele_x), ...
+             all_info.data_block{1}(idx_B(~idx_B_at_inf), conf_ele_z)];
+
+        % Set position for electrodes at infinity.
+        A_coo(idx_A_at_inf,:) = inf(length(find(idx_A_at_inf)), 2);
+        B_coo(idx_B_at_inf,:) = inf(length(find(idx_B_at_inf)), 2);
+
+        % Obtain spacings.
+        r1 = getR(M_coo - A_coo); % AM
+        r2 = getR(N_coo - A_coo); % AN
+        r3 = getR(M_coo - B_coo); % BM
+        r4 = getR(N_coo - B_coo); % BN
+
+        % Define k.
+        k = (2*pi) * 1./((1./r1 - 1./r2) - (1./r3 - 1./r4));
+    else
+        k = all_info.data_block{2}(:,data_k);
+    end
     %% Exclude vector of observed data (=rhoa per definition).
     
     % Obtain rhoa and check uniqueness.
     if ~empty_measure
+        % Choose data type to export.
+        % (default = rhoa)
+        data_var = 'rhoa';
+        % For given rhoa information
         if any(data_rhoa)
             rhoa = all_info.data_block{2}(:,data_rhoa);
-
-            if any(data_rho)
-                % TODO: proof consistency.
-                warning('Rhoa and rho provided - ignoring the latter.'); 
-            elseif any(data_U) || any(data_I)
-                % TODO: proof consistency.
-                warning('Rhoa and U or I provided - ignoring the latter.');
+            % For additonally given rho.
+            if any(data_rho) && ~all(all_info.data_block{2}(:,data_rho) == 0)
+                if empty_k
+                    warning(['Rhoa and rho but no k provided - ', ...
+                        'using rho as data']);
+                    data_var = 'rho';
+                    rho = all_info.data_block{2}(:,data_rho);
+                else
+                    warning('Rhoa, k and rho provided - ignoring the latter.');
+                end
+            % For additionally given U and I.
+            elseif any(data_U) && any(data_I)
+                if ~all(all_info.data_block{2}(:,data_U) == 0) && ...
+                        ~all(all_info.data_block{2}(:,data_I) == 0) && ...
+                        empty_k
+                    warning(['Rhoa and U and I but no k provided - ', ...
+                        'using rho as data']);
+                    data_var = 'rho';
+                    rho = all_info.data_block{2}(:,data_U) ./ ...
+                          all_info.data_block{2}(:,data_I);
+                elseif ~all(all_info.data_block{2}(:,data_U) == 0) && ...
+                           ~all(all_info.data_block{2}(:,data_I) == 0)
+                    warning('Rhoa, k and U and I provided - ignoring the two latter.');
+                else
+                    % Nothing to do.
+                end
             end
+        % For given rho information
         elseif any(data_rho)
             rhoa = all_info.data_block{2}(:,data_rho) .* k;
-
-            if any(data_U) || any(data_I)
+            % For additionally given U or I.
+            if any(data_U) && any(data_I)
                 % TODO: proof consistency.
                 warning('Rho and U or I provided - ignoring the latter.');
             end
+        % If only U & I are given
         else
             vec_U = all_info.data_block{2}(:,data_U);
             vec_I = all_info.data_block{2}(:,data_I);
@@ -346,7 +384,12 @@ function dc_conf = getConfigFromBERTData(name, verbosity)
     dc_conf.RX.coo = RX_coo;
     dc_conf.k = k;
     if ~empty_measure
-        dc_conf.rhoa = rhoa;
+        switch data_var 
+            case {'rhoa'}
+                dc_conf.rhoa = rhoa;
+            case {'rho'}
+                dc_conf.rho = rho;
+        end
     end
     dc_conf.mapTX = R;
     dc_conf.mapRX = L;
