@@ -58,8 +58,21 @@
 % Clean up and set verbosity.
 clean();
 verbosity = pick(2, false, true);
+
+% Enable small parameter anomaly.
 include_anomaly = pick(1, false, true);
-include_topo = pick(2, false, true);
+
+% Enable smooth topography.
+include_topo = pick(1, false, true);
+
+% Define number of uniform grid refinements.
+refinement = 2;
+
+% Set order of Lagrange elements.
+FE_order = pick(2, 1, 2);
+
+% Define type of numerical integration approach.
+FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
 
 %% Set up disctrete DC fwd problem.
 
@@ -101,9 +114,6 @@ dc_conf = App_DC.createConfigBERT(ele_pos, conf_type, 'verbosity', verbosity);
 clear('elev_x', 'elev_y', 'ele_pos', 'ixd_ele_in_topo', ...
       'topo_poly', 'topo_x', 'topo_y', 'ii');
 
-% Define type of numerical integration approach.
-FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
-
 % Define mesh.
 % Note: TX/RX positions may not be part of the vertex list of 'cube' & 
 % 'rhomb' mesh.
@@ -121,14 +131,6 @@ bnd.quad_ord = 1;
 % Define background conductivity.
 param_info.val = 1/1000;
 param_info.name = {'entire'};
-
-%% Set up FEM.
-
-% Define number of uniform grid refinements.
-refinement = 0;
-
-% Set order of Lagrange elements.
-FE_order = pick(2, 1, 2);
 
 % Summarize parameter.
 fwd_params = struct();
@@ -151,7 +153,7 @@ mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
     'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
     'RX', fwd_params.RX.coo, 'dom_name', param_info.name{:});
 
-%% Add some conductivity anomalies to background.
+%% Set up parameter vector.
 
 % Set up parameter vector.
 param = Param.initParam(mesh, param_info);
