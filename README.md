@@ -34,6 +34,15 @@ Mesh:
 	- routine to load arbitrary mesh from Gmsh .msh output files (2D and 3D supported)
 	- using Gmsh physical tags to identify parameter domains (surfaces) and boundary parts (lines) from .msh
 
+DC application:
+- assembling of DC 2D and 2.5D system and solution
+- creation of a wavenumber set for 2.5D problem
+- import of DC measurement configuration from a BERT formatted file
+- export of DC measurement configuration to a BERT formatted file
+- creation of a DC measurement configuration for given electrode positions
+    - currently supported: Wenner
+- creation of a measurement operator for the transformation of modelled electrical potential to observed apparent resistivity
+
 Lagrange elements:
 - 2D first and second order
 
@@ -63,22 +72,26 @@ Visualization:
 
 # Applications:
 
-The following driver files are available for application:
-- DRIVE_DC: 2.5D DC problem (modelling of electrical potential)
+- DRIVE_DC_point: 2.5D DC problem (modelling of electrical potential)
     - 1 TX (3D-point source), n RX (arbitrary position in mesh)
     - 3 types of spatial inverse FT
     - in-/homogeneous Dirichlet/Neumann boundary conditions
     - mesh generation via Gmsh (incorporating TX/RX positions, topography)
-
-The following driver files are available for testing:
-- DRIVE_TestMesh: Visualization of the underlying unstructured grid and derived information.
+- DRIVE_DC_wenner: 2.5D DC problem (modelling of electrical potential)
+    - TX (3D-point source) and RX constructed from giving set of electrodes for a Wenner configuration
+    - mesh generation via Gmsh (incorporating TX/RX positions, topography)
+- DRIVE_DC_Ralph: 2.5D DC problem (modelling of electrical potential)
+    - TX (3D-point source) and RX constructed from giving set of electrodes for a Schlumberger configuration
+    - comparison to analytic solution provided by Ralph-Uwe Börner
+    - mesh generation via Gmsh (incorporating TX/RX positions, topography)
+- DRIVE_Mesh: Visualization of the underlying unstructured grid and derived information.
 - DRIVE_Poisson: FE solution of the Poission equation for homogeneous/point source and in-/homogeneous Dirichlet/Neumann boundary conditions.
 - DRIVE_FEvsRefSol: 
     - FE reference solution for an arbitrary polynomial function whose analytic derivative act as rhs of the problem.
     - FE reference solution for a 2D-point source with known analytic solution
     - in-/homogeneous Dirichlet/Neumann boundary conditions
-- DRIVE_DCExternal: 
-    - 2.5D DC problem with a 3D-point source
+- DRIVE_DCExternal: 2.5D DC problem (modelling of electrical potential)
+    - TX (3D-point source)
     - homogeneous Dirichlet BC at boundaries in subsurface, homogeneous Neumann BC at boundary on surface
     - incorporation of an external mesh, created by Gmsh
 - DRIVE_DC2D:
