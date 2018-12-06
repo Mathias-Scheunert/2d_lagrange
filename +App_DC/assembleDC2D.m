@@ -31,10 +31,11 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     %                 printed.
     %
     % OUTPUT PARAMETER
-    %   sol     ... Cell [n x 1] of structs for the n wavenumbers.
-    %               Each containing the information of the DC problem to be 
-    %               solved numerically, i.e. rhs vector, system matrix, 
-    %               interpolation operator.
+    %   fe    ... Struct, including all information to set up Lagrange FE.
+    %   sol   ... Cell [n x 1] of structs for the n wavenumbers.
+    %             Each containing the information of the DC problem to be 
+    %             solved numerically, i.e. rhs vector, system matrix, 
+    %             interpolation operator.
     
     %% Check input.
     

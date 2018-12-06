@@ -61,10 +61,16 @@ warning('on');
 debugging = pick(2, false, true);
 verbosity = pick(2, false, true);
 
-%% Set up disctrete DC fwd problem.
+% Define number of uniform grid refinements.
+refinement = 1;
+
+% Set order of Lagrange elements.
+FE_order = pick(2, 1, 2);
 
 % Define type of numerical integration approach.
 FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
+
+%% Set up disctrete DC fwd problem.
 
 % Set up domain boundaries.
 % (For given TX/RX these may be adapted)
@@ -124,14 +130,6 @@ bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
 bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
 bnd.quad_ord = 1;
 
-%% Set up FEM.
-
-% Define number of uniform grid refinements.
-refinement = 0;
-
-% Set order of Lagrange elements.
-FE_order = pick(2, 1, 2);
-
 % Summarize parameter.
 fwd_params = struct();
 fwd_params.TX = TX;
@@ -152,7 +150,7 @@ mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
     'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
     'RX', fwd_params.RX.coo, 'dom_name', param_info.name{:});
 
-%% Set up conductivity anomaly.
+%% Set up parameter vector.
 
 % Set up parameter vector.
 param = Param.initParam(mesh, param_info);

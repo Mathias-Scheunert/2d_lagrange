@@ -44,6 +44,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %                 printed.
     %
     % OUTPUT PARAMETER
+    %   fe      ... Struct, including all information to set up Lagrange FE.
     %   sol     ... Cell [n x 1] of structs for the n wavenumbers.
     %               Each containing the information of the DC problem to be 
     %               solved numerically, i.e. rhs vector, system matrix, 

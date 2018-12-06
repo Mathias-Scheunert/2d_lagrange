@@ -100,7 +100,7 @@ function mesh = loadGmsh(name, varargin)
     assertRef = @(x) assert(isscalar(x) && ~islogical(x) && x >= 0, ...
         'ref - Scalar, denoting the number of uniform ref steps, expected.');
     assertLogic = @(x) assert(islogical(x), ...
-        'verbosity - logical, denoting if status should be printed, expected');
+        'logical, denoting if status should be printed, expected');
     
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();

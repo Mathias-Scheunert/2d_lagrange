@@ -17,6 +17,7 @@ function fe = initFiniteElement(order, mesh, point, verbosity)
     %
     % OUTPUT PARAMETER
     %   fe ... Struct, including all information to set up Lagrange FE.
+    %   TODO: better explain content.
     %
     % REMARKS
     %   Please note the ordering of vertex and edge indices within

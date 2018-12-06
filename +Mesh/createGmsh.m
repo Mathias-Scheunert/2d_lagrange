@@ -116,7 +116,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     
     % If TX/RX positions are known, rather use an adapted offset to the
     % domain boundary.
-    TXRX = [TX; RX];
+    TXRX = unique([TX; RX], 'rows');
     if ~isempty(TXRX)
         % Prepare.
         coo_offset = pick(2, 3500, 5500);
@@ -136,9 +136,10 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
                roundn(bnd(2), bnd_dec(2) - 2), ... 
                bnd(3), ...
                roundn(bnd(4), bnd_dec(3) - 2)];
-        warning(sprintf(['\nAdapt domain boundaries using the given ', ...
+        warning('Mesh:createGmsh:bnd2Close', ...
+            sprintf(['\nAdapt domain boundaries using the given ', ...
             'TX/RX positions. \nThis ensures the accuracy of the ', ...
-            'numerical solution.']));
+            'numerical solution.'])); %#ok
     end
     
     % Transform boundary coordinates.
@@ -208,8 +209,12 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
         
         % Just reduce h, for those points that are already part of 
         % point_domain (i.e. TX/RX coincides with topo).
-        [txrx_in_pd, idx_txrx_in_pd] = ismember(... 
-            point_domain(:, [2, 4]), TXRX, 'rows');
+        % TODO: Check if the tolerance has to be consistent with the 
+        %       tolerance stet  in FeL.getInterpolation().
+        tol_find_TX_in_pd = pick(1, 1e-3, 1e-6);
+        [txrx_in_pd, idx_txrx_in_pd] = ismembertol(...
+                                       point_domain(:, [2, 4]), TXRX, ...
+                                       tol_find_TX_in_pd, 'ByRows', true);
         point_domain(txrx_in_pd, 5) = h_TXRX;
         idx_txrx_not_in_pd = ~ismember(...
             1:size(TXRX, 1), idx_txrx_in_pd(idx_txrx_in_pd ~= 0));

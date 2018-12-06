@@ -1,6 +1,7 @@
 # files
 *~
 .nfs*
+*.dat
 tmp_*
 *_tmp.*
 *.geo
