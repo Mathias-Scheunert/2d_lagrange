@@ -54,7 +54,7 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     
     % Appand bndDOF information.
     switch mesh.type
-        case {'cube', 'rhomb', 'gmsh_create', 'gmsh_load'}          
+        case {'cube', 'gmsh_create', 'gmsh_load'}          
             if ~isfield(bnd, 'bndDOF')
                 bnd = FeL.getBndDOF(fe, mesh, bnd);
             end

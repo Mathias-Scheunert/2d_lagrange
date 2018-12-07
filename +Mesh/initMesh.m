@@ -89,8 +89,6 @@ function mesh = initMesh(var, varargin)
     %% Create mesh.
     
     switch var
-        case 'rhomb'
-            mesh = Mesh.createRhombMesh(args.bnd, args.verbosity);
         case 'cube'
             mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
         case 'gmsh_create'
@@ -135,7 +133,7 @@ function mesh = initMesh(var, varargin)
     
     %% Refine mesh.
 
-    if any(strcmp(mesh.type, {'cube', 'rhomb'}))
+    if any(strcmp(mesh.type, {'cube'}))
         if args.verbosity
             fprintf('Refine mesh ... '); 
         end

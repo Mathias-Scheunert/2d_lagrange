@@ -115,8 +115,7 @@ clear('elev_x', 'elev_y', 'ele_pos', 'ixd_ele_in_topo', ...
       'topo_poly', 'topo_x', 'topo_y', 'ii');
 
 % Define mesh.
-% Note: TX/RX positions may not be part of the vertex list of 'cube' & 
-% 'rhomb' mesh.
+% Note: TX/RX positions may not be part of the vertex list of 'cube' mesh.
 mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.

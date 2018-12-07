@@ -94,7 +94,7 @@ RX = pick(3, ...
     []);                                                    % none
 
 % Choose basic grid type.
-mesh_type = pick(2, 'rhomb', 'cube');
+mesh_type = 'cube';
 
 % Print status.
 if verbosity

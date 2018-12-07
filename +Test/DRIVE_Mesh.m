@@ -14,7 +14,7 @@ x = [0, 10];
 y = [2, 5];
 
 % Choose basic grid type.
-grid_type = pick(1, 'rhomb', 'cube');
+grid_type = 'cube';
 
 % Define number of grid refinements.
 refinement = pick(1, 0, 1, 2);

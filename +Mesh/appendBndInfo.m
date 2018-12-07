@@ -32,7 +32,7 @@ function mesh = appendBndInfo(mesh)
     %% Add or handle bnd edge identifier.
     
     switch mesh.type
-        case {'cube', 'rhomb'}
+        case {'cube'}
             % Get indices from domain boundaries.
             bnd_xmin = cellfun(@(x) all(x(:,1) == mesh.bnd(1)), mesh.edge2cord);
             bnd_xmax = cellfun(@(x) all(x(:,1) == mesh.bnd(2)), mesh.edge2cord);

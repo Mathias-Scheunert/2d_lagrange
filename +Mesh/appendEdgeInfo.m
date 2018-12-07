@@ -99,7 +99,7 @@ function mesh = appendEdgeInfo(mesh)
                 mesh.bnd_edge_part(map_order);
             mesh.bnd_edge_part = bnd_edge_part;
             
-        case {'cube', 'rhomb'}
+        case {'cube'}
             % Nothing to do.
             
         otherwise

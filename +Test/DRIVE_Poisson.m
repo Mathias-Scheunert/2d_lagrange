@@ -96,7 +96,7 @@ bnd_mix.quad_ord = 1;
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
-mesh_type = pick(2, 'rhomb', 'cube');
+mesh_type = 'cube';
 
 % Set number of grid refinements.
 ref_steps = 2;

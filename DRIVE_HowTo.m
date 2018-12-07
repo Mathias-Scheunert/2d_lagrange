@@ -118,10 +118,9 @@ topo.coo = [TX.coo; RX.coo; -3, 1; 3, 2]; % location [x_1, y_1; x_2, y_2; ...]
 
 % There are several ways to set up an appropriate mesh for your problem:
 % 1) create a simple mesh by your own:
-mesh_type = pick(2, 'rhomb', 'cube');  % two available rectangular domains, 
-                                       %  splitted up in triangles
-                                       % see +Mesh.createRhombMesh.m
-                                       %     +Mesh.createUnitCubeMesh.m
+mesh_type = 'cube';                    % rectangular domain splitted up 
+                                       % in triangles
+                                       % see +Mesh.createUnitCubeMesh.m
 ref_steps = 1;                         % numer of uniform mesh refinemets
 %             xmin xmax ymin ymax 
 domain_bnd = [-1,  1,   -1,  1];       % domain boundaries
@@ -199,8 +198,8 @@ param = Param.initParam(mesh, info);
     % A parameter vector will be created.
     % Also consistency is checked - i.e. if number of domains and its
     %  identifier are existing.
-    % Note, for the own meshes 'cube' and 'rhomb' the only parameter name
-    % is defined as 'entire'.
+    % Note, for the own mesh 'cube' the only parameter name is defined
+    % as 'entire'.
 
 %% Set up FEM.
 

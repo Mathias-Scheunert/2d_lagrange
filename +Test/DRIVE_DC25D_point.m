@@ -117,8 +117,7 @@ end
 clear('topo_max', 'topo_min');
 
 % Define mesh.
-% Note: TX/RX positions may not be part of the vertex list of 'cube' & 
-% 'rhomb' mesh.
+% Note: TX/RX positions may not be part of the vertex list of 'cube' mesh.
 mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.
