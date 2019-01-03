@@ -1,12 +1,16 @@
-function d_obs = getObsData(u, fe, dc_conf)
+function d_obs = getObsData(u, I, dc_conf)
     % Create observation data from FE solution.
     %
     % SYNTAX
-    %   d_obs = getObsData(u, dc_conf)
+    %   d_obs = getObsData(u, I, dc_conf)
     %
     % INPUT PARAMETER
     %   u       ... Matrix, (block vector) of FE solutions.
-    %   dc_conf ... Struct, containing the 
+    %   I       ... Matrix, interpolation operator which restricts
+    %               solutions at DOFs to solution on observation points in
+    %               mesh.
+    %   dc_conf ... Struct, containing the mapping matrices for superposing
+    %               solution for various sources and receiver positions.
     %
     % OUTPUT PARAMETER
     %   d_obs ... Vector, of synthetic data (rhoa at the observations).
@@ -15,6 +19,8 @@ function d_obs = getObsData(u, fe, dc_conf)
     
     assert(ismatrix(u), ...
         'u - Matrix (block solution) from FE forward problem, expected.');
+    assert(ismatrix(I), ...
+        'I - Matrix of interpolation operator, expected.');
     assert(isstruct(dc_conf) && all(isfield(dc_conf, {'mapTX', 'mapRX'})), ...
         ['dc_conf - Struct, containing the DC measurement ', ...
         'configuration info, expected.']);
@@ -22,7 +28,7 @@ function d_obs = getObsData(u, fe, dc_conf)
     %% Apply mappings.
     
     % Apply interpolation to map u at DOF to u at all possible RX.
-    uRX = fe.I * u;
+    uRX = I * u;
     
     % Apply mapping of sources (i.e. superposition of solutions).
     uRX_mapTX = uRX * dc_conf.mapTX;
