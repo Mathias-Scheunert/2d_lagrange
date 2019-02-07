@@ -188,6 +188,9 @@ u_FE = App_DC.solveDC25D(fe, sol, FT_info, verbosity);
 % Obtain potentials at RX positions.
 phi_FE = fe.I * u_FE;
 
+% Show result.
+Plot.plotGradient(fe, mesh, u_FE, 'sign', 'neg');
+
 %% Compare with analytic point source at top of homogeneous half-space.
 
 x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.RX.coo(1,1)) .^2 + ...
@@ -280,6 +283,7 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
     subplot(2, 1, 2)
         rel_err_2D = (1 - (phi_FE_2D ./ phi_ref_2D{cur_k_idx})) * 100;
         plot(x_plot, rel_err_2D);
+        ylim([-3, 3]);
         ylabel('rel. error');
         xlabel('profile length');
 end

@@ -194,7 +194,7 @@ end
 
 u_FE = App_DC.solveDC25D(fe, sol, FT_info, verbosity);
 
-% Obtain vector of observed data for the 
+% Obtain vector of observed data from separate solutions.
 rhoa = App_DC.getObsData(u_FE, fe.I, dc_conf);
 
 %% Show some results.

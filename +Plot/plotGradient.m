@@ -59,7 +59,26 @@ function [] = plotGradient(fe, mesh, u, varargin)
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
-            
+
+    % Fetch info.
+    n_cell = fe.sizes.cell;
+    
+    %% Evaluate solution at cell midpoints.
+    if isnan(args.param)
+        % Get local basis functions at cell midpoint.
+        loc_basis = fe.base.Phi(1/3, 1/3);
+
+        % Evaluate solution at all cell midpoints.
+        u_cell = zeros(n_cell, 1);
+        for ii = 1:n_cell                
+            % Get current DOF.
+            cur_DOF = fe.DOF_maps.cell2DOF{ii};
+
+            % Add DOF and sum up solution.
+            u_cell(ii) = sum(bsxfun(@times, u(cur_DOF).', loc_basis), 2);
+        end
+    end
+        
     %% Get gradient of solution.
     
     if args.verbosity
@@ -67,7 +86,6 @@ function [] = plotGradient(fe, mesh, u, varargin)
     end
     % Evaluate gradients of basis function at these points and superpose 
     % evaluations for all basis functions of a cell.
-    n_cell = fe.sizes.cell;
     grad_coo = zeros(n_cell, 2);
     
     % Evaluate gradient of basis functions at cell midpoint in
@@ -127,17 +145,23 @@ function [] = plotGradient(fe, mesh, u, varargin)
     ylim([min(mesh.vertices(:,2)), max(mesh.vertices(:,2))]);
     caxis('auto');
 
-    % Plot underlying mesh.
+    % Visualize solution with underlying mesh.
     hold on
-    cell_coo_all = cell2mat(mesh.cell2cord);
-    cell_coo_x = reshape(cell_coo_all(:,1), [3, fe.sizes.cell]);
-    cell_coo_y = reshape(cell_coo_all(:,2), [3, fe.sizes.cell]);
-    patch(cell_coo_x, cell_coo_y, args.param);
-    hold off
-    if ~isnan(args.param)
+    if isnan(args.param)
+        patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
+              'FaceVertexCData', u_cell, ...
+              'FaceColor', 'flat');
+        h = colorbar();
+        ylabel(h, 'potential');
+    else
+        patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
+              'FaceVertexCData', args.param, ...
+              'FaceColor', 'flat');
         h = colorbar();
         ylabel(h, 'cell parameter value');
     end
+    hold off
+
 
     % Get cell midpoints in global from local (barycentric) coordinates.
     lambda_mid = 1/3 + zeros(3, 1);
