@@ -11,8 +11,7 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     %               d_\phi / d_n = 0             at d_Omega_3 (top, bottom)
     %
     % 2D Variational problem:
-    %   a(u,v) = \int_Omega \grad(\phi') * \sigma \grad(v) + ...
-    %                \int_Omega \phi' * \sigma v
+    %   a(u,v) = \int_Omega \grad(\phi') * \sigma \grad(v)
     %   f(v)   = I \int_{Omega} \dirac(x_0) v
     %
     % SYNTAX

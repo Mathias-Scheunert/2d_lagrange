@@ -101,18 +101,9 @@ if debugging
     topo = [];
 else
     % Add some arbitrary topography.
-    % (Including some TX/RX positions and points above TX/RX positions)
-    % Inculde all TX/RX points
-%     topo = [TX.coo; RX.coo];
-    % Inculde all TX/RX points with shift in y-dir.
-%     topo = [TX.coo; RX.coo(1:8, :); [RX.coo(9:end, 1), RX.coo(9:end, 2)-2]];
-    % Inculde only several TX/RX points with shift in y-dir.
-    topo = [TX.coo; RX.coo(1:8, :); [RX.coo(9:end-3, 1), RX.coo(9:end-3, 2)-2]];
-    topo = [[linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]; ...
-            topo;
-            [linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)]
+    topo = [round([linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)], 2); ...
+            round([linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)], 2)
            ];
-    topo = round(topo .* 10) ./ 10;
 end
 clear('topo_max', 'topo_min');
 

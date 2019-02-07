@@ -9,7 +9,7 @@
 %   optional:
 %           d_u/d_n = \grad(f(x))) * n                      at d_Omega_2
 %
-% Problem 1 'poisson':
+% Problem 2 'poisson':
 %   given: 
 %       p(x)
 %   solve:
