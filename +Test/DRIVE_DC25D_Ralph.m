@@ -83,7 +83,7 @@ refinement = 0;
 FE_order = pick(2, 1, 2);
 
 % Define type of numerical integration approach.
-FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
+FT_type = 'Boerner';
 
 %% Construct Mesh.
 

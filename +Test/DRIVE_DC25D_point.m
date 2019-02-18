@@ -80,10 +80,12 @@ topo_min = -2;
 topo_max = 3;
 
 % Define background conductivity.
+param_info = struct();
 param_info.val = 1/1000;
 param_info.name = {'entire'};
 
 % Define source and receiver locations at earth's surface.
+TX = struct();
 TX.type = 'point_exact';
 TX.coo = [0, 0];
 TX.val = 1;
@@ -113,6 +115,7 @@ mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
+bnd = struct();
 bnd.type = {'dirichlet', 'neumann'};
 %         ymin ymax  xmin xmax 
 bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
@@ -188,21 +191,25 @@ u_FE = App_DC.solveDC25D(fe, sol, FT_info, verbosity);
 % Obtain potentials at RX positions.
 phi_FE = fe.I * u_FE;
 
-% Show result.
-Plot.plotGradient(fe, mesh, u_FE, 'sign', 'neg');
-
 %% Compare with analytic point source at top of homogeneous half-space.
 
-x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.RX.coo(1,1)) .^2 + ...
-              (fwd_params.RX.coo(:,2) - fwd_params.RX.coo(1,2)) .^2);
+% Plot / compare solutions along the profile.
+x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.TX.coo(1,1)) .^2 + ...
+              (fwd_params.RX.coo(:,2) - fwd_params.TX.coo(1,2)) .^2);
 
+switch fwd_params.FT_type
+    case {'Boerner'}
+        fig_nun = 2;
+    case {'Xu'}
+        fig_nun = 20;
+    case {'Bing'}
+        fig_nun = 200;
+end
+          
 if debugging
     % Get reference solution in 3D.
     ref_3D = RefSol.getElectrodeAtHS(1/sig_anomaly, ...
-        fwd_params.TX.val, fwd_params.TX.coo);
-    u_ref = arrayfun(@(x, y) ref_3D.f(x, y), ...
-                fe.DOF_maps.DOF_coo(:, 1), ...
-                fe.DOF_maps.DOF_coo(:, 2));
+                                     fwd_params.TX.val, fwd_params.TX.coo);
     phi_3D = arrayfun(@(x, y) ref_3D.f(x, y), ...
                   fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
 
@@ -223,17 +230,14 @@ if debugging
         end
     end
 
-    % Plot / compare solutions along the profile.
-    x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.RX.coo(1,1)) .^2 + ...
-                  (fwd_params.RX.coo(:,2) - fwd_params.RX.coo(1,2)) .^2);
-    figure()
+    figure(fig_nun)
     subplot(2, 1, 1)
-        plot(x_plot, phi_3D, 'ok', ...
+        semilogy(x_plot, phi_3D, 'ok', ...
              x_plot, phi_asy, 'xb', ...
              x_plot, phi_FE, '-r');
-        title(sprintf(...
-            ['2.5D solution for numerical integration using %d ', ...
-            'wavenumbers'], length(sol)));
+        xlim([x_plot(1), x_plot(end)]);
+        title(sprintf('2.5D half-space solution using %d wavenumbers (%s)', ...
+              FT_info.n, fwd_params.FT_type));
         legend('\phi_{3D}', ...
                '\phi_{asy}', ...
                '\phi_{FE}');
@@ -241,30 +245,27 @@ if debugging
     subplot(2, 1, 2)
         rel_err_FE = (1 - (phi_FE ./ phi_3D)) * 100;
         rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
-        plot(x_plot, rel_err_FE, 'b', ...
-             x_plot, rel_err_asy, 'r');
+        plot(x_plot, rel_err_asy, 'b', ...
+             x_plot, rel_err_FE, 'r');
+        xlim([x_plot(1), x_plot(end)]);
         ylim([-3, 3]);
-        legend('\phi_{ref} vs. \phi_{FE}', ...
-               '\phi_{ref} vs. \phi_{asy}');
+        legend('\phi_{ref} vs. \phi_{asy}', ...
+               '\phi_{ref} vs. \phi_{FE}');
         ylabel('rel. error');
         xlabel('profile length');
         
 else
-    figure()
+    figure(fig_nun)
         plot(x_plot, phi_FE, '-r');
         legend('\phi_{FE}');
         ylabel('potential');
         xlabel('profile length');
 end
 
-Plot.plotMesh(mesh, param)
-
 %% Compare some solutions within the wavenumber domain.
 
 if debugging && ~strcmp(FT_info.type, 'Bing')
     % Get asymptotics in 2D.
-    r_TX2RX = sqrt((fwd_params.TX.coo(1) - fwd_params.RX.coo(:,1)).^2 + ...
-        (fwd_params.TX.coo(2) - fwd_params.RX.coo(:,2)).^2);
     phi_ref_2D = cell(FT_info.n, 1);
     for jj = 1:(FT_info.n)
         phi_ref_2D{jj} = arrayfun(@(r) ...
@@ -272,21 +273,30 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
     end
 
     % Compare to 2D FE solutions.
-    figure()
-    subplot(2, 1, 1)
-        %                    relative                    fix (not too large!)
-        cur_k_idx = pick(2, round(length(FT_info.k) / 2), 2);
-        u_cur = FeL.solveFwd(sol{cur_k_idx}, fe);
-        phi_FE_2D = fe.I * u_cur;
-        plot(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, 'ob');
-        title(sprintf(...
-            '2D solution w.r.t the %d th wavenumber (k = %e)) ', ...
-            cur_k_idx, FT_info.k(cur_k_idx)));
-        legend('\phi_{FE}', '\phi_{bessel}');
-    subplot(2, 1, 2)
-        rel_err_2D = (1 - (phi_FE_2D ./ phi_ref_2D{cur_k_idx})) * 100;
-        plot(x_plot, rel_err_2D);
-        ylim([-3, 3]);
-        ylabel('rel. error');
-        xlabel('profile length');
+    figure(fig_nun+1)
+    set(gcf, 'Units', 'normalized', 'OuterPosition', [0, 0, 1, 1])
+    all_k_idx = 1:ceil(FT_info.n / 7):FT_info.n;
+    for kk = 1:length(all_k_idx)
+        subplot(2, length(all_k_idx), kk)
+            cur_k_idx = all_k_idx(kk);
+            u_cur = FeL.solveFwd(sol{cur_k_idx}, fe);
+            phi_FE_2D = fe.I * u_cur;
+            semilogy(x_plot, phi_FE_2D, 'r', x_plot, phi_ref_2D{cur_k_idx}, 'ob');
+            title(sprintf('k_{%d} = %.1e', cur_k_idx, FT_info.k(cur_k_idx)));
+            if kk == 1
+                ylabel('$\tilde{\phi}(k_x)$', 'Interpreter', 'latex');
+            end
+            legend('\phi_{FE}', '\phi_{bessel}');
+        subplot(2, length(all_k_idx), length(all_k_idx) + kk)
+            rel_err_2D = (1 - (phi_FE_2D ./ phi_ref_2D{cur_k_idx})) * 100;
+            plot(x_plot, rel_err_2D);
+            if kk == 4
+                title('FE-2D vs. analytic 2D solution for variing k_j');
+            end
+            ylim([-30, 30]);
+            if kk == 1
+                ylabel('rel. error');
+            end
+            xlabel('profile length');
+    end
 end
