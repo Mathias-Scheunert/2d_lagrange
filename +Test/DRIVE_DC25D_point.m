@@ -214,7 +214,9 @@ if debugging
         r = abs(fwd_params.RX.coo(i,1) - fwd_params.TX.coo(1,1));
         switch fwd_params.FT_type
             case {'Boerner', 'Xu'}
-                phi_asy(i) = (2 / pi) * sum(FT_info.w .* besselk(0, FT_info.k * r));
+%                 RefSol.get_Uk_HR(k, r_TX2RX, I, rho1);
+                phi_asy(i) = (2 / pi) * sum(FT_info.w .* ...
+                    RefSol.get_Uk_HR(FT_info.k, r, 1, 1/sig_anomaly).');
             case 'Bing'
                 % Not known.
                 phi_asy = phi_asy * NaN;
@@ -265,7 +267,8 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
         (fwd_params.TX.coo(2) - fwd_params.RX.coo(:,2)).^2);
     phi_ref_2D = cell(FT_info.n, 1);
     for jj = 1:(FT_info.n)
-        phi_ref_2D{jj} = arrayfun(@(r) besselk(0, FT_info.k(jj) * r), r_TX2RX);
+        phi_ref_2D{jj} = arrayfun(@(r) ...
+            RefSol.get_Uk_HR(FT_info.k(jj), r, 1, 1/sig_anomaly).', x_plot);
     end
 
     % Compare to 2D FE solutions.
