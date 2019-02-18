@@ -121,13 +121,14 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     % domain boundary.
     TXRX = unique([TX; RX], 'rows');
     if ~isempty(TXRX)
-        % Prepare.
-        coo_offset = pick(2, 3500, 5500);
         
         % Get specific extentions.
         min_x = min(TXRX(:,1));
         max_x = max(TXRX(:,1));
         max_y = max(TXRX(:,2));
+        
+        % Adapt.
+        coo_offset = pick(3, 5500, 10000, round(abs(max_x - min_x)*100));
         bnd = [min_x - coo_offset, ...
                max_x + coo_offset, ...
                bnd(3), ...
