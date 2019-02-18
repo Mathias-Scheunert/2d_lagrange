@@ -61,7 +61,7 @@ warning('on');
 verbosity = pick(2, false, true);
 
 % Define number of uniform grid refinements.
-refinement = 3;
+refinement = 1;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
