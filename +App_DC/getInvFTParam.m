@@ -38,8 +38,7 @@ function params = getInvFTParam(TX, RX, type)
     %                                  Bing Z.; 1998 (Dissertation)
     %                                  Xu S.; 2000
     %
-    % TODO: Debug! Bing-variant still hase an offset w.r.t. analytic
-    %       solution for homog. HR.
+    % TODO: Debug Bing-variant (where to start/stop summation?).
     
     %% Check input.
     
@@ -56,35 +55,40 @@ function params = getInvFTParam(TX, RX, type)
     
     %% Get infos.
     
-    % Define number od wavenubers.
-    % TODO: find usefull approach to somehow predetermine numbers of k's.
-    n_k = pick(3, 8, 17, 25);
+    % Define number of wavenubers.
+    % (Bing / Xu)
+    n_k = 17; 
     
     % Iterate over TX positions.
     params = struct();
     switch type
         case 'Boerner'
-            [params.k, params.w, params.n] = getInvFTBoerner(TX, RX, n_k);
+            [params.k, params.w, params.n] = getInvFTBoerner(TX, RX);
         case 'Bing'
-            [params.k, params.n] = getInvFTBing(TX, RX, n_k);
+            error('Approach not fully proved - do not use!');
+            [params.k, params.n] = getInvFTBing(TX, RX, n_k); %#ok
         case 'Xu'
-            [params.k, params.w, params.n] = getInvFTXu(TX, RX, n_k);
+%             error('Approach misleading - do not use!');
+            [params.k, params.w, params.n] = getInvFTXu(TX, RX, n_k); %#ok
         otherwise
             error('Unknown type - "Boerner", "Bing" or "Xu" supported.')
     end
     params.type = type;
 end
 
-function [k, w, n] = getInvFTBoerner(TX, RX, n)
+function [k, w, n] = getInvFTBoerner(TX, RX)
     % Calculate nodes and weights for quadrature approach by Boerner R.-U.
     %
     % Approach exploits logarithmic and exponetial asymptotic behaviour of
-    % Bessel functions K_0(k * r), denoting the analytic solution for a 
-    % unit point source over unit half-space.
+    % Bessel functions K_0(u) with u = k * r denoting the analytic solution
+    % for a unit point source over unit half-space in wavenumber domain.
     %
     % Note that source strengh I and resistivity \rho only shift the
     % amplitude of the analytic solution such that dealing with unit
     % quantities is justified.
+    %
+    % The approach leads to k and w which approximate the bessel function
+    % for arbitrary TX/RX offsets r.
     %
     % SYNTAX
     %   [k, w, n] = getInvFTBoerner(TX, RX, n)
@@ -98,6 +102,9 @@ function [k, w, n] = getInvFTBoerner(TX, RX, n)
     %   k ... Vector, containing quadrature nodes (spatial wavenumbers).
     %   w ... Vector, containing weights for quadrature summation.
     %   n ... Scalar, denoting number of k or w, respectively.
+    %
+    % REMARKS
+    %   Also see Kemna A, Dissertation, 1999; LaBrecque et al 1996a
     
     
     %% Prepare parameter.
@@ -120,8 +127,9 @@ function [k, w, n] = getInvFTBoerner(TX, RX, n)
 
     % Define number of wavenumbers for both parts of the asymptotic 
     % behavior of the analytic solution.
-    n_k_log = round(n/2);
-    n_k_exp = n - n_k_log;
+    % (Adapt unsymmetric distribution of nodes from Kemna)
+    n_k_log = round(3*log(max(r_TX2RX) / min(r_TX2RX)));
+    n_k_exp = 4;
 
     % Get quadrature rules for both asymptotics.
     [x_Leg, w_Leg] = Quad.getQuadratureRule(n_k_log, 1, ...
@@ -136,6 +144,7 @@ function [k, w, n] = getInvFTBoerner(TX, RX, n)
     w_exp = k_crit * (exp(x_Lag(:)) .* w_Lag(:));
     k = [k_log; k_exp];
     w = [w_log; w_exp];
+    n = n_k_log + n_k_exp;
 end
 
 function [k, n] = getInvFTBing(TX, RX, n)
@@ -172,39 +181,48 @@ function [k, n] = getInvFTBing(TX, RX, n)
     end
     r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
-    r_max = max(r_TX2RX);
-
-    % Get critical wavenumber (transition of asymptotic behavior).
-    k_crit = 1 / (2 * r_min);
     
-    % Set tolerance for curvature criteria.
-    tol_min = 2e-1;
+    % Set lower bnd for f(k) and k.
+    % (Derived from bessle function behavior for r_min = 0.5 and 
+    % r_max = 500 -> we don't expect offsets beyond that range)
+    u_min = 1e-4;
+    k_min = 1e-3;
         
-    %% Get k range.
+    %% Get initial k range.
     
     % Predefine a large range of wavenumbers.
-    k_range = logspace(-5, 5, 100);
+    k_range = logspace(log10(k_min), 6, 301);
 
     % Define analytic solution for unit source over unit half-space.
     I = 1;
     rho = 2 * pi;
     u_HS = @(k, r) (I * rho) / (2 * pi) * besselk(0, k * r);
 
-    % Get solutions spectra and curvatures.
-    u_max = arrayfun(@(k) u_HS(k, r_max), k_range);
-    grad_u_max = gradient(u_max);
+    % Get solutions spectra.
+    u = arrayfun(@(k) u_HS(k, r_min), k_range);
     
-    % Get respective wavenumber boundaries.
-    k_min = k_range(find(abs(grad_u_max) < tol_min, 1, 'first'));
-    k = logspace(log10(k_min), log10(k_crit), n);
+    % Get k for u_max.
+    k_max = k_range(find(u > u_min, 1, 'last'));
+    
+     % Get k from Boerner.
+    k_crit = 1 / (2 * min(r_TX2RX));
+    
+    % Get range of k.
+    k_2max = logspace(log10(k_crit), log10(k_max), 1 + round(n/2));
+    k_2min = logspace(log10(k_crit), log10(k_min), n - round(n/2));
+    k = [fliplr(k_2min), k_2max(2:end)].';
 end
 
 function [k, w, n] = getInvFTXu(TX, RX, n)
     % Calculate weights by Xu S. 2000 for quadrature nodes by Bing Z 1998.
     %
-    % The values are based on the consideration of the bessel function
-    % behaviour for variing wavenumbers w.r.t. the minimal and maximal
-    % TX-RX offset.
+    % Approach uses bessel function K_0(k * r) behaviour for minimal and
+    % maximal TX/RX offset to derive a range for k.
+    % Use critical k from Boerner to derive a distribution for k.
+    % Calculate the appropriate w by least-squares approach.
+    %
+    % The approach leads to optimized w which approximate the bessel
+    % function best at a given set of TX/RX offsets r.
     %
     % SYNTAX
     %   [k, n] = getInvFTXu(TX, RX)
@@ -217,8 +235,6 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     % OUTPUT PARAMETER
     %   k   ... Vector, containing wavenumbers.
     %   n   ... Scalar, denoting number of k or w, respectively.
-    
-    debugging = pick(1, false, true);
     
     %% Prepare parameter.
     
@@ -235,112 +251,45 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     end
     r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
-    r_max = max(r_TX2RX);
     
-    % Set tolerance for curvature criteria.
-    tol_min = 2e-1;
-    tol_max = 1e-20;
+    % Set lower bnd for f(k) and k.
+    % (Derived from bessle function behavior for r_min = 0.5 and 
+    % r_max = 500 -> we don't expect offsets beyond that range)
+    u_min = 1e-4;
+    k_min = 1e-3;
         
-    %% Get k range.
+    %% Get initial k range.
     
     % Predefine a large range of wavenumbers.
-    k_range = logspace(-5, 5, 100);
+    k_range = logspace(log10(k_min), 6, 301);
 
     % Define analytic solution for unit source over unit half-space.
     I = 1;
     rho = 2 * pi;
     u_HS = @(k, r) (I * rho) / (2 * pi) * besselk(0, k * r);
 
-    % Get solutions spectra and curvatures.
-    u_min = arrayfun(@(k) u_HS(k, r_min), k_range);
-    grad_u_min = gradient(u_min);
-    u_max = arrayfun(@(k) u_HS(k, r_max), k_range);
-    grad_u_max = gradient(u_max);
+    % Get solutions spectra.
+    u = arrayfun(@(k) u_HS(k, r_min), k_range);
     
-    % Get respective wavenumber boundaries.
-    k_min = k_range(find(abs(grad_u_max) < tol_min, 1, 'first'));
-    k_max = k_range(find(abs(grad_u_min) > tol_max, 1, 'last'));
+    % Get k for u_max.
+    k_max = k_range(find(u > u_min, 1, 'last'));
     
-    % Get range of k and index for critical k.
-    k = (logspace(log10(k_min), log10(k_max), n)).';
-
-    %% Get w and k by nonlinear least-squares.
-%{ 
-    % For a point source over a homogeneous half-space the solution
-    %   (\rho * I) / (2 * pi * abs(r))
-    % is ~ to
-    %   (2 / pi) \int_{0}^{\inf} (I * rho) / (2 * pi) * besselk(0, k * r)
-    % Hence, by general quadrature approach 
-    %   1 / abs(r) ~ \sum_{j = 1}^{n} besselk(0, k_j * r) w_j
-    % By defining 
-    %   A*w = v
-    % with
-    %   A = [r_i besselk(0, k_j * r_i)]_{i=1:m,j:n}
-    %   w = [w_j]_{j=1:n}
-    %   v = [1]_{i=1:m}
-    % a nonlinear minimization can be obtained to estimate optimal w_j and 
-    % k_j by:
-    %   ||v - A(k)*w||_2^2 -> min_{w,k}
-    %   ||v - A(k_0)*w_0 - S_0 * \delta [k;w]||_2^2 -> min_{[k;w]}
-    % with
-    %   S(k_0,w_0)_0 = d_{A(k_0)*w_0} / d_{[k;w]}
-    %          [k;w] = [k_0;w_0] + \delta [k;w]
-    %   
-    % Procedure: 
-    %   1) guess k_0 -> Bing-approach and set w_0
-    %   2) iterate until ||v - A(k)*w|| converges
+     % Get k from Boerner.
+    k_crit = 1 / (2 * min(r_TX2RX));
     
-    % Set up optimization for m = [k; w].
-    lambda = 1e-5;
-    m = log([k; 1/n * ones(n, 1)]);
-    iter = 1;
-    iter_max = 20;
-    res = zeros(iter_max, 1);
-
-    while iter <= iter_max
-        
-        % Get derivative w.r.t. log(w): (equals A since dependencies are 
-        % linear)
-        m_op = exp(m); % used within the subroutines.
-        S_w = getSys(u_HS, m_op(1:n), r_TX2RX);
-        
-        % Get current residuum.
-        res(iter) = norm(ones(length(r_TX2RX), 1) - S_w * m(n + 1:end));
-        
-        % Terminate if already converged.
-        if (iter > 1) && (abs(res(iter) - res(iter - 1)) < abs(res(1))*1e-3)
-            break;
-        end
-        
-        % Get derivative w.r.t. log(k): (using perturbation method)
-        S_k = getSens(u_HS, m_op(1:n), r_TX2RX, ...
-                  S_w * m(n + 1:end), m(n + 1:end));
-        % (include diagonal matrix, resulting from chain rule)
-        S_k = S_k * diag(exp(m(1:n)));
-    
-        % Set up linearized system for optimization of k and w.
-        S = [S_k, S_w];
-        b = (1 + zeros(length(r_TX2RX), 1)) - (S_w * m(n + 1:end));
-
-        % Solve corresponding normal equation (Levenberg-Maquard-scheme).
-        dm =  ((S.'*S + lambda * eye(2*n, 2*n)) \ (S.' * b));
-        m = m + dm;
-        iter = iter + 1;
-    end
-    
-    % Exclude wavenumbers and weights.
-    % (Add prefactor to derive weights, equivalent to Boerner and Bing.)
-    m = exp(m);
-    k = m(1:n);
-    w = (pi / 2) * m(n + 1:end);
-%}   
+    % Get range of k.
+    k_2max = logspace(log10(k_crit), log10(k_max), 1 + round(n/2));
+    k_2min = logspace(log10(k_crit), log10(k_min), n - round(n/2));
+    k = [fliplr(k_2min), k_2max(2:end)].';  
+  
     %% Get corresponding w by linear least-squares.
 
-    % For a point source over a homogeneous half-space the solution
-    %   (\rho * I) / (2 * pi * abs(r))
-    % is ~ to
-    %   (2 / pi) \int_{0}^{\inf} (I * rho) / (2 * pi) * besselk(0, k * r)
-    % Hence, by general quadrature approach 
+    % The solution of point source over a homogeneous half-space 
+    %   i) (\rho * I) / (2 * pi * abs(r))
+    % is given by the Fourier transform in wavenumberdomain by
+    %   ii) (2 / pi) \int_{0}^{\inf} (I * rho) / (2 * pi) * besselk(0, k * r)
+    %
+    % Hence, i) is approximated by quadrature approach applied on ii)
     %   1 / abs(r) ~ \sum_{j = 1}^{n} besselk(0, k_j * r) w_j
     % By defining 
     %   A*w = v
@@ -351,41 +300,125 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     % a linear minimization can be obtained to estimate optimal w_j for a
     % set of given k_j by:
     %   ||v - A*w||_2^2 -> min_w
-    %   w = \inv(A^{T}A) * A^{T}*v
     %
     % Procedure: 
     %   1) take k -> Bing-approach
-    %   2) linear optimize for w
-    
-    lambda = 1e-6;
+    %   2) optimize for w
     
     % Set up linear system for estimation of weights.
-    A_w = getSys(u_HS, k, r_TX2RX);
-    b_w = 1 + zeros(length(r_TX2RX), 1);
-
-    % Solve corresponding normal equation (Levenberg-Maquard-scheme).
-    % (Add prefactor to derive weights,  equivalent to Boerner and Bing.)
-    w = (pi / 2) * ((A_w.'*A_w + lambda * eye(n, n)) \ (A_w.' * b_w));
-
-    %% Plot asymptotics.
+    A = getSys(u_HS, k, r_TX2RX);
+    b = 1 + zeros(length(r_TX2RX), 1);
     
-    if debugging
-        figure();
-        loglog(k_range, u_min, 'b', k_range, u_max, 'r');
-        hold on
-        plot(k_min, ...
-            u_max(find(abs(grad_u_max) < tol_min, 1, 'first')), 'x')
-        plot(k_max, ...
-            u_min(find(abs(grad_u_min) > tol_max, 1, 'last')), 'o')
-        hold off
-        legend(sprintf('r = %d', r_min), ...
-               sprintf('r = %d', r_max), ...
-               'k_{min}', 'k_{max}', ...
-               'Location', 'best');
-        ylim([1e-100, 1e5]);
-        xlabel('k');
-        ylabel('K_0(k, r)');
+    % Obtain SVD.
+    [U, S, V] = svd(A);
+    sing_val = diag(S);
+    pseudo_rank = find(sing_val > 1e-3, 1, 'last');
+    invA = V(:,1:pseudo_rank) * diag(1./sing_val(1:pseudo_rank)) * U(:, 1:pseudo_rank).';
+
+    % Solve minimization by Pseudoinverse.
+    % (Add prefactor to derive weights,  equivalent to Boerner and Bing.)
+    w = (pi / 2) * invA * b;
+
+    %% Optimize k by nonlinear least-squares.
+%{   
+    % Iterate.
+    iter_max = 100;
+    res = zeros(iter_max, 1);
+    for kk = 1:iter_max
+        % Get Jacobian.
+        A0 = getSys(u_HS, k, r_TX2RX);
+        J = getSens(u_HS, k, r_TX2RX, A0, w);
+        
+        % Obtain SVD.
+        [U, S, V] = svd(J);
+        sing_val = diag(S);
+        pseudo_rank = find(sing_val > sing_val(1) * 1e-3, 1, 'last');
+        invJ = V(:,1:pseudo_rank) * diag(1./sing_val(1:pseudo_rank)) * U(:, 1:pseudo_rank).';
+        
+        % Set up rhs.
+        b = ones(length(r_TX2RX), 1) - (A0 * w);
+        res(kk) = norm(b);
+        
+        % Solve minimization by Pseudoinverse.
+        % (Add prefactor to derive weights,  equivalent to Boerner and Bing.)
+        dk = invJ * b;
+        
+        % Get model update.
+        k = k + dk;
+        
+%         if norm(dk) < norm(k)*1e-6
+%             break;
+%         end
     end
+%}
+    %% Optimize w and k by nonlinear least-squares.
+%{   
+    % Nonlinear least-squares approach:
+    %   ||I - F(k_j,w_j)||_2^2 -> min_[k_j,w_j]
+    %
+    % Linearization:
+    %   F(k_j,w_j) ~= F(k0_j,w0_j) + [\d_F(k0_j,w0_j) / d_k_j; * [d_k_j,d_w_j]
+    %                                 \d_F(k0_j,w0_j) / d_w_j]
+    %
+    % Gauss-Newton problem:
+    %   ||I - F(k0_j,w0_j) - [\d_F(k0_j,w0_j) / d_k_j; * [d_k_j,d_w_j] ||_2^2 -> min_[d_k_j,d_w_j]
+    %                         \d_F(k0_j,w0_j) / d_w_j] 
+    %     |______ ______|  - |_________ _____________| * |_____ _____|
+    %            V                     V                       V
+    %            b         -     J(k0_j, w0_j)         *      d_m
+    
+    % Set up optimization for m = [k; w].
+    w = 1 + 0*k;
+    m = log([k; w]);
+    
+    iter = 1;
+    iter_max = 300;
+    res = zeros(iter_max, 1);
+    while iter <= iter_max
+        
+        % Get derivative w.r.t. w at k_start: 
+        % (== A since dependencies are linear!)
+        S_w = getSys(u_HS, exp(m(1:n)), r_TX2RX);
+        
+        % Get derivative w.r.t. k: (using perturbation method)
+        S_k = getSens(u_HS, exp(m(1:n)), r_TX2RX, S_w, exp(m(n + 1:end)));
+        
+        % Apply chain rule for darivatives w.r.t. log(k, w):
+        S_w = S_w * diag(exp(m(n + 1:end)));
+        S_k = S_k * diag(exp(m(1:n)));
+        
+        % Summarize Jacobian.
+        J = [S_k, S_w];
+        
+        % Set up rhs.
+        b = ones(length(r_TX2RX), 1) - (S_w * m(n + 1:end));
+
+        % Get current residuum.
+        res(iter) = norm(b);
+        
+%         % Obtain SVD.
+%         [U, S, V] = svd(J);
+%         sing_val = diag(S);
+%         pseudo_rank = find(sing_val > sing_val(1)*1e-4, 1, 'last');
+%         invJ = V(:,1:pseudo_rank) * diag(1./sing_val(1:pseudo_rank)) * U(:, 1:pseudo_rank).';
+%         
+%         % Solve.
+%         d_m = invJ * b;
+        
+        % Solve.
+        JTJ = J.'*J;
+        d_m = (JTJ + 1e-6*eye(size(JTJ))) \ (J.'*b);
+        
+        % Get model update.
+        m = m + d_m;
+        iter = iter + 1;
+    end
+    
+    % Exclude wavenumbers and weights.
+    % (Add prefactor to derive weights, equivalent to Boerner and Bing.)
+    k = exp(m(1:n));
+    w = (pi / 2) * exp(m(n + 1:end));
+%}
 end
 
 function A = getSys(fun, k, r)
@@ -393,13 +426,15 @@ function A = getSys(fun, k, r)
    
     A = zeros(length(r), length(k));
     for ii = 1:length(r)
-        A(ii,:) = abs(r(ii)) * arrayfun(@(x) fun(x,r(ii)), k);
+        A(ii,:) = r(ii) * arrayfun(@(x) fun(x,r(ii)), k);
     end
 end
 
-function S = getSens(fun, k, r, Aw_org, w)
-    % Calculates d_(A*w) / d_k by perturbation.
+function S = getSens(fun, k, r, A0, w) %#ok
+    % Calculates d_(F(k,w)) / d_k by perturbation.
     %
+    % F(k,w) := r_l * A_lj(k_j, r_l) * w_j
+    % -> getSys provides: r_l * A_lj(k_j, r_l)
     % TODO: add Taylor test for verification.
     
     % Initialize.
@@ -408,16 +443,61 @@ function S = getSens(fun, k, r, Aw_org, w)
 
     % Loop over columns.
     for ii = 1:length(k)
-        
         % Set current k_dist to original and add noise.
         k_dist = k;
         k_dist(ii) = k(ii).*(1 + noise);
         
         % Get corresponding solution.
         A_dist = getSys(fun, k_dist, r);
-        Aw_dist = A_dist * w;
         
         % Calculate colums of sensitivity.
-        S(:,ii)= (Aw_dist - Aw_org) / (k_dist(ii) * noise);
+        S(:, ii)= ((A_dist - A0) * w) / (k(ii).*noise);
     end
+end
+
+function [] = compare_w_k(TX, RX, n_k) %#ok
+    % Get w and k:
+    [k_xu, w_xu, ~] = getInvFTXu(TX, RX, n_k);
+    [k_rub, w_rub, ~] = getInvFTBoerner(TX, RX);
+
+    % Get TX-RX offsets.
+    r_TX2RX = [];
+    for kk = 1:size (TX, 1)
+        cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
+
+        % Exclude TX == RX.
+        cur_TX2RX(cur_TX2RX == 0) = [];
+
+        % Summarize.
+        r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
+    end
+    r_TX2RX = unique(r_TX2RX);
+    n_r = length(r_TX2RX);
+
+    % Calculate approximation.
+    [r_approx_xu, r_approx_rub] = deal(zeros(n_r, 1));
+    for kk = 1:n_r
+        r_approx_xu(kk) = sum((2 / pi)*w_xu .* besselk(0, k_xu * r_TX2RX(kk)));
+        r_approx_rub(kk) = sum((2 / pi)*w_rub .* besselk(0, k_rub * r_TX2RX(kk)));
+    end
+
+    % Compare asymptotic with approximation.
+    figure(100)
+    subplot(2, 1, 1)
+        plot(1:n_r, 1./r_TX2RX, '-k', ...
+             1:n_r, r_approx_xu, '-or', ...
+             1:n_r, r_approx_rub, '-xb');
+        legend('1/r_l', '1/r_{xu, l}', '1/r_{rub, l}');
+        ylabel('f(r)');
+        xlim([0.5, n_r+0.5]);
+        xticklabels([]);
+    subplot(2, 1, 2)
+        plot(1:n_r, 100*(r_approx_xu - 1./r_TX2RX) / 1./r_TX2RX, '-ob', ...
+             1:n_r, 100*(r_approx_rub - 1./r_TX2RX) / 1./r_TX2RX, '-vr');
+        legend('1/r_{xu, l}', '1/r_{rub, l}');
+        xlim([0.5, n_r+0.5]);
+        xticks(1:n_r);
+        xticklabels(r_TX2RX);
+        xlabel('r');
+        ylabel('rel. error');
 end

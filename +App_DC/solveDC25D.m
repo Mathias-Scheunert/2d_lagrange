@@ -66,16 +66,16 @@ function u = solveDC25D(fe, sol, FT, verbosity)
             % Sum up solutions (apply quadrature).
             u_rect = (2  * FT.k(1) / pi) * u_2D{1};
             u_log = 0 * u_rect;
-            for ii = 2:(length(FT.k) - 2)
+            for ii = 1:length(FT.k) - 2
                 u_log = u_log + (...
-                    (2 / pi) * (FT.k(ii + 1) - FT.k(ii)) * ...
+                    (FT.k(ii + 1) - FT.k(ii)) * ...
                     (u_2D{ii} - u_2D{ii + 1}) ./ ...
                     (log(u_2D{ii} ./ u_2D{ii + 1}))...
-                        );
+                                );
             end
             u_exp = ((2 * u_2D{end}) * (FT.k(end) - FT.k(end - 1))) ./ ...
                 (pi * log(u_2D{end - 1} ./ u_2D{end}));
-            u = u_rect + u_log + u_exp;
+            u = u_rect + (2 / pi) * u_log + u_exp;
         otherwise
             error('Unknown type.');
     end
