@@ -7,8 +7,8 @@ tmp_*
 *.geo
 *.msh
 test_*
-\+Mesh/External
 
 # folders
+/External
 /test
 
