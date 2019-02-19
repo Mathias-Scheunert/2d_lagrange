@@ -1,7 +1,10 @@
 function [] = plotGradient(fe, mesh, u, varargin)
-    % Visualize the normalized gradient of the solution at cell midpoints.
+    % Visualize the normalized gradient of the solution at cell centroids.
     %
-    % Gradient of the solution at the midpoint of the cell k is given by:
+    % The gradients are evaluated at cells centroids but plotted at cells
+    % incenter!
+    %
+    % Gradient of the solution at point of the cell k is given by:
     %   \grad Phi_k = \sum_i(k) ( B_k^(-T) \grad(\phi_i(k)(x_mid)) * u_i(k))
     % for
     %   k = index of cell
@@ -63,12 +66,12 @@ function [] = plotGradient(fe, mesh, u, varargin)
     % Fetch info.
     n_cell = fe.sizes.cell;
     
-    %% Evaluate solution at cell midpoints.
+    %% Evaluate solution at cell centroids.
     if isnan(args.param)
-        % Get local basis functions at cell midpoint.
+        % Get local basis functions at cell centroids.
         loc_basis = fe.base.Phi(1/3, 1/3);
 
-        % Evaluate solution at all cell midpoints.
+        % Evaluate solution at all cell centroids.
         u_cell = zeros(n_cell, 1);
         for ii = 1:n_cell                
             % Get current DOF.
@@ -87,8 +90,9 @@ function [] = plotGradient(fe, mesh, u, varargin)
     % Evaluate gradients of basis function at these points and superpose 
     % evaluations for all basis functions of a cell.
     grad_coo = zeros(n_cell, 2);
+    cell_incenter = zeros(n_cell, 2);
     
-    % Evaluate gradient of basis functions at cell midpoint in
+    % Evaluate gradient of basis functions at cell centroid in
     % barycentric coordinates.
     loc_base = fe.base.grad_Phi(1/3, 1/3);
     
@@ -118,9 +122,14 @@ function [] = plotGradient(fe, mesh, u, varargin)
         % Get inner circle radius.
         cur_r = sqrt(prod(cur_s - cur_edges_length)/cur_s);
         
+        % Get cell incenter in global coordinates.
+        cell_incenter(ii, :) = sum(flipud(cur_edges_length) .* ...
+                                   mesh.cell2cord{ii}, 1) / ...
+                                      (cur_s * 2);
+        
         % Adjust length of the gradient to be little smaler than the 
         % current cells inner circle diameter.
-        grad_coo(ii,:) = grad_coo(ii,:) * 1.6*cur_r;
+        grad_coo(ii,:) = grad_coo(ii,:) * 1.8*cur_r;
         switch args.sign
             case 'pos'
                 % Nothing to do.
@@ -161,28 +170,19 @@ function [] = plotGradient(fe, mesh, u, varargin)
         ylabel(h, 'cell parameter value');
     end
     hold off
-
-
-    % Get cell midpoints in global from local (barycentric) coordinates.
-    lambda_mid = 1/3 + zeros(3, 1);
-    cell_mid = cellfun(@(x) ...
-        {[lambda_mid(1)*x(1,1) + lambda_mid(2)*x(2,1) + lambda_mid(3)*x(3,1); ...
-        lambda_mid(1)*x(1,2) + lambda_mid(2)*x(2,2) + lambda_mid(3)*x(3,2)].'}, ...
-        mesh.cell2cord);
-    cell_mid = cell2mat(cell_mid);
     
     % Slightly shift them, sucht that center of plotted vectors will be
-    % located at the cell midpoint.
+    % located at the cell incenter.
     % (otherwise the vector origin will be there)
-    cell_mid = [cell_mid(:,1) - grad_coo(:,1)./2, ...
-                cell_mid(:,2) - grad_coo(:,2)./2];
+    plot_mid = [cell_incenter(:,1) - grad_coo(:,1)./2, ...
+                cell_incenter(:,2) - grad_coo(:,2)./2];
     
     % Display the solution for all DOF (at an adapted triangulation).
     hold on
-    scale = 0;
-    quiver(cell_mid(:,1), cell_mid(:,2), grad_coo(:,1), grad_coo(:,2), scale, ...
+    quiver(plot_mid(:,1), plot_mid(:,2), grad_coo(:,1), grad_coo(:,2), ...
         'Color', 'red', ...
-        'LineWidth', 2);
+        'LineWidth', 2, ...
+        'AutoScale','off');
     hold off
     
     % Adjust figure.
