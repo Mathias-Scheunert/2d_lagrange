@@ -103,8 +103,8 @@ title('Normalized E-field for cylinder in a homogeneous media.');
 
 % Note: in order to obtain a multipol solution, the solution vectors are
 % just summed up.
-Plot.plotGradient(fe, mesh, sum(u_FE, 2), 'sign', 'neg', 'param', param);
-title('Normalized E-field for cylinder in a homogeneous media.');
+% Plot.plotGradient(fe, mesh, sum(u_FE, 2), 'sign', 'neg', 'param', param);
+% title('Normalized E-field for cylinder in a homogeneous media.');
 
 Plot.plotSolution(fe, mesh, sum(u_FE, 2));
 title('Electrical potential for cylinder in a homogeneous media.');

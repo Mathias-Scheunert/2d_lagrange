@@ -68,7 +68,7 @@ function params = getInvFTParam(TX, RX, type)
             error('Approach not fully proved - do not use!');
             [params.k, params.n] = getInvFTBing(TX, RX, n_k); %#ok
         case 'Xu'
-%             error('Approach misleading - do not use!');
+            error('Approach misleading - do not use!');
             [params.k, params.w, params.n] = getInvFTXu(TX, RX, n_k); %#ok
         otherwise
             error('Unknown type - "Boerner", "Bing" or "Xu" supported.')
@@ -96,7 +96,6 @@ function [k, w, n] = getInvFTBoerner(TX, RX)
     % INPUT PARAMETER
     %   TX ... Matrix of TX position coordinates.
     %   RX ... Matrix of RX position coordinates.
-    %   n  ... Scalar, denoting number of k or w, respectively.
     %
     % OUTPUT PARAMETER
     %   k ... Vector, containing quadrature nodes (spatial wavenumbers).
