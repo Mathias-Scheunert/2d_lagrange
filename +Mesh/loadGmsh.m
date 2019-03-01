@@ -123,10 +123,10 @@ function mesh = loadGmsh(name, varargin)
                        'whitespace', '');
     gmsh_ver = gmsh_ver{1}{end};
     if ~strcmp(gmsh_ver(1), '3')
-        warning('Gmsh:versionNum', ...
-            sprintf(['Gmsh version %s.x detected - ', ...
-            'Function was tested only for version 3.x.'], gmsh_ver(1)));
-        warning('off', 'Gmsh:versionNum');
+%         warning('Gmsh:versionNum', ...
+%             sprintf(['Gmsh version %s.x detected - ', ...
+%             'Function was tested only for version 3.x.'], gmsh_ver(1)));
+%         warning('off', 'Gmsh:versionNum');
     end
     
     %% Refine uniformly.
@@ -477,10 +477,11 @@ function mesh = loadGmsh(name, varargin)
         
         % Map point information.
         if ~isempty(element_content{1})
+            % Expand point list to entire vertex list size.
+            point_id_map = zeros(size(vertices, 1), 1);
+            point_id_map(points(:, 6)) = points(:, 4);
+            % Extract physical names.
             phys_point_content = phys_content(phys_point_id,:);
-            phys_point_id = phys_ids{1}(:);
-            point_id_map = element_content{1}(:, 4) == phys_point_id.';
-            point_id_map = point_id_map * (1:length(phys_point_id)).';
             phys_point_names = phys_point_content(:, 3);
         else
             point_id_map = [];
