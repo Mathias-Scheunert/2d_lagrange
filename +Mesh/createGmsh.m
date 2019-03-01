@@ -128,7 +128,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
         max_y = max(TXRX(:,2));
         
         % Adapt.
-        coo_offset = pick(3, 5500, 10000, round(abs(max_x - min_x)*100));
+        coo_offset = round(abs(max_x - min_x) * 500);
         bnd = [min_x - coo_offset, ...
                max_x + coo_offset, ...
                bnd(3), ...
@@ -209,7 +209,7 @@ function createGmshInput(name, bnd, TX, RX, topo, dom_name, verbosity)
     if ~isempty(TXRX)
         % Initialize.
         %                geometry based               fix
-        h_TXRX = pick(1, round(diff(bnd(1:2)) / 500), 0.1);
+        h_TXRX = pick(2, round(diff(bnd(1:2)) / 500), 1);
         
         % Just reduce h, for those points that are already part of 
         % point_domain (i.e. TX/RX coincides with topo).
