@@ -62,13 +62,13 @@ debugging = pick(2, false, true);
 verbosity = pick(2, false, true);
 
 % Define number of uniform grid refinements.
-refinement = 1;
+refinement = 2;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
 
 % Define type of numerical integration approach.
-FT_type = pick(3, 'Boerner', 'Bing', 'Xu');
+FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
 
 %% Set up disctrete DC fwd problem.
 
@@ -90,11 +90,12 @@ TX.type = 'point_exact';
 TX.coo = [0, 0];
 TX.val = 1;
 %
+n_RX = 17;
 RX.coo = pick(2, ...
-            [linspace(-40, 40, 17).', ...
-            topo_min + (topo_max - topo_min) .* rand(17, 1)], ...
-            [linspace(-40, 40, 17).', ...
-            TX.coo(2) + zeros(17, 1)] ...
+            [linspace(0, 40, n_RX).', ...
+            topo_min + (topo_max - topo_min) .* rand(n_RX, 1)], ...
+            [linspace(0, 40, n_RX).', ...
+            TX.coo(2) + zeros(n_RX, 1)] ...
          );
 RX.coo(ismember(RX.coo(:,1), TX.coo(:,1)),:) = [];
 RX.coo = round(RX.coo .* 10) ./ 10;
@@ -103,9 +104,11 @@ if debugging
     topo = [];
 else
     % Add some arbitrary topography.
-    topo = [round([linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)], 2); ...
+    topo = pick(2, ...
+           [round([linspace(-350, -45, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)], 2); ...
             round([linspace(45, 350, 20).', topo_min + (topo_max - topo_min) .* rand(20,1)], 2)
-           ];
+           ], ...
+           []);
 end
 clear('topo_max', 'topo_min');
 
@@ -139,9 +142,9 @@ clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
-    'ref', fwd_params.ref, 'verbosity', verbosity, ...
-    'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
-    'RX', fwd_params.RX.coo, 'dom_name', param_info.name{:});
+                'ref', fwd_params.ref, 'verbosity', verbosity, ...
+                'topo', fwd_params.topo, 'TX', fwd_params.TX.coo, ...
+                'RX', fwd_params.RX.coo, 'dom_name', param_info.name{:});
 
 %% Set up parameter vector.
 
@@ -149,15 +152,13 @@ mesh = Mesh.initMesh(mesh_type, 'bnd', fwd_params.dom_bnd, ...
 param = Param.initParam(mesh, param_info);
 
 % Set disturbed area (equals vertical dike).
-x_dist = [-80, -10];
-y_dist = [10, 80];
+x_dist = [15, 22];
 
 % Define parameter of conductivity (conductor within resistor).
 if debugging
-    param = (0 * param) + 1 / (2 * pi);
-    sig_anomaly = 1 / (2 * pi);
+    sig_anomaly = param_info.val;
 else
-    sig_anomaly = 10;
+    sig_anomaly = pick(1, 1/100, param_info.val);
 
     % Find all cell midpoints using barycentric coordinates.
     lambda_mid = 1/3 + zeros(3, 1);
@@ -168,8 +169,7 @@ else
 
     % Find cells, belonging to distrubed area.
     cell_dist = cellfun(@(x) ...
-        (x(1) > x_dist(1) && x(1) < x_dist(2)) && ...
-        (x(2) > y_dist(1) && x(2) < y_dist(2)), ...
+        (x(1) > x_dist(1) && x(1) < x_dist(2)), ...
             cell_mid);
 
     % Set parameter for disturbed area.
@@ -206,61 +206,65 @@ switch fwd_params.FT_type
         fig_nun = 200;
 end
           
-if debugging
-    % Get reference solution in 3D.
-    ref_3D = RefSol.getElectrodeAtHS(1/sig_anomaly, ...
-                                     fwd_params.TX.val, fwd_params.TX.coo);
-    phi_3D = arrayfun(@(x, y) ref_3D.f(x, y), ...
-                  fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
+% Get reference solution in 3D.
+ref_3D = RefSol.getElectrodeAtHS(1/param_info.val, ...
+                                 fwd_params.TX.val, fwd_params.TX.coo);
+phi_3D = arrayfun(@(x, y) ref_3D.f(x, y), ...
+              fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
+ref_dike_3D = RefSol.getElectrodeAtVertDike(1/param_info.val, ...
+                                       1/sig_anomaly, ...
+                                       x_dist(1), x_dist(2)-x_dist(1), ...
+                                       fwd_params.TX.coo, ...
+                                       fwd_params.TX.val);
+phi_dike_3D = arrayfun(@(x, y) ref_dike_3D.f(x, y), ...
+              fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
 
-    % Get asymptotic solution.
-    % I.e. the numerical integration of the asymptotic Bessel functions
-    % which map the 2D behavior of the 3D solution for each wavenumbers.
-    phi_asy = zeros(size(fwd_params.RX.coo, 1), 1);
-    for i=1:size(fwd_params.RX.coo, 1)
-        r = abs(fwd_params.RX.coo(i,1) - fwd_params.TX.coo(1,1));
-        switch fwd_params.FT_type
-            case {'Boerner', 'Xu'}
+% Get asymptotic solution.
+% I.e. the numerical integration of the asymptotic Bessel functions
+% which map the 2D behavior of the 3D solution for each wavenumbers.
+phi_asy = zeros(size(fwd_params.RX.coo, 1), 1);
+for i=1:size(fwd_params.RX.coo, 1)
+    r = abs(fwd_params.RX.coo(i,1) - fwd_params.TX.coo(1,1));
+    switch fwd_params.FT_type
+        case {'Boerner', 'Xu'}
 %                 RefSol.get_Uk_HR(k, r_TX2RX, I, rho1);
-                phi_asy(i) = (2 / pi) * sum(FT_info.w .* ...
-                    RefSol.get_Uk_HR(FT_info.k, r, 1, 1/sig_anomaly).');
-            case 'Bing'
-                % Not known.
-                phi_asy = phi_asy * NaN;
-        end
+            phi_asy(i) = (2 / pi) * sum(FT_info.w .* ...
+                RefSol.get_Uk_HR(FT_info.k, r, 1, 1/param_info.val).');
+        case 'Bing'
+            % Not known.
+            phi_asy = phi_asy * NaN;
     end
+end
 
-    figure(fig_nun)
-    subplot(2, 1, 1)
-        semilogy(x_plot, phi_3D, 'ok', ...
+figure(fig_nun)
+subplot(2, 1, 1)
+    semilogy(x_plot, phi_3D, 'ok', ...
+             x_plot, phi_dike_3D, '+m', ...
              x_plot, phi_asy, 'xb', ...
              x_plot, phi_FE, '-r');
-        xlim([x_plot(1), x_plot(end)]);
-        title(sprintf('2.5D half-space solution using %d wavenumbers (%s)', ...
-              FT_info.n, fwd_params.FT_type));
-        legend('\phi_{3D}', ...
-               '\phi_{asy}', ...
-               '\phi_{FE}');
-        ylabel('potential');
-    subplot(2, 1, 2)
-        rel_err_FE = (1 - (phi_FE ./ phi_3D)) * 100;
-        rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
-        plot(x_plot, rel_err_asy, 'b', ...
-             x_plot, rel_err_FE, 'r');
-        xlim([x_plot(1), x_plot(end)]);
-        ylim([-3, 3]);
-        legend('\phi_{ref} vs. \phi_{asy}', ...
-               '\phi_{ref} vs. \phi_{FE}');
-        ylabel('rel. error');
-        xlabel('profile length');
-        
-else
-    figure(fig_nun)
-        plot(x_plot, phi_FE, '-r');
-        legend('\phi_{FE}');
-        ylabel('potential');
-        xlabel('profile length');
-end
+    xlim([x_plot(1), x_plot(end)]);
+    ylim([1e0, 1e2]);
+    title(sprintf('2.5D half-space solution using %d wavenumbers (%s)', ...
+          FT_info.n, fwd_params.FT_type));
+    legend('\phi_{3D}', ...
+           '\phi_{dike 3D}', ...
+           '\phi_{asy}', ...
+           '\phi_{FE}');
+    ylabel('potential');
+subplot(2, 1, 2)
+    rel_err_FE = (1 - (phi_FE ./ phi_3D)) * 100;
+    rel_err_dike_FE = (1 - (phi_FE ./ phi_dike_3D)) * 100;
+    rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
+    plot(x_plot, rel_err_asy, 'b', ...
+         x_plot, rel_err_dike_FE, 'm', ...
+         x_plot, rel_err_FE, 'r');
+    xlim([x_plot(1), x_plot(end)]);
+    ylim([-3, 3]);
+    legend('\phi_{3D} vs. \phi_{asy}', ...
+           '\phi_{dike 3D} vs. \phi_{FE}', ...
+           '\phi_{3D} vs. \phi_{FE}');
+    ylabel('rel. error');
+    xlabel('profile length');
 
 %% Compare some solutions within the wavenumber domain.
 
@@ -269,7 +273,7 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
     phi_ref_2D = cell(FT_info.n, 1);
     for jj = 1:(FT_info.n)
         phi_ref_2D{jj} = arrayfun(@(r) ...
-            RefSol.get_Uk_HR(FT_info.k(jj), r, 1, 1/sig_anomaly).', x_plot);
+            RefSol.get_Uk_HR(FT_info.k(jj), r, 1, 1/param_info.val).', x_plot);
     end
 
     % Compare to 2D FE solutions.
@@ -300,3 +304,9 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
             xlabel('profile length');
     end
 end
+
+return;
+%%
+Plot.plotMesh(mesh), ylim([-10, 20]), xlim([-20, 60]);
+hold on; 
+plot(fwd_params.RX.coo(:,1), fwd_params.RX.coo(:,2), '*b');
