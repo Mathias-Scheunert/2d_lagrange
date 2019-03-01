@@ -58,7 +58,7 @@
 % Clean up and set verbosity.
 clean();
 warning('on');
-debugging = pick(2, false, true);
+debugging = pick(1, false, true);
 verbosity = pick(2, false, true);
 
 % Define number of uniform grid refinements.
@@ -246,9 +246,9 @@ subplot(2, 1, 1)
     ylim([1e0, 1e2]);
     title(sprintf('2.5D half-space solution using %d wavenumbers (%s)', ...
           FT_info.n, fwd_params.FT_type));
-    legend('\phi_{3D}', ...
+    legend('\phi_{HS 3D}', ...
            '\phi_{dike 3D}', ...
-           '\phi_{asy}', ...
+           '\phi_{asyHS 3D}', ...
            '\phi_{FE}');
     ylabel('potential');
 subplot(2, 1, 2)
@@ -260,9 +260,9 @@ subplot(2, 1, 2)
          x_plot, rel_err_FE, 'r');
     xlim([x_plot(1), x_plot(end)]);
     ylim([-3, 3]);
-    legend('\phi_{3D} vs. \phi_{asy}', ...
+    legend('\phi_{HS 3D} vs. \phi_{asyHS 3D}', ...
            '\phi_{dike 3D} vs. \phi_{FE}', ...
-           '\phi_{3D} vs. \phi_{FE}');
+           '\phi_{HS 3D} vs. \phi_{FE}');
     ylabel('rel. error');
     xlabel('profile length');
 
