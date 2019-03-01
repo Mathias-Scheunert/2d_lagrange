@@ -47,7 +47,7 @@ function [] = plotMesh(mesh, params, debug)
     %% Add simplices.
     
     hold on
-    if debug && isfield(mesh, 'cell2cord')
+    if debug && isfield(mesh, 'cell2cord') && n_cells < 200
         cell_coo_all = cell2mat(mesh.cell2cord);
         cell_coo_x = reshape(cell_coo_all(:,1), [3, n_cells]);
         cell_coo_y = reshape(cell_coo_all(:,2), [3, n_cells]);
@@ -68,12 +68,15 @@ function [] = plotMesh(mesh, params, debug)
     %% Add boundary adges.
     
     if isfield(mesh, 'bnd_edge') && debug
-        bnd_edge_cords = mesh.edge2cord(mesh.bnd_edge);
         hold on
-        for ii = 1:length(bnd_edge_cords)
-            line(bnd_edge_cords{ii}(:,1), bnd_edge_cords{ii}(:,2), ...
-                'LineWidth', 4, ...
-                'Color', [.8 .8 .8]);
+        n_parts = length(mesh.bnd_edge_part_name);
+        for kk = 1:n_parts
+            bnd_edge_cords = mesh.edge2cord(mesh.bnd_edge_part == kk);
+            for ii = 1:length(bnd_edge_cords)
+                line(bnd_edge_cords{ii}(:,1), bnd_edge_cords{ii}(:,2), ...
+                    'LineWidth', 4, ...
+                    'Color', 1/kk * [1, 1, 1] - 1/(2*n_parts));
+            end
         end
         hold off
     end
