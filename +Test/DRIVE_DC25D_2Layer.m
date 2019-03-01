@@ -129,10 +129,6 @@ mesh = Mesh.initMesh(mesh_type, 'name', file_name, ...
 % Set up parameter vector.
 param = Param.initParam(mesh, param_info);
 
-% Set disturbed area (equals vertical dike).
-x_dist = [-80, -10];
-y_dist = [10, 80];
-
 %% Assemble 2.5D DC problem.
 
 [fe, sol, FT_info] = App_DC.assembleDC25D(mesh, param, fwd_params, verbosity);

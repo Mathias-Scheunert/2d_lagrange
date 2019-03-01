@@ -20,7 +20,7 @@ function ele2L_fun = getElectrodeAt2L(rho1, rho2, h, I, TX)
     %   TX    ... Vector [2, x 1], denoting the source position.
     %
     % OUTPUT PARAMETER
-    %   ele2L_fun ... Struct, containing function and gradient handles.
+    %   ele2L_fun ... Struct, containing function handle.
     
     %% Check input.
     
