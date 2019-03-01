@@ -274,5 +274,9 @@ function [] = writeGEO(name, info)
             dom_name{ii}, id_plane_surface(ii));
     end
     
+    % Remove multiples.
+    fprintf(fileID, '\n');
+    fprintf(fileID, 'Coherence;');
+    
     fclose(fileID);
 end
