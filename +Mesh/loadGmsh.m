@@ -131,16 +131,17 @@ function mesh = loadGmsh(name, varargin)
     
     %% Refine uniformly.
     
-    if args.verbosity
+    if args.verbosity && args.ref > 0
         fprintf('Refine mesh ... '); 
     end
     name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
     copyfile(name, name_tmp);
     for i = 1:args.ref
+        
         system([gmsh_path.folder, '/gmsh -refine -format msh2 -v 0 ', ...
             name_tmp]);
     end
-    if args.verbosity
+    if args.verbosity && args.ref > 0
        fprintf('done.\n');
     end
     
