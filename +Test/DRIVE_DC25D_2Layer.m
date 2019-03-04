@@ -122,7 +122,7 @@ fwd_params.ref = refinement;
 %% Set up mesh.
 
 mesh = Mesh.initMesh(mesh_type, 'name', file_name, ...
-    'ref', fwd_params.ref, 'verbosity', verbosity);
+                     'ref', fwd_params.ref, 'verbosity', verbosity);
 
 %% Set up parameter vector.
 

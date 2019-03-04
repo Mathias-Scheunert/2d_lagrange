@@ -1,4 +1,4 @@
-function [] = createVerticalDikeMesh(bnd, ele, x0, width, gmsh_file)
+function mesh = createVerticalDikeMesh(bnd, ele, x0, width, ref)
     % Creates Gmsh input (*.geo) and output (.msh) file for a VD in a HS.
     %
     % Constructs mesh for a half-space including a vertical dike and a
@@ -12,7 +12,14 @@ function [] = createVerticalDikeMesh(bnd, ele, x0, width, gmsh_file)
     %   ele   ... Vector of electrode positions.
     %   x0    ... Scalar, denoting left boundary of dike.
     %   width ... Scalar, denoting width of dike.
-    %   name  ... Charracter denoting name of files.
+    %   ref   ... Scalar, denoting number of uniform grid refinements.
+    %
+    % OUTPUT PARAMETER
+    %   mesh ... Struct, containing vertex2coordinates (vertices), 
+    %            simplex2vertex (cell2vtx), boundary egde2coordinates 
+    %            (bnd_edge2vtx), boundary egde 2 model domain boundary
+    %            (bnd_edge_...) and simplex parameter domains 
+    %            (parameter_domains).
     
     %% Check input.
     
@@ -21,9 +28,9 @@ function [] = createVerticalDikeMesh(bnd, ele, x0, width, gmsh_file)
     assert(bnd(1) < x0 && bnd(2) > (x0 + width), ...
         'Expect dike to be located inside the given domain boundary.')
     if nargin < 5
-        gmsh_file = 'vertical_dike';
+        ref = 0;
     else
-        assert(ischar(gmsh_file));
+        assert(isscalar(ref));
     end
     
     %% Check Gmsh version.
@@ -34,14 +41,27 @@ function [] = createVerticalDikeMesh(bnd, ele, x0, width, gmsh_file)
     end
     
     %% Create Gmsh input file.
-   
+
+    gmsh_file = 'vert_dike';
     input_info = createGmshInput(bnd, ele, width, x0);
     writeGEO([gmsh_file, '.geo'], input_info)
     
     %% Run Gmsh.
     
     system([gmsh_path.folder, '/gmsh -2 ', ...
-            gmsh_file, '.geo -v 0 -format msh2']);   
+            gmsh_file, '.geo -v 0 -format msh2']);
+        
+    %% Import mesh information from .msh file.
+
+    mesh = Mesh.loadGmsh([gmsh_file, '.msh'], ...
+                         'ref', ref);
+    
+    % Override type.
+    mesh.type = 'gmsh_dike';
+
+    %% Clean up.
+    
+    delete([gmsh_file, '.geo'], [gmsh_file, '.msh']);
 end
 
 function info = createGmshInput(bnd, point_ele, h, x0)

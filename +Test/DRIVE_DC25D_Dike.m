@@ -88,13 +88,6 @@ RX.coo = [linspace(0, 40, n_RX).', zeros(n_RX, 1)];
 RX.coo(ismember(RX.coo(:,1), TX.coo(:,1)),:) = [];
 RX.coo = round(RX.coo .* 10) ./ 10;
 
-% Define mesh.
-% Note: TX/RX positions may not be part of the vertex list of 'cube' mesh.
-file_name = 'vert_dike';
-Mesh.createVerticalDikeMesh(domain_bnd, [TX.coo; RX.coo], ...
-                       dike_info(1), dike_info(2), ...
-                       file_name);
-
 % Define background conductivity.
 param_info = struct();
 param_info.val = [1/1000, 1/100, 1/1000];
@@ -121,10 +114,9 @@ fwd_params.ref = refinement;
 
 %% Set up mesh.
 
-mesh_type = 'gmsh_load';
-mesh = Mesh.initMesh(mesh_type, 'name', [file_name, '.msh'], ...
-                                'ref', fwd_params.ref, ...
-                                'verbosity', verbosity);
+mesh = Mesh.initMesh('gmsh_dike', 'bnd', domain_bnd, ...
+                     'TX', [TX.coo; RX.coo], ...
+                     'dike', dike_info, 'ref', fwd_params.ref);
 
 %% Set up parameter vector.
 

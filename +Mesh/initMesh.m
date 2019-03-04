@@ -55,7 +55,7 @@ function mesh = initMesh(var, varargin)
     
     % Define possible input keys and its properties checks.
     input_keys = {'bnd', 'ref', 'TX', 'RX', 'topo', 'dom_name', 'name', ...
-                  'verbosity'};
+                  'dike', 'verbosity'};
     assertBnd = @(x) assert(isvector(x) && length(x) == 4 && ...
         x(1) < x(2) && x(3) < x(4), ...
         ['bnd - Vector [1 x 4] denoting the lower and the upper ', ...
@@ -68,6 +68,8 @@ function mesh = initMesh(var, varargin)
         'name - Character of Gmsh file name to load (including file extention!).');
     assertDomName = @(x) assert(ischar(x), ...
         'dom_name - Character of parameter domain name, expected.');
+    assertDike = @(x) assert(isvector(x) && length(x) == 2, ...
+        'dike - Vector [1 x 2] of left boundary and width,m expected.');
     assertVerbose = @(x) assert(islogical(x), ...
         'verbosity - logical, denoting if status should be printed, expected');
     
@@ -80,7 +82,8 @@ function mesh = initMesh(var, varargin)
     parser_obj.addParameter(input_keys{5}, [], assertPos);
     parser_obj.addParameter(input_keys{6}, [], assertName);
     parser_obj.addParameter(input_keys{7}, 'def', assertDomName);
-    parser_obj.addParameter(input_keys{8}, false, assertVerbose);
+    parser_obj.addParameter(input_keys{8}, [5, 5], assertDike);
+    parser_obj.addParameter(input_keys{9}, false, assertVerbose);
    
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
@@ -91,6 +94,10 @@ function mesh = initMesh(var, varargin)
     switch var
         case 'cube'
             mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
+        case 'gmsh_dike'
+            mesh = Mesh.createVerticalDikeMesh(args.bnd, args.TX, ...
+                                               args.dike(1), args.dike(2), ...
+                                               args.ref);
         case 'gmsh_create'
             mesh = Mesh.createGmsh(args.bnd, args);
         case 'gmsh_load'

@@ -304,9 +304,3 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
             xlabel('profile length');
     end
 end
-
-return;
-%%
-Plot.plotMesh(mesh), ylim([-10, 20]), xlim([-20, 60]);
-hold on; 
-plot(fwd_params.RX.coo(:,1), fwd_params.RX.coo(:,2), '*b');
