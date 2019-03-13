@@ -104,8 +104,9 @@ delete('test.geo', 'test.msh');
 %% Extract TX/RX.
 
 % Find maximum numbers of TX and RX.
-str = cellfun(@(x) {x(1)}, mesh.point_names(mesh.point));
-num = cellfun(@(x) str2double(x(2:end)), mesh.point_names(mesh.point));
+point_idx = mesh.point(mesh.point ~= 0);
+str = cellfun(@(x) {x(1)}, mesh.point_names(point_idx));
+num = cellfun(@(x) str2double(x(2:end)), mesh.point_names(point_idx));
 % RECI: Change roles.
 TX_max_num = max(num(strcmp(str, 'M') | strcmp(str, 'N')));
 RX_max_num = max(num(strcmp(str, 'A') | strcmp(str, 'B')));
@@ -118,8 +119,8 @@ TX.coo = zeros(TX_max_num*2, 2);
 for ii = 1:(TX_max_num)
     % For each TX pair: get current indices of A and B.
 % RECI: Change roles.
-    cur_A = find(strcmp(mesh.point_names(mesh.point), sprintf('M%d', ii)));
-    cur_B = find(strcmp(mesh.point_names(mesh.point), sprintf('N%d', ii)));
+    cur_A = find(strcmp(mesh.point_names(point_idx), sprintf('M%d', ii)));
+    cur_B = find(strcmp(mesh.point_names(point_idx), sprintf('N%d', ii)));
     % Construct index to fill in matrix.
     idx = (ii*2) - 1;
     TX.coo(idx,:) = mesh.vertices(mesh.point2vtx(cur_A),:);
@@ -138,8 +139,8 @@ RX.coo = zeros(RX_max_num*2, 2);
 for jj = 1:(RX_max_num)
     % For each RX pair: get current indices of M and N.
 % RECI: Change roles.
-    cur_M = find(strcmp(mesh.point_names(mesh.point), sprintf('A%d', jj)));
-    cur_N = find(strcmp(mesh.point_names(mesh.point), sprintf('B%d', jj)));
+    cur_M = find(strcmp(mesh.point_names(point_idx), sprintf('A%d', jj)));
+    cur_N = find(strcmp(mesh.point_names(point_idx), sprintf('B%d', jj)));
     % Construct index to fill in matrix.
     idx = (jj*2) - 1;
     RX.coo(idx,:) = mesh.vertices(mesh.point2vtx(cur_M),:);

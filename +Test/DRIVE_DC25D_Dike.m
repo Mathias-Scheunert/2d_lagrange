@@ -189,6 +189,9 @@ subplot(2, 1, 2)
 
 return;
 %%
-Plot.plotMesh(mesh), ylim([-10, 20]), xlim([-20, 60]);
+Plot.plotMesh(mesh, param), ylim([-10, 20]), xlim([-20, 60]);
 hold on; 
 plot(RX.coo(:,1), RX.coo(:,2), '*b');
+
+%%
+Plot.plotGradient(fe, mesh, u_FE, 'sign', 'neg');

@@ -34,16 +34,6 @@ function mesh = createGmsh(bnd, args)
     if isempty(gmsh_path)
         error('Gmsh executable could not be found in path.');
     end
-    [~, gmsh_ver] = system([gmsh_path.folder, '/gmsh -version']);
-    gmsh_ver = textscan(gmsh_ver, '%s', 'delimiter', '\n', ...
-                       'whitespace', '');
-    gmsh_ver = gmsh_ver{1}{end};
-    if ~strcmp(gmsh_ver(1), '3')
-        warning('Gmsh:versionNum', ...
-            sprintf(['Gmsh version %s.x detected - ', ...
-            'Function was tested only for version 3.x.'], gmsh_ver(1)));
-        warning('off', 'Gmsh:versionNum');
-    end
     
     %% Create Gmsh input file.
 

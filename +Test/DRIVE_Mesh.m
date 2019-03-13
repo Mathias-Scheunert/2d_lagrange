@@ -23,15 +23,16 @@ refinement = pick(1, 0, 1, 2);
 
 % Construct triangular grid for a rectangular domain.
 mesh = Mesh.initMesh(grid_type, 'bnd',  [x, y]);
-n_cells = length(mesh.cell2vtx);
+n_cells = size(mesh.cell2vtx, 1);
 
 % Plot grid.
 if debug
     Plot.plotMesh(mesh, (1:n_cells)/n_cells, false);
     clb = colorbar;
     clb.Label.String = 'cell number';
-    clb_labels = cellfun(@(x) {num2str(x)}, num2cell(round(clb.Ticks * n_cells)));
-    clb.Ticks = round(clb.Ticks * n_cells) / n_cells;
+    tmp_tick = unique(round(clb.Ticks * n_cells));
+    clb_labels = cellfun(@(x) {num2str(x)}, num2cell(tmp_tick));
+    clb.Ticks = tmp_tick / n_cells;
     clb.TickLabels = clb_labels;
     drawnow();
 end
@@ -47,8 +48,9 @@ if debug
     Plot.plotMesh(mesh, (1:n_cells)/n_cells, true);
     clb = colorbar;
     clb.Label.String = 'cell number';
-    clb_labels = cellfun(@(x) {num2str(x)}, num2cell(round(clb.Ticks * n_cells)));
-    clb.Ticks = round(clb.Ticks * n_cells) / n_cells;
+    tmp_tick = unique(round(clb.Ticks * n_cells));
+    clb_labels = cellfun(@(x) {num2str(x)}, num2cell(tmp_tick));
+    clb.Ticks = tmp_tick / n_cells;
     clb.TickLabels = clb_labels;
     drawnow();
 end

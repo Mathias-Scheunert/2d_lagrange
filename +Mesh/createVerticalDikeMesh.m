@@ -57,7 +57,7 @@ function mesh = createVerticalDikeMesh(bnd, ele, x0, width, ref)
                          'ref', ref);
     
     % Override type.
-    mesh.type = 'gmsh_dike';
+    mesh.type = 'gmsh_load';
 
     %% Clean up.
     

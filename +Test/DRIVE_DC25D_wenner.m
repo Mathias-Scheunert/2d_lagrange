@@ -66,7 +66,7 @@ include_anomaly = pick(1, false, true);
 include_topo = pick(1, false, true);
 
 % Define number of uniform grid refinements.
-refinement = 2;
+refinement = 0;
 
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
