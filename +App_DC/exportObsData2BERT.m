@@ -19,7 +19,7 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     
     assert(ischar(name), ...
         'name - Char, denoting the file name.');
-    assert(isstruct(survey) &&  all(isfield(survey, {'header', 'data'})), ...
+    assert(isstruct(survey) &&  all(isfield(survey, {'data_header', 'data'})), ...
         'survey - Struct, tabulated configuration info and its names, expected.');
     assert(ismatrix(ele) && size(ele, 2) == 2, ...
         'ele - Matrix [n x 2], of electrode positions expected.');
@@ -28,6 +28,9 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     else
         assert(islogical(verbosity), ...
             'verbosity - Logical, dennoting if stats should be print, expected.');
+    end
+    if length(name) < 5 || ~strcmp(name(end-3:end), '.txt')
+        name = [name, '.txt'];
     end
     
     %% Export survey to file in BERT format.
@@ -39,22 +42,25 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     % Write electrode info block.
     % Set header.
     n_ele = size(ele, 1);
-    fprintf(fileID, '%d\n', n_ele);
+    fprintf(fileID, '%d# Number of electrodes\n', n_ele);
     fprintf(fileID, '# x z\n');
     % Set positions.
     for i = 1:n_ele
-        fprintf(fileID, '%d %d \n', ele(i,:));
+        fprintf(fileID, '%.2f %.2f \n', ele(i,:));
     end
     
     % Write data block.
     % Set header.
     n_data = size(survey.data, 1);
     n_col = size(survey.data, 2);
-    fprintf(fileID, '%d\n', n_data);
-    fprintf(fileID, ['# ', repmat('%s ', 1, n_col), '\n'], survey.header{:});
+    fprintf(fileID, '%d# Number of data\n', n_data);
+    fprintf(fileID, ['# ', repmat('%s ', 1, n_col), '\n'], survey.data_header{:});
     % Set data.
     for i = 1:n_data
-        fprintf(fileID, [repmat('%d ', 1, n_col), '\n'], survey.data(i,:));
+        fprintf(fileID, [repmat('%d ', 1, 4), repmat('%.3f ', 1, n_col-4)], survey.data(i,:));
+        if i ~= n_data
+            fprintf(fileID, '\n');
+        end
     end
     fclose(fileID);
     if verbosity
