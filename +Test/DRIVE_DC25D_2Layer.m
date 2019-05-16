@@ -63,6 +63,9 @@ verbosity = pick(2, false, true);
 % Define number of uniform grid refinements.
 refinement = 1;
 
+% Set boundary constraint.
+bc_type = pick(1, 'D_N', 'DtN_N');
+
 % Set order of Lagrange elements.
 FE_order = pick(2, 1, 2);
 
@@ -102,13 +105,25 @@ mesh_type = 'gmsh_load';
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
-bnd = struct();
-bnd.type = {'dirichlet', 'neumann'};
-%         ymin ymax  xmin xmax 
-bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
-           {0;  [];   [];  []}}; ... % 2 for Neumann
-bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
-bnd.quad_ord = 1;
+switch bc_type
+    case 'D_N'
+        bnd = struct();
+        bnd.type = {'dirichlet', 'neumann'};
+        %         ymin ymax  xmin xmax 
+        bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
+                   {0;  [];   [];  []}}; ... % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = 1;
+        
+    case 'DtN_N'
+        bnd.type = {'dtn', 'neumann'};
+        %         ymin       ymax       xmin       xmax 
+        dtn_fun = App_DC.getD2NBCVals(TX.coo);
+        bnd.val = {{[]; dtn_fun.f; dtn_fun.f; dtn_fun.f}, ...  % 1 for D-t-N operator
+                   { 0;        [];        [];        []}};     % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = dtn_fun.quad_ord;
+end
 
 % Summarize parameter.
 fwd_params = struct();
