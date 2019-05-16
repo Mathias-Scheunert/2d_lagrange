@@ -63,6 +63,8 @@ Assembling of:
 Boundary conditions:
 - homogeneous and inhomogeneous Dirichlet
 - homogeneous and inhomogeneous Neumann
+- mixed or Robin for the DC application case 
+(i.e. the analytic solution for a TX at a homogenous halfe-space is used to set up the Dirichlet-to-Neummann operator)
 
 Visualization:
 - mesh with parameter, edge orientations and normals
@@ -78,6 +80,7 @@ Visualization:
     - 3 approaches for wavenumber estimation for spatial inverse FT
     - in-/homogeneous Dirichlet/Neumann boundary conditions
     - mesh generation via Gmsh (incorporating TX/RX positions, topography)
+    - vertical Dike or 2-layer anomaly whose FE solutions can be compared to analytic solutions
 - DRIVE_DC_wenner: 
     - 2.5D DC problem (modelling of electrical potential)
     - TX (3D-point source) and RX constructed from giving set of electrodes for a Wenner configuration

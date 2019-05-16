@@ -65,6 +65,9 @@ include_anomaly = pick(1, false, true);
 % Enable smooth topography.
 include_topo = pick(1, false, true);
 
+% Set boundary constraint.
+bc_type = pick(1, 'D_N', 'DtN_N');
+
 % Define number of uniform grid refinements.
 refinement = 1;
 
@@ -120,12 +123,31 @@ mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
-bnd.type = {'dirichlet', 'neumann'};
-%         ymin ymax  xmin xmax 
-bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
-           {0;  [];   [];  []}}; ... % 2 for Neumann
-bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
-bnd.quad_ord = 1;
+switch bc_type
+    case 'D_N'
+        bnd.type = {'dirichlet', 'neumann'};
+        %         ymin ymax  xmin xmax 
+        bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
+                   {0;  [];   [];  []}}; ... % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = 1;
+
+    case 'DtN_N'
+        bnd.type = {'dtn', 'neumann'};
+        % Choose the central TX.
+        TX_mean = find(dc_conf.TX.coo(:, 1) >= mean(dc_conf.TX.coo(:, 1)), ...
+                       1, 'first');
+        % Use this position as best approx to all TX positions w.r.t. Robin
+        % boundary conditions.
+        % Note: otherwise each TX positions requires a seperate Robin-BC
+        %       which means a unique FE system matrix for each TX!
+        dtn_fun = App_DC.getD2NBCVals(dc_conf.TX.coo(TX_mean, :));
+        %         ymin       ymax       xmin       xmax 
+        bnd.val = {{[]; dtn_fun.f; dtn_fun.f; dtn_fun.f}, ...  % 1 for D-t-N operator
+                   { 0;        [];        [];        []}};     % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = dtn_fun.quad_ord;
+end
 
 % Define background conductivity.
 param_info.val = 1/1000;

@@ -137,8 +137,8 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
                     'match the bnd_DOF.']);
             end
 
-            case 'neumann'
-                % As Neumann values needs to be evaluated at
+            case {'neumann', 'dtn'}
+                % As Neumann (Robin) values needs to be evaluated at
                 % quadrature nodes leave everything untouched.
                 % See Fe.treatBC.m for its handling.
                 if ~isfield(bnd, 'quad_ord')

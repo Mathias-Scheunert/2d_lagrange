@@ -10,9 +10,11 @@ function [M, TM] = assembleMass(fe, mesh, param, verbosity)
     % a(u_i, v_j) = ...
     %   \sum_k param_k
     %       \sum_l ( w_l ...
-    %           \phi_i({x,y}_l) * \phi_j({x,y}_l)
+    %           \phi_i(\hat{x,y}_l) * \phi_j(\hat{x,y}_l)
     %              )
     %   * \abs(\det(B_k))
+    %
+    % \hat[{x,y}}_l     ... quadrature nodes on references coords
     %
     % k   - num simplices
     % l   - num quadrature nodes

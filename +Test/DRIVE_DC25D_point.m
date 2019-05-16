@@ -61,6 +61,12 @@ warning('on');
 debugging = pick(1, false, true);
 verbosity = pick(2, false, true);
 
+% Set up anomaly type.
+ano_type = pick(2, 'vdike', '2layer');
+
+% Set boundary constraint.
+bc_type = pick(1, 'D_N', 'DtN_N');
+
 % Define number of uniform grid refinements.
 refinement = 2;
 
@@ -118,13 +124,25 @@ mesh_type = 'gmsh_create';
 
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
-bnd = struct();
-bnd.type = {'dirichlet', 'neumann'};
-%         ymin ymax  xmin xmax 
-bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
-           {0;  [];   [];  []}}; ... % 2 for Neumann
-bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
-bnd.quad_ord = 1;
+switch bc_type
+    case 'D_N'
+        bnd = struct();
+        bnd.type = {'dirichlet', 'neumann'};
+        %         ymin ymax  xmin xmax 
+        bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
+                   {0;  [];   [];  []}}; ... % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = 1;
+
+    case 'DtN_N'
+        bnd.type = {'dtn', 'neumann'};
+        %         ymin       ymax       xmin       xmax 
+        dtn_fun = App_DC.getD2NBCVals(TX.coo);
+        bnd.val = {{[]; dtn_fun.f; dtn_fun.f; dtn_fun.f}, ...  % 1 for D-t-N operator
+                   { 0;        [];        [];        []}};     % 2 for Neumann
+        bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};
+        bnd.quad_ord = dtn_fun.quad_ord;
+end
 
 % Summarize parameter.
 fwd_params = struct();
@@ -154,6 +172,9 @@ param = Param.initParam(mesh, param_info);
 % Set disturbed area (equals vertical dike).
 x_dist = [15, 22];
 
+% Set disturbed area (equals 2 layer).
+y_dist = 30;
+
 % Define parameter of conductivity (conductor within resistor).
 if debugging
     sig_anomaly = param_info.val;
@@ -168,9 +189,16 @@ else
         mesh.cell2cord);
 
     % Find cells, belonging to distrubed area.
-    cell_dist = cellfun(@(x) ...
-        (x(1) > x_dist(1) && x(1) < x_dist(2)), ...
-            cell_mid);
+    switch ano_type
+        case 'vdike'
+            cell_dist = cellfun(@(x) ...
+                (x(1) > x_dist(1) && x(1) < x_dist(2)), ...
+                    cell_mid);
+
+        case '2layer'
+            cell_dist = cellfun(@(x) ...
+                (x(2) < y_dist), cell_mid);
+    end
 
     % Set parameter for disturbed area.
     param(cell_dist) = sig_anomaly;
@@ -211,13 +239,25 @@ ref_3D = RefSol.getElectrodeAtHS(1/param_info.val, ...
                                  fwd_params.TX.val, fwd_params.TX.coo);
 phi_3D = arrayfun(@(x, y) ref_3D.f(x, y), ...
               fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
-ref_dike_3D = RefSol.getElectrodeAtVertDike(1/param_info.val, ...
+switch ano_type
+    case 'vdike'
+    ref_dike_3D = RefSol.getElectrodeAtVertDike(1/param_info.val, ...
                                        1/sig_anomaly, ...
                                        x_dist(1), x_dist(2)-x_dist(1), ...
                                        fwd_params.TX.coo, ...
                                        fwd_params.TX.val);
-phi_dike_3D = arrayfun(@(x, y) ref_dike_3D.f(x, y), ...
+    phi_ref_3D = arrayfun(@(x, y) ref_dike_3D.f(x, y), ...
               fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
+    case '2layer'
+    ref_2layer_3D = RefSol.getElectrodeAt2L(1/sig_anomaly, ...
+                                       1/param_info.val, ...
+                                       y_dist, ...
+                                       fwd_params.TX.val, ...
+                                       fwd_params.TX.coo);
+    phi_ref_3D = arrayfun(@(x, y) ref_2layer_3D.f(x, y), ...
+              fwd_params.RX.coo(:, 1), fwd_params.RX.coo(:, 2));
+end
+
 
 % Get asymptotic solution.
 % I.e. the numerical integration of the asymptotic Bessel functions
@@ -236,10 +276,10 @@ for i=1:size(fwd_params.RX.coo, 1)
     end
 end
 
-figure(fig_nun)
+figure(fig_num)
 subplot(2, 1, 1)
     semilogy(x_plot, phi_3D, 'ok', ...
-             x_plot, phi_dike_3D, '+m', ...
+             x_plot, phi_ref_3D, '+m', ...
              x_plot, phi_asy, 'xb', ...
              x_plot, phi_FE, '-r');
     xlim([x_plot(1), x_plot(end)]);
@@ -247,13 +287,13 @@ subplot(2, 1, 1)
     title(sprintf('2.5D half-space solution using %d wavenumbers (%s)', ...
           FT_info.n, fwd_params.FT_type));
     legend('\phi_{HS 3D}', ...
-           '\phi_{dike 3D}', ...
+           ['\phi_{', ano_type, ' 3D}'], ...
            '\phi_{asyHS 3D}', ...
            '\phi_{FE}');
     ylabel('potential');
 subplot(2, 1, 2)
     rel_err_FE = (1 - (phi_FE ./ phi_3D)) * 100;
-    rel_err_dike_FE = (1 - (phi_FE ./ phi_dike_3D)) * 100;
+    rel_err_dike_FE = (1 - (phi_FE ./ phi_ref_3D)) * 100;
     rel_err_asy = (1 - (phi_asy ./ phi_3D)) * 100;
     plot(x_plot, rel_err_asy, 'b', ...
          x_plot, rel_err_dike_FE, 'm', ...
@@ -261,7 +301,7 @@ subplot(2, 1, 2)
     xlim([x_plot(1), x_plot(end)]);
     ylim([-3, 3]);
     legend('\phi_{HS 3D} vs. \phi_{asyHS 3D}', ...
-           '\phi_{dike 3D} vs. \phi_{FE}', ...
+           ['\phi_{', ano_type, ' 3D} vs. \phi_{FE}'], ...
            '\phi_{HS 3D} vs. \phi_{FE}');
     ylabel('rel. error');
     xlabel('profile length');
