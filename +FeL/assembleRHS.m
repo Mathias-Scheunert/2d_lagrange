@@ -9,9 +9,12 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     %     shift to reference simplex):
     % f(v_i) = ...
     %   \sum_k \sum_l ( w_l ( ...
-    %              \phi_i({x,y}_l) f({x,y}_l))
+    %              \phi_i(\hat{x,y}_l) f({x,y}_l))
     %                 )
     %   * \abs(\det(B_k))
+    %
+    %   \hat[{x,y}}_l     ... quadrature nodes on references coords
+    %   {x,y}_l           ... quadrature nodes on global coords
     %
     % k - num simplices
     % l - num quadrature nodes

@@ -187,7 +187,6 @@ subplot(2, 1, 2)
     ylabel('rel. error');
     xlabel('profile length');
 
-return;
 %%
 Plot.plotMesh(mesh, param), ylim([-10, 20]), xlim([-20, 60]);
 hold on; 
