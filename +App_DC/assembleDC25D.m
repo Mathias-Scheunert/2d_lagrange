@@ -107,6 +107,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
         sol{ii}.b = (1 / 2) .* rhs;
 
         % Handle boundary conditions.
+        bnd.k = FT_info.k(ii);
         sol{ii} = FeL.treatBC(fe, mesh, sol{ii}, bnd);
     end
     if verbosity

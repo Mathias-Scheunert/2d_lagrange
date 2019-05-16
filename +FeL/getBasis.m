@@ -112,4 +112,9 @@ function base = getBasis(order)
             % Get local DOF coordinates for the basis functions.
             base.DOF = V2(:,2:3);
     end
+    
+    % Set local DOF direction (normal vector).
+    base.DOF_normals = [[0, -1];
+                        [1,  1] / sqrt(2);
+                       [-1,  0]];
 end
