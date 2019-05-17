@@ -47,7 +47,7 @@ function dc_conf = createConfigBERT(ele, type, varargin)
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
     parser_obj.addParameter(input_keys{1}, false, assertStore);
-    parser_obj.addParameter(input_keys{2}, 'configuration.dat', assertName);
+    parser_obj.addParameter(input_keys{2}, 'configuration.txt', assertName);
     parser_obj.addParameter(input_keys{3}, false, assertVerbose);
    
     % Exctract all properties from inputParser.
@@ -86,7 +86,7 @@ function dc_conf = createConfigBERT(ele, type, varargin)
             % Define matrix of electrode combinations.
             survey = struct();
             survey.data = zeros(n_obs_max, n_active_ele);
-            survey.header = {'A', 'M', 'N', 'B'};
+            survey.data_header = {'A', 'M', 'N', 'B'};
             cur_row_idx = 0;
             for ii = 1:k_max
                 % Get number of observations for current spacing.
@@ -109,8 +109,8 @@ function dc_conf = createConfigBERT(ele, type, varargin)
     %% (Temporarily) export information.
     
     % Make sure that the .dat ending is included in name string.
-    if ~strcmp(args.name(end - 3:end), '.dat')
-        args.name = [args.name, '.dat'];
+    if ~strcmp(args.name(end - 3:end), '.txt')
+        args.name = [args.name, '.txt'];
     end
     App_DC.exportObsData2BERT(args.name, survey, ele);
     
@@ -133,5 +133,3 @@ function dc_conf = createConfigBERT(ele, type, varargin)
         fprintf('done.\n');
     end 
 end
-
-
