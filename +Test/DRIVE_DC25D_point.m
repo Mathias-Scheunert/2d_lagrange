@@ -227,11 +227,11 @@ x_plot = sqrt((fwd_params.RX.coo(:,1) - fwd_params.TX.coo(1,1)) .^2 + ...
 
 switch fwd_params.FT_type
     case {'Boerner'}
-        fig_nun = 2;
+        fig_num = 2;
     case {'Xu'}
-        fig_nun = 20;
+        fig_num = 20;
     case {'Bing'}
-        fig_nun = 200;
+        fig_num = 200;
 end
           
 % Get reference solution in 3D.
