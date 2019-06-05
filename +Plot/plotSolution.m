@@ -54,6 +54,9 @@ function [] = plotSolution(fe, mesh, u, varargin)
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
     
+    % Get handle for current figure (or open new figure).
+    fig1 = gcf();
+    
     %% Get coordinates for all DOF.
 
     x = fe.DOF_maps.DOF_coo(:,1);
@@ -92,7 +95,7 @@ function [] = plotSolution(fe, mesh, u, varargin)
     if args.verbosity
        fprintf('Print solution ... '); 
     end
-    figure();
+    figure(fig1);
     axis('equal');
     set(gca, 'Ydir', 'reverse') % As y should point downwards.
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
