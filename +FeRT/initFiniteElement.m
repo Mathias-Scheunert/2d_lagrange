@@ -50,7 +50,7 @@ function fe = initFiniteElement(mesh, verbosity)
     if verbosity
        fprintf('Set up quadrature rule ... '); 
     end
-    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(2, fe.dim);
+    [fe.quad.nodes, fe.quad.weights] = Quad.getQuadratureRule(2*fe.order, fe.dim);
     if verbosity
        fprintf('done.\n'); 
     end
