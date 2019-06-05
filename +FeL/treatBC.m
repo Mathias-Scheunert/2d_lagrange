@@ -73,6 +73,11 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     %% Treat Dirichlet-to-Neumann.
 
     if any(idx_DtN)
+        % Handle 2D case.
+        if ~isfield(bnd, 'k')
+            bnd.k = 1;
+        end
+        
         % Initialize.
         obsolet_BC = cellfun(@isempty, bnd.val{idx_DtN});
         bnd_DtN = struct('val', {bnd.val{idx_DtN}(~obsolet_BC).'}, ...
@@ -429,6 +434,9 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
     %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
     %           Dirichlet-to-Neumann operator adds a contribution to the
     %           system left-hand-side, i.e. the system matrix.
+    %
+    % TODO: fix / revise current implementation, as it is focused on 2.5D
+    %       -> this should rather be a special case!
     
     % Check integration kernel.
     assert(all(cellfun(@(x) isa(x, 'function_handle'), bnd.val)));
@@ -582,7 +590,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
             % Note:[2x1] or [1x2] vector-shaped output is expected from 
             % bnd_val!
             neum_eval = num2cell(arrayfun(@(x, y) ...
-                dot(bnd_val(x, y), bnd_edge_n{ii}), ...
+                bnd_val(x, y, bnd_edge_n{ii}(:)), ...
                 gauss_cords_global(1,:), gauss_cords_global(2,:))).';
             catch ME
                if strcmp(ME.identifier, 'MATLAB:dot:InputSizeMismatch')
