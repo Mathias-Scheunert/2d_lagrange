@@ -101,8 +101,8 @@ function mesh = appendEdgeInfo(mesh)
                 mesh.bnd_edge_part(map_order);
             mesh.bnd_edge_part = bnd_edge_part;
             
-        case {'cube'}
-            % Nothing to do.
+        case {'cube', 'disc'}
+            % Nothing to do.         
             
         otherwise
             error('Unknown mesh type.');

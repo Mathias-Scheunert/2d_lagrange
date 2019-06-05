@@ -44,6 +44,20 @@ function mesh = appendBndInfo(mesh)
             mesh.bnd_edge_part_name = {'xmin', 'xmax', 'ymin', 'ymax'};
             mesh.bnd_edge_part = [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax] * ...
                                    (1:length(mesh.bnd_edge_part_name)).';
+
+        case {'disc'}
+            % Get indices from domain boundaries.
+            tol = 1e-10;
+            r_fun = @(x, y) sqrt(x.^2 + y.^2);
+            bnd_ymin = cellfun(@(x) all(abs(x(:,2)) < tol), mesh.edge2cord);
+            bnd_rmax = cellfun(@(x) all(r_fun(x(:, 1), x(:,2)) > 1-tol), ...
+                                        mesh.edge2cord);
+            mesh.bnd_edge = bnd_ymin | bnd_rmax;
+            
+            % Summarize.
+            mesh.bnd_edge_part_name = {'surface', 'subsurface'};
+            mesh.bnd_edge_part = [bnd_ymin, bnd_rmax] * ...
+                                   (1:length(mesh.bnd_edge_part_name)).';
             
         case {'gmsh_create', 'gmsh_load'}
             % Nothing to do, as these information are already part of the

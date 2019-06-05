@@ -94,6 +94,9 @@ function mesh = initMesh(var, varargin)
     switch var
         case 'cube'
             mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
+        case 'disc'
+            mesh = Mesh.createUnitDiscMesh(args.ref, args.verbosity);
+            args.ref = 0;
         case 'gmsh_dike'
             mesh = Mesh.createVerticalDikeMesh(args.bnd, args.TX, ...
                                                args.dike(1), args.dike(2), ...
