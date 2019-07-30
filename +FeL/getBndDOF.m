@@ -87,7 +87,7 @@ function bnd = getBndDOF(fe, mesh, bnd)
     bnd_part_vtx_idx = cell(n_bnd_part, 1);
     for ii = 1:n_bnd_part
         bnd_part_vtx_idx{ii} = mesh.edge2vtx(mesh.bnd_edge_part == ii,:);
-        bnd_part_vtx_idx{ii} = unique(bnd_part_vtx_idx{ii});
+        bnd_part_vtx_idx{ii} = unique(bnd_part_vtx_idx{ii}(:));
     end
     
     switch fe.order
@@ -103,7 +103,7 @@ function bnd = getBndDOF(fe, mesh, bnd)
             bnd_part_edge_idx = cell(n_bnd_part, 1);
             for ii = 1:n_bnd_part
                 bnd_part_edge_idx{ii} = n_vtx + ...
-                                        find(mesh.bnd_edge_part == ii);
+                                            find(mesh.bnd_edge_part == ii);
             end
             
             % Summarize.
