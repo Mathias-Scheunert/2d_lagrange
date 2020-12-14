@@ -19,14 +19,14 @@ function u = unit(n, i, make_sparse)
     %                   dense otherwise.
     %   u           ... Resulting unit column vector or matrix of unit
     %                   column vectors.
-    
+
     if nargin < 3
         make_sparse = false;
     else
         assert(isscalar(make_sparse) && islogical(make_sparse), ...
             'Expected argument ''make_sparse'' to be a logical scalar.');
     end
-    
+
     ni = length(i);
     u = accumarray({i, 1:ni}, 1, [n, ni], [], [], make_sparse);
 end

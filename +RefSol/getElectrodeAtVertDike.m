@@ -17,12 +17,12 @@ function eleVD_fun = getElectrodeAtVertDike(rho1, rho2, x0, h, TX, I)
     %                 Handle evaluates Potential at [X, Y = 0]
     %
     % REMARKS
-    % Formulas are derived analog to the formulas of Telford et al. 
+    % Formulas are derived analog to the formulas of Telford et al.
     % (Applied Geophysics p.683) and Keller & Frischknecht (Electromagnetic
-    % Methods in Geophysical Prospecting p.181). 
-    % However the formulas are not the same, the formulas in this program 
-    % are more general. 
-    % The summation is done with the Horner schema. 
+    % Methods in Geophysical Prospecting p.181).
+    % However the formulas are not the same, the formulas in this program
+    % are more general.
+    % The summation is done with the Horner schema.
     % The survey configuration is a combination of this current-potential
     % configuration.
     %
@@ -31,24 +31,24 @@ function eleVD_fun = getElectrodeAtVertDike(rho1, rho2, x0, h, TX, I)
     %
     % COORDINATE SYSTEM
     %
-    %                   x = strike direction          
+    %                   x = strike direction
     %                  /            /
     %                 /            /
     %                y = 0        y = h
     %  x,z=0 --------+------------+----------> y
     %         rho1   |    rho2    |    rho1
     %                |            |
-    %                v            
+    %                v
     %                z
     %
     % Note the difference between the local coordinates and INPUT:
     %   y -> x for TX
-    %              
+    %
     % COPYRIGHT
     %   Function was originally developed by T. Hanstein.
-    
+
     %% Check input.
-    
+
     assert(isscalar(rho1), 'rho1 - Scalar denoting resistivity, expected.');
     assert(isscalar(rho2), 'rho2 - Scalar denoting resistivity, expected.');
     assert(isscalar(x0), 'y0 - Scalar denoting dike left boundary, expected.');
@@ -58,9 +58,9 @@ function eleVD_fun = getElectrodeAtVertDike(rho1, rho2, x0, h, TX, I)
         'TX - Vector [2 x 1], denoting source position, expected.');
     assert(TX(2) == 0, ...
         'Sources only at y = 0 are supported.');
-    
+
     %% Set Parameter.
-    
+
     max = 100; % fix number of summations
     pi2 = 2*pi;
     h2 = 2*h;
@@ -72,25 +72,25 @@ function eleVD_fun = getElectrodeAtVertDike(rho1, rho2, x0, h, TX, I)
     BB = -AK * CC;
 
     %% Define function.
-    
+
     % (Note the change of coordinates.)
     eleVD_fun.f = @(X, Y) evaluateU(0, (TX(1) - x0), 0, (X - x0), Y);
-    
+
     %% Define gradient.
-    
+
     % Skip derivation.
 
     %% Set required quadrature order.
-    
+
     eleVD_fun.quad_ord = 4;
 
     %% Evaluate cases for different positions of TX and RX.
-    
+
     % XC ... x-coord. of TX, parallel to strike direction
     % YC ... y-coord. of TX, perpendicular to strike direct
     % XP ... x-coord. of RX, parallel to strike direction
     % YP ... y-coord. of RX, perpendicular to strike direct
-    
+
     function U = evaluateU(XC, YC, XP, YP, ZP)
         assert(ZP == 0, ...
             'Evaluation only at y = 0 supported.');

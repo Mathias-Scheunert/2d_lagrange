@@ -14,17 +14,17 @@ function const_fun = getConst(val)
     % OUTPUT PARAMETER
     %
     %   const_fun ... Struct, containing function handle.
-    
+
     %% Check input
-    
+
     assert(isscalar(val), ...
         'val - scalar, denoting the amplitude, expected.');
-    
+
     %% Define const-fuction.
 
     const_fun.f = @(x, y) val;
-    
+
     %% Set required quadrature order.
-    
+
     const_fun.quad_ord = 1;
 end

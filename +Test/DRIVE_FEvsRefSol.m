@@ -1,7 +1,7 @@
 % Script for testing the FE-Code w.r.t. an analytic test function.
 %
 % Problem 1 'reference':
-%   given: 
+%   given:
 %       f(x), \nabla²(f(x))
 %   solve:
 %   -\nabla²(u) + u = -\nabla²(f(x(DOF)))                   in Omega
@@ -10,7 +10,7 @@
 %           d_u/d_n = \grad(f(x))) * n                      at d_Omega_2
 %
 % Problem 2 'poisson':
-%   given: 
+%   given:
 %       p(x)
 %   solve:
 %   -\nabla²(u) = \dirac(x_0)      in Omega
@@ -33,7 +33,7 @@ if debuging
     profile on
 end
 if verbosity
-   fprintf('Test 2D Lagrange FE using a known analytic solution\n'); 
+   fprintf('Test 2D Lagrange FE using a known analytic solution\n');
 end
 
 % Set up order of Lagrange elements.
@@ -76,7 +76,7 @@ bnd_D.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 %
 bnd_mix = struct();
 bnd_mix.type = {'neumann', 'dirichlet'};
-%                         xmin            xmax            ymin            ymax                            
+%                         xmin            xmax            ymin            ymax
 bnd_mix.val = {{TX.ref_sol_u.J;             [];             []; TX.ref_sol_u.J}, ...
                {[];             TX.ref_sol_u.f; TX.ref_sol_u.f;             []}};
 bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
@@ -109,7 +109,7 @@ if verbosity
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
 if verbosity
-   fprintf('... FE-FWP set up.\n \n'); 
+   fprintf('... FE-FWP set up.\n \n');
 end
 
 %% Run fwp.
@@ -148,14 +148,14 @@ sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
 
 if verbosity
-   fprintf('... Linear system and BC set up.\n \n'); 
+   fprintf('... Linear system and BC set up.\n \n');
 end
 
 %% Solve fwd problem.
 
 % Get solution at DOF.
 u = FeL.solveFwd(sol, fe, verbosity);
-    
+
 %% Plot against reference solution.
 
 % Get reference solution at all DOF.
@@ -181,7 +181,7 @@ if plotting
     z_lim = cur_fig.CurrentAxes.ZLim;
 
     % Get approx. FE-solution.
-    % Note: in order to obtain a multipol solution, the solution vectors 
+    % Note: in order to obtain a multipol solution, the solution vectors
     % are just summed up.
     Plot.plotSolution(fe, mesh, sum(u, 2), ...
         'param', param, 'verbosity', verbosity, 'style', '3D');
@@ -197,7 +197,7 @@ if plotting
         hold off
         drawnow();
     end
-    
+
     % Visualize both w.r.t. profile path.
     if ~isempty(RX)
         x = sqrt((RX(:,1) - RX(1,1)) .^2 + (RX(:,2) - RX(1,2)) .^2);

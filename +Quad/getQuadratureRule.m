@@ -26,7 +26,7 @@ function [x, w] = getQuadratureRule(order, dim, varargin)
     %
     % REMARKS
     %
-    %   Reference simplex of dimension dim is given by vertex (cartesian) 
+    %   Reference simplex of dimension dim is given by vertex (cartesian)
     %   coordinates.
     %
     %     [eye(dim), zeros(dim, 1)]
@@ -37,9 +37,9 @@ function [x, w] = getQuadratureRule(order, dim, varargin)
     %   2D code originally written by Jan Blechta.
     %   1D G.-Legendre originally written by Martin Afanasjew.
     %   1D G.-Laguerre originally written by Ralph-Uwe Börner.
-    
+
     %% Check input and set properties.
-    
+
     % Define possible input keys and its properties checks.
     input_keys = {'bnd', 'type'};
     assertBnd = @(x) assert(isvector(x) && length(x) == 2 && x(1) < x(2), ...
@@ -49,18 +49,18 @@ function [x, w] = getQuadratureRule(order, dim, varargin)
         any(strcmp(x, {'Legendre', 'Laguerre'})), ...
         ['type - Char denoting quadrature type "Legendre" or ', ...
         '"Laguerre" expected.']);
-    
+
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
     parser_obj.addParameter(input_keys{1}, [], assertBnd);
     parser_obj.addParameter(input_keys{2}, 'Legendre', assertType);
-   
+
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
 
     %% Choose propper subroutine.
-    
+
     switch dim
         case 1
             switch args.type
@@ -97,15 +97,15 @@ function [x, w] = GaussLegendre(n, bnd)
     %   w ... Row vector of quadrature weights corresponding to the nodes
     %         in 'x'. The weights are rescaled to the interval specified by
     %         'bnd_lo' and 'bnd_up' such that 'sum(w) == bnd_up - bnd_lo'.
-    
+
     % Check input
     if n < 1
         warning('Quadratur order > 0 expected. Set n = 1.');
         n = 1;
     end
-    
+
     if isempty(bnd)
-        % Set lower and upper bound w.r.t. the edge of the reference 
+        % Set lower and upper bound w.r.t. the edge of the reference
         % simplex.
         bnd_lo = 0;
         bnd_up = 1;
@@ -118,12 +118,12 @@ function [x, w] = GaussLegendre(n, bnd)
     k = (1:n - 1).';
     c = k ./ sqrt(4 .* k .^ 2 - 1);
     A = spdiags([[c; 0], [0; c]], [-1, +1], n, n);
-    
+
     % Compute nodes and weights on [-1, 1] using eigen decomposition.
     [V, D] = eig(full(A));
     x = diag(D);
     w = V(1, :) .^ 2;
-    
+
     % Transform nodes and weights from [-1, 1] to [bnd_lo, bnd_up].
     x = 0.5 * (bnd_lo + bnd_up) + 0.5 * (bnd_up - bnd_lo) .* x;
     w = (bnd_up - bnd_lo) .* w;
@@ -133,7 +133,7 @@ function [x, w] = GaussLaguerre(n)
     % Provides nodes and weights of the Gauss-Laguerre quadrature in 1D.
     %
     % \in_{0}^{\inf} \exp(-x) f(x) dx = ...
-    %       \sum_{j = 0}^{n - 1} w_j f(x_j) 
+    %       \sum_{j = 0}^{n - 1} w_j f(x_j)
     %
     % INPUT PARAMETER
     %   n ... Positive scalar integer that denotes the number of desired
@@ -141,7 +141,7 @@ function [x, w] = GaussLaguerre(n)
     %
     % OUTPUT PARAMETER
     %   x ... Column vector of quadrature nodes in the interval 0 to \inf.
-    %         The smallest abscissa is returned in x[1], the largest in 
+    %         The smallest abscissa is returned in x[1], the largest in
     %         x[n].
     %   w ... Row vector of quadrature weights corresponding to the nodes
     %         in 'x'. The weights are rescaled to the interval specified by
@@ -153,7 +153,7 @@ function [x, w] = GaussLaguerre(n)
     % Set up parameters.
     tolerance = 1e-14;
     max_iter = 10;
-    
+
     % Initiallize quantities.
     z = 0;
     x = zeros(n, 1);
@@ -165,36 +165,36 @@ function [x, w] = GaussLaguerre(n)
             % Initial guess for the smallest root.
             z = 3 / (1 + 2.4 * n);
         elseif i == 2
-            % Initial guess for the second root. 
+            % Initial guess for the second root.
             z = z + 15 / (1 + 2.5 * n);
         else
             % Initial guess for the other roots.
             ai = i - 2;
             z = z + (1 + 2.55 * ai) / (1.9 * ai) * (z - x(ai));
         end
-        
+
         % Refinement by Newton's method.
         for its = 1:max_iter
             p1 = 1;
             p2 = 0;
-            
-            % Loop up the recurrence relation to get the Laguerre 
+
+            % Loop up the recurrence relation to get the Laguerre
             % polynomial evaluated at z.
             for j = 1:n
                 p3 = p2;
                 p2 = p1;
                 p1 = ((2 * j - 1 - z) * p2 - (j - 1) * p3) / j;
             end
-            
-            % p1 is now the desired Laguerre polynomial. 
-            % Now compute pp, its derivative, by a standard relation 
+
+            % p1 is now the desired Laguerre polynomial.
+            % Now compute pp, its derivative, by a standard relation
             % involving also p2, the polynomial of one lower order.
             pp = n * (p1 - p2) / z;
             z1 = z;
-            
+
             % Apply Newton’s formula.
             z  = z1 - p1 / pp;
-            if(abs(z - z1) <= tolerance) 
+            if(abs(z - z1) <= tolerance)
                 break;
             end
         end
@@ -216,7 +216,7 @@ function [x, w] = Quad2D(order)
     % INPUT PARAMETER
     %   oder ... Positive scalar, denoting the order of the Lagrange
     %            elements.
-    
+
     switch order
         case {0, 1}
             % Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1

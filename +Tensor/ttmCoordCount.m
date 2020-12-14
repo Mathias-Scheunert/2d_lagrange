@@ -41,7 +41,7 @@ function num_nnz = ttmCoordCount(ten_i, ten_m, mat_i, mat_m, dim)
     %   to multiply, i.e. along which to perform the inner products.
     %
     % See also ttmCoordApply, Tensor3Coord.
-    
+
     num_nnz = 0;
     ten_num = size(ten_i, 1);
     ten_cur = 1;

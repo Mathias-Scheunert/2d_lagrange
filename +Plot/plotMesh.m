@@ -1,8 +1,8 @@
-function [] = plotMesh(mesh, params, debug)
+function [] = plotMesh(mesh, params, f_num, debug)
     % Visualize the 2d FE mesh.
-    % 
+    %
     % SYNTAX
-    %   [] = plotMesh(mesh[, params, debug])
+    %   [] = plotMesh(mesh[, params, f_num, debug])
     %
     % INPUT PARAMETER
     %   mesh ... Struct, containing the mesh information.
@@ -10,31 +10,38 @@ function [] = plotMesh(mesh, params, debug)
     %            struct please read header of Mesh.initMesh.
     %
     % OPTIONAL PARAMETER
+    %   f_num  ... Scalar, figure number.
     %   params ... Vector, containing the piecewise constant parameter
     %              information, associated with the cells' face.
     %   debug  ... Logical, denoting if additional information will be
     %              visualized.
-    
+
     %% Check input
-    
+
     assert(isstruct(mesh) && isfield(mesh, 'cell2vtx'), ...
         'mesh - Struct - containing information for a 2D mesh expected.');
-    
+
     n_cells = size(mesh.cell2vtx, 1);
-    if nargin < 3
+    if nargin < 4
         debug = false;
         assert(islogical(debug), ...
             'debug - Logical expected.');
+    end
+    if nargin < 3
+        f_num = 1;
+    else
+        assert(isscalar(f_num));
     end
     if nargin < 2
         params = NaN * zeros(n_cells, 1);
     elseif isempty(params)
         params = NaN * ones(n_cells, 1);
     end
-        
+
     %% Create figure.
-    
-    figure();
+
+    figure(f_num);
+    clf;
     axis('equal');
     set(gca, 'Ydir', 'reverse') % As y should point downwards.
     xlim([min(mesh.vertices(:,1)), max(mesh.vertices(:,1))]);
@@ -43,9 +50,9 @@ function [] = plotMesh(mesh, params, debug)
     if debug
         drawnow();
     end
-    
+
     %% Add simplices.
-    
+
     hold on
     if debug && isfield(mesh, 'cell2cord') && n_cells < 200
         cell_coo_all = cell2mat(mesh.cell2cord);
@@ -60,13 +67,13 @@ function [] = plotMesh(mesh, params, debug)
     else
         patch('Faces', mesh.cell2vtx, 'Vertices', mesh.vertices, ...
             'FaceVertexCData', params(:), ...
-            'FaceColor', 'flat')
+            'FaceColor', 'flat', 'EdgeColor', 'none')
     end
     hold off
     drawnow();
-    
+
     %% Add boundary adges.
-    
+
     if isfield(mesh, 'bnd_edge') && debug
         hold on
         n_parts = length(mesh.bnd_edge_part_name);
@@ -80,9 +87,9 @@ function [] = plotMesh(mesh, params, debug)
         end
         hold off
     end
-    
+
     %% Add edge orientation.
-    
+
     if isfield(mesh, 'edge2cord') && debug
         % Midpoints of the edges.
         pos = cell2mat(cellfun(@(x) {x(1,:) + diff(x, 1) / 2}, mesh.edge2cord));
@@ -96,12 +103,12 @@ function [] = plotMesh(mesh, params, debug)
             'MaxHeadSize', 1 / norm(len));
         hold off
     end
-    
+
     %% Add boundary edge normal.
-        
+
     % Plot normal vectors.
     if isfield(mesh, 'edge2cord') && debug
-        
+
         % Get bnd edge indices and its normal vectors.
         bnd_edge_idx = find(mesh.bnd_edge);
 
@@ -118,7 +125,7 @@ function [] = plotMesh(mesh, params, debug)
         bnd_edge_n = vertcat(bnd_edge_n{:});
         bnd_edge_n = cell2mat(bnd_edge_n);
         bnd_pos = cell2mat(bnd_pos);
-        
+
         hold on
         quiver(bnd_pos(:,1), bnd_pos(:,2), bnd_edge_n(:,1), bnd_edge_n(:,2), ...
             'Color', 'red', ...

@@ -37,7 +37,7 @@ classdef Tensor3Base ...
     %
     % COPYRIGHT
     %   The class was developed and implemented by Martin Afanasjew.
-    
+
     % Tensor-specific functionality (abstract).
     methods (Abstract)
         % Finds indices and values of nonzero elements.
@@ -57,7 +57,7 @@ classdef Tensor3Base ...
         %
         % See also Tensor3Base/nonzeros.
         [index, value] = find(val)
-        
+
         % Converts sparse tensor to full 3D array.
         %
         % SYNTAX
@@ -78,7 +78,7 @@ classdef Tensor3Base ...
         %
         % See also full.
         res = full(val)
-        
+
         % Returns number of nonzero tensor elements.
         %
         % SYNTAX
@@ -92,7 +92,7 @@ classdef Tensor3Base ...
         %
         % See also nnz.
         nz = nnz(val)
-        
+
         % Returns nonzero tensor elements.
         %
         % SYNTAX
@@ -106,7 +106,7 @@ classdef Tensor3Base ...
         %
         % See also Tensor3Base/find.
         s = nonzeros(val)
-        
+
         % Converts tensor to struct for compatibility with 'varhash'.
         %
         % SYNTAX
@@ -122,7 +122,7 @@ classdef Tensor3Base ...
         %
         % See also varhash.
         data = struct(self)
-        
+
         % Computes a tensor-matrix product (ttm = tensor times matrix).
         %
         % SYNTAX
@@ -141,7 +141,7 @@ classdef Tensor3Base ...
         %
         % See also Tensor3Base/ttv.
         res = ttm(ten, mat, dim)
-        
+
         % Computes a tensor-vector product (ttv = tensor times vector).
         %
         % SYNTAX
@@ -159,7 +159,7 @@ classdef Tensor3Base ...
         % See also Tensor3Base/ttm.
         res = ttv(ten, vec, dim)
     end
-    
+
     % Helpers for construction.
     methods (Static, Access = protected)
         function sz = preEmpty(varargin)
@@ -184,7 +184,7 @@ classdef Tensor3Base ...
             %   This is intended as a helper for use in derived classes,
             %   and as such is not exposed to the general public. Look at
             %   existing implementations for details on how to use this.
-            
+
             % Construct size vector depending on argument count.
             switch nargin
                 case 0
@@ -205,10 +205,10 @@ classdef Tensor3Base ...
                         'Multiple size arguments must be scalars.');
                     sz = [varargin{:}];
             end
-            
+
             % Pad size vector with singletons.
             sz = [sz, ones(1, max(0, 3 - length(sz)))];
-            
+
             % Validate size specification.
             assert(all(fix(sz) == sz) && all(sz >= 0), ...
                 'Expected size to be given as non-negative integers.');
@@ -216,11 +216,11 @@ classdef Tensor3Base ...
                 'Expected all trailing dimensions starting with the fourth to be one.');
             assert(any(sz(1:3) == 0), ...
                 'Expected at least one dimension to be zero.');
-            
+
             % Return size vector as expected by constructor.
             sz = sz(1:3);
         end
-        
+
         function [empty, sz, i, v] = preConstruct(sz, i, v)
             % Preprocesses arguments for tensor construction.
             %
@@ -254,7 +254,7 @@ classdef Tensor3Base ...
             %   This is intended as a helper for use in derived classes,
             %   and as such is not exposed to the general public. Look at
             %   existing implementations for details on how to use this.
-            
+
             % Convert from a compatible class, if sole argument.
             if nargin == 1 && isa(sz, 'Tensor.Tensor3Base')
                 [sz1, sz2, sz3] = size(sz);
@@ -263,7 +263,7 @@ classdef Tensor3Base ...
                 sz = [sz1, sz2, sz3];
                 return
             end
-            
+
             % Validate size and general stuff.
             assert(nargin == 1 || nargin == 3, ...
                 'Expected one or three arguments.');
@@ -271,10 +271,10 @@ classdef Tensor3Base ...
                 'Expected size argument to be a row vector of length three.');
             assert(all(fix(sz) == sz) && all(sz >= 0), ...
                 'Expected size argument to be a vector of non-negative integers.');
-            
+
             % Helpful quantity.
             empty = (nargin == 1) || (isempty(i) && isempty(v));
-            
+
             % Validate indices and values.
             if empty
                 i = zeros(0, 3);
@@ -293,7 +293,7 @@ classdef Tensor3Base ...
             end
         end
     end
-    
+
     % Output.
     methods
         function disp(val, name)
@@ -317,7 +317,7 @@ classdef Tensor3Base ...
             %            include the variable name in your output.
             %
             % See also disp, Tensor3Base/display.
-            
+
             % Prepare variable name printing.
             if nargin >= 2
                 % Handle 'display' case.
@@ -330,19 +330,19 @@ classdef Tensor3Base ...
                 % Handle 'disp' case.
                 name = '';
             end
-            
+
             % Print variable name.
             if ~isempty(name)
                 fprintf('%s =\n', name);
             end
-            
+
             % Print size and class.
             [m, n, p] = size(val);
             fprintf('   Sparse tensor: %d-by-%d-by-%d', m, n, p);
             fprintf(' (nnz = %s,', num2str(nnz(val)));
             fprintf(' class ''%s'')\n', class(val));
         end
-        
+
         function display(val)
             % Prints the tensor in expressions without trailing semicolon.
             %
@@ -353,14 +353,14 @@ classdef Tensor3Base ...
             % INPUT/OUTPUT PARAMETERS
             %
             %   val ... Sparse tensor that should be printed. Since
-            %           printing of a typical sparse tensor is not very 
+            %           printing of a typical sparse tensor is not very
             %           helpful, only some meta data is output. If you
             %           really want to see the entries of the tensor, you
             %           can use 'full' to convert it to MATLAB's dense
             %           tensor format and then print it.
             %
             % See also display, Tensor3Base/disp.
-            
+
             disp(val, inputname(1));
         end
     end

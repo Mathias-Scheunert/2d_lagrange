@@ -1,15 +1,15 @@
 function [] = createGmsh_Ralph(mn1, mn2, ab_half)
     % Construct test mesh for gmsh.
-    
+
     % Set gmsh parameter.
     exp_fac = pick(1, 5, 10);          % extension of domain w.r.t. AB/2
     % -> increase to improve solution for large AB/2!
     h_at_TXRX = pick(1, 0.5);          % element size at TX/RX points
-    
+
     % Set geopmetry.
-    d = 5;                             % width of the vertical dike    
+    d = 5;                             % width of the vertical dike
     offset = -0.1;                     % horz shift of configuration midpoint
-    
+
     %% Define points describing geometry.
 
     % Domain (considering clock-wise sorting).
@@ -20,7 +20,7 @@ function [] = createGmsh_Ralph(mn1, mn2, ab_half)
     p_domain = [-bnd_x, 0, 0, h_domain;
                  bnd_x, 0, 0, h_domain;
                  bnd_x, 0, bnd_z, h_domain;
-                -bnd_x, 0, bnd_z, h_domain]; 
+                -bnd_x, 0, bnd_z, h_domain];
 
     % Dike (considering clock-wise sorting).
     h_dike_ymin = h_at_TXRX;

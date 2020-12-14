@@ -1,6 +1,6 @@
 function [] = plotSolution(fe, mesh, u, varargin)
     % Visualize the solution of the 2D FE fwd problem.
-    % 
+    %
     % SYNTAX
     %   [] = plotSolution(fe, mesh, u[, varargin])
     %
@@ -22,16 +22,16 @@ function [] = plotSolution(fe, mesh, u, varargin)
     %                 printed.   [default = false]
     %   style     ... Character, denoting if solution will be plotted in
     %                 '2D' or '3D'. [default = '2D']
-    
+
     %% Check input
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'DOF_maps', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2cord', 'bnd_edge'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isvector(u) && length(u) == fe.sizes.DOF, ...
         'u - vector, containing the solution for at all DOF, expected.');
-    
+
     % Define optional input keys and its properties checks.
     input_keys = {'param', 'verbosity', 'debug', 'style'};
     assertParam = @(x) assert(isvector(x) && length(x) == fe.sizes.cell, ...
@@ -42,29 +42,29 @@ function [] = plotSolution(fe, mesh, u, varargin)
         'debug - logical, denoting if debug stuff is printed, expected');
     assertStyle = @(x) assert(ischar(x) && any(strcmp(x, {'2D', '3D'})), ...
         'style - character, denoting if figure is plotted in 2D or 3D, expected');
-    
+
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
     parser_obj.addParameter(input_keys{1}, zeros(fe.sizes.cell, 1), assertParam);
     parser_obj.addParameter(input_keys{2}, false, assertVerbose);
     parser_obj.addParameter(input_keys{3}, false, assertDebug);
     parser_obj.addParameter(input_keys{4}, '2D', assertStyle);
-   
+
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
-    
+
     % Get handle for current figure (or open new figure).
     fig1 = gcf();
-    
+
     %% Get coordinates for all DOF.
 
     x = fe.DOF_maps.DOF_coo(:,1);
     y = fe.DOF_maps.DOF_coo(:,2);
     if args.debug
-        
+
         if args.verbosity
-           fprintf('Print mesh and nodes ... '); 
+           fprintf('Print mesh and nodes ... ');
         end
         % Plot mesh.
         Plot.plotMesh(mesh);
@@ -77,7 +77,7 @@ function [] = plotSolution(fe, mesh, u, varargin)
               error('Visualization of order higher than two not supported yet.');
           end
         hold off
-        
+
         % Plot mesh.
         hold on
         cell_coo_all = cell2mat(mesh.cell2cord);
@@ -86,14 +86,14 @@ function [] = plotSolution(fe, mesh, u, varargin)
         patch(cell_coo_x, cell_coo_y, max(u) * (param / max(param)));
         hold off
         if args.verbosity
-           fprintf('done.\n'); 
+           fprintf('done.\n');
         end
     end
-    
+
     %% Add solution.
-    
+
     if args.verbosity
-       fprintf('Print solution ... '); 
+       fprintf('Print solution ... ');
     end
     figure(fig1);
     axis('equal');
@@ -133,6 +133,6 @@ function [] = plotSolution(fe, mesh, u, varargin)
     h = colorbar();
     ylabel(h, 'solution amplitude');
     if args.verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end

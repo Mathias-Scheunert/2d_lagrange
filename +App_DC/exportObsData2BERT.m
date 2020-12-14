@@ -1,5 +1,5 @@
 function [] = exportObsData2BERT(name, survey, ele, verbosity)
-    % Write 
+    % Write
     %
     % SYNTAX
     %   [] = exportObsData2BERT(name, survey, ele)
@@ -14,9 +14,9 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
     %                 printed.
-    
+
     %% Check input.
-    
+
     assert(ischar(name), ...
         'name - Char, denoting the file name.');
     assert(isstruct(survey) &&  all(isfield(survey, {'data_header', 'data'})), ...
@@ -32,12 +32,12 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     if length(name) < 5 || ~strcmp(name(end-3:end), '.txt')
         name = [name, '.txt'];
     end
-    
+
     %% Export survey to file in BERT format.
-    
+
     if verbosity
-       fprintf('Export measurement configuration info to BERT file ... '); 
-    end 
+       fprintf('Export measurement configuration info to BERT file ... ');
+    end
     fileID = fopen(name, 'w');
     % Write electrode info block.
     % Set header.
@@ -48,7 +48,7 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     for i = 1:n_ele
         fprintf(fileID, '%.2f %.2f \n', ele(i,:));
     end
-    
+
     % Write data block.
     % Set header.
     n_data = size(survey.data, 1);
@@ -65,5 +65,5 @@ function [] = exportObsData2BERT(name, survey, ele, verbosity)
     fclose(fileID);
     if verbosity
         fprintf('done.\n');
-    end 
+    end
 end

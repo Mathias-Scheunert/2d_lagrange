@@ -15,8 +15,8 @@ function mesh = createUnitDiscMesh(n, verbosity)
     % COPYRIGHT
     %   Code originally written by Jan Blechta (CurlCurl-Toolbox).
 
-    %% Check input. 
-    
+    %% Check input.
+
     assert(isscalar(n));
     if n < 1
         n = 1;
@@ -25,15 +25,15 @@ function mesh = createUnitDiscMesh(n, verbosity)
         verbosity = false;
     else
         assert(islogical(verbosity), ...
-            'verbosity - Logical, denoting if verbose output is desired, expected.');        
+            'verbosity - Logical, denoting if verbose output is desired, expected.');
     end
-    
+
     %% Construct.
-    
+
     if verbosity
-       fprintf('Create basic disc mesh ... '); 
+       fprintf('Create basic disc mesh ... ');
     end
-    
+
     num_vertices = (3*n + 2)*(n + 1)/2;
     num_cells = 3*n*n;
 
@@ -81,7 +81,7 @@ function mesh = createUnitDiscMesh(n, verbosity)
     if verbosity
        fprintf('done.\n');
     end
-    
+
     % Summarize.
     mesh = struct();
     mesh.type = 'disc';
@@ -89,5 +89,5 @@ function mesh = createUnitDiscMesh(n, verbosity)
     mesh.vertices = vertex_coords.';
     mesh.cell2vtx = cells.';
     mesh.parameter_domain = ones(size(mesh.cell2vtx, 1), 1);
-    mesh.parameter_domain_name = {'entire'};  
+    mesh.parameter_domain_name = {'entire'};
 end

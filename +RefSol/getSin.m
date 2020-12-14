@@ -10,7 +10,7 @@ function sin_fun = getSin()
     % OUTPUT PARAMETER
     %   sin_fun ... Struct, containing function handles of the sin function
     %               as well as its Jacobian and Hessian matrix.
-    
+
     %% Define fuction.
 
     sin_fun.f = @(X, Y) -10 * X .^ 2 + 10 * Y .^ 2 + ...
@@ -26,7 +26,7 @@ function sin_fun = getSin()
     sin_fun.J = @(X, Y) [Jx(X, Y), Jy(X, Y)];
 
     % Define Hessian terms.
-    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin(X .* Y) + 12 * X .^ 2; 
+    Hxx = @(X, Y) -20 - 4 * Y .^ 2 .* sin(X .* Y) + 12 * X .^ 2;
     Hxy = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
     Hyx = @(X, Y) 4 * cos(X .* Y) - 4 * X .* Y .* sin(X .* Y);
     Hyy = @(X, Y) 20 - 4 * X .^ 2 .* sin(X .* Y);
@@ -35,8 +35,8 @@ function sin_fun = getSin()
     sin_fun.H = @(X, Y) [Hxx(X, Y), Hxy(X, Y); ...
                          Hyx(X, Y), Hyy(X, Y)];
     sin_fun.L = @(X, Y) -(Hxx(X, Y) + Hyy(X, Y));
-    
+
     %% Set required quadrature order.
-    
+
     sin_fun.quad_ord = 6;
 end

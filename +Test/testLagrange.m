@@ -5,7 +5,7 @@ classdef testLagrange < matlab.unittest.TestCase
     %   runtests('Test.testLagrange')
 
     properties (TestParameter)
-        
+
         % Parameters for source, domain, boundary condition:
         %    test number                , ...
         %    source type     char       , ...
@@ -13,10 +13,10 @@ classdef testLagrange < matlab.unittest.TestCase
         %    x               [min, max] , ...
         %    y               [min, max] , ...
         %    bnd type        char       , ...
-        %    known L2-error             , ... % known from successful runs 
+        %    known L2-error             , ... % known from successful runs
         %    known H1-error             , ... % known from successful runs
         %    verbosity       locigal
-        
+
         factory = {
             {1, 'reference',   @RefSol.getSin,       [-4, 4], [-4, 4], 'pure', ...
              [-2.1309, -2.1010; ...
@@ -42,42 +42,42 @@ classdef testLagrange < matlab.unittest.TestCase
     end
 
     methods (Test)
-        
+
         function Basis(~)
             % Tests on basis (function) definitions.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
         function Interpolation(~)
             % Tests on interpolation operator.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
         function Assembling(~)
             % Tests on assembling of mass, stiffnes matrix and rhs vector.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
         function Mapping(~)
             % Tests on DOF mapping.
-            % TODO: implement. 
+            % TODO: implement.
         end
 
         function Convergence(test_case, factory)
             % Convergence test for FE solution of the Laplace problem.
-            
+
             %% Get/Set test case variables.
-            
+
             % Set (fixed) parameter.
             mesh_type = 'cube';
             ref_steps = 1:4;
             order = [1, 2];
-            
+
             % Get (variable) parameter from input.
             TX = struct();
             [factory_num, TX.type, refSolFun, x, y, bnd_variant, ...
              rates_L2_ref, rates_H1_ref, verbosity] = factory{:};
-            
+
             % Expand input variables.
             switch TX.type
                 case 'reference'
@@ -85,7 +85,7 @@ classdef testLagrange < matlab.unittest.TestCase
                     TX.ref_sol_u = refSolFun();
                     % Rhs ref. sol.
                     TX.ref_sol.f = @(X, Y) TX.ref_sol_u.L(X, Y) + TX.ref_sol_u.f(X, Y);
-                    
+
                 case 'point_exact'
                     % TX coords and strength.
                     TX.coo = [0, 0];
@@ -93,13 +93,13 @@ classdef testLagrange < matlab.unittest.TestCase
                     % Ref. solution.
                     TX.ref_sol_u = refSolFun(TX.coo);
             end
-            
+
             % RX positions (diagonal profile with 17 points).
             RX = [linspace(x(1), x(end), 17).', ...
                   linspace(y(end), y(1), 17).'];
-            
+
             %% Define boundary conditions.
-            
+
             bnd = struct();
             bnd.name = {'xmin', 'xmax', 'ymin', 'ymax'};
             switch bnd_variant
@@ -112,14 +112,14 @@ classdef testLagrange < matlab.unittest.TestCase
                 case 'mix'
                     % Dirichlet/Neumann BC.
                     bnd.type = {'neumann', 'dirichlet'};
-                    %                     xmin            xmax            ymin            ymax                            
+                    %                     xmin            xmax            ymin            ymax
                     bnd.val = {{TX.ref_sol_u.J;             [];             []; TX.ref_sol_u.J}, ...
                                {[];             TX.ref_sol_u.f; TX.ref_sol_u.f;             []}};
                     bnd.quad_ord = TX.ref_sol_u.quad_ord;
             end
-            
+
             %% Set up loops.
-                            
+
             % Iterate (if required) over different Lagrange orders.
             [err_L2, err_H1, err_num_DOF] = deal(cell(length(order), 1));
             for cur_order = order
@@ -186,7 +186,7 @@ classdef testLagrange < matlab.unittest.TestCase
                     sol = FeL.treatBC(fe, mesh, sol, cur_bnd, verbosity);
 
                     if verbosity
-                       fprintf('... Linear system and BC set up.\n \n'); 
+                       fprintf('... Linear system and BC set up.\n \n');
                     end
 
                     %% Solve fwd problem.
@@ -244,16 +244,16 @@ classdef testLagrange < matlab.unittest.TestCase
                        'const', 'O(h)', ...
                        'Location', 'EastOutside');
             end
-            
+
             %% Compare to known results.
-            
+
             % Summarize convergence rates.
             rates_L2 = cell2mat([fit_L2, last_rate_L2]);
             rates_H1 = cell2mat([fit_H1, last_rate_H1]);
-            
+
             % Test against known rates.
             test_case.verifyEqual(rates_L2, rates_L2_ref, 'AbsTol', 1e-3);
-            test_case.verifyEqual(rates_H1, rates_H1_ref, 'AbsTol', 1e-3); 
+            test_case.verifyEqual(rates_H1, rates_H1_ref, 'AbsTol', 1e-3);
         end
     end
 

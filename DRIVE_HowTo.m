@@ -39,16 +39,16 @@ return;
 %
 % General remarks:
 %   Most of the usual required steps to set up the FE forward problem are
-%   summarized within the <package>.init(...) and <package>.assemble(...) 
+%   summarized within the <package>.init(...) and <package>.assemble(...)
 %   routines.
 %   If possible, it is recommended to use these (they are fairly tested).
 %
-%   To be more flexible in defining your own problem you may need to 
+%   To be more flexible in defining your own problem you may need to
 %   exclude specific steps.
 %
 % Coordinate system (Kartesian):
 % Note that topography therefore typically has a negative y-component.
-%  0,0 ------> 
+%  0,0 ------>
 %      |      x
 %      |
 %      |
@@ -60,7 +60,7 @@ return;
 % Clean up workspace and set verbosity.
 clean();                            % clears and closes everything
 warning('on');
-verbosity = pick(2, false, true);   % each function supporting verbosity 
+verbosity = pick(2, false, true);   % each function supporting verbosity
                                     %  will print out some statistics
 
 %% Define problem specific nodal geometry.
@@ -75,7 +75,7 @@ TX.type = 'point_exact';
 TX.coo = [0, 0];                    % location [x, y]
 TX.val = 1;                         % source strengh
 % 2.2) multiple Dirac point sources
-%   -> Multiple source points will generate multiple rhs vectors 
+%   -> Multiple source points will generate multiple rhs vectors
 %      (block-rhs) which lead to a multiple solutions vectors.
 TX.type = 'point_exact';
 TX.coo = [0, 0; 1, 1];              % location [x_1, y_1; x_2, y_2; ...]
@@ -85,7 +85,7 @@ TX.val = [1; -1];
 %   -> This source type was introduced to verify the code, as it allows for
 %   convergence studies.
 TX.type = 'reference';
-TX.ref_sol_u = RefSol.getSin(); 
+TX.ref_sol_u = RefSol.getSin();
     % Analytic solution for the current problem
     % -> required for setting up exact Dirichlet/Neumann boundary
     %  conditions and for comparing the FE solution to that
@@ -96,19 +96,19 @@ TX.ref_sol_u = RefSol.getSin();
     % Note that some functions may require additional input arguments
     %  (e.g. coordinates; RefSol.getPoisson2D(TX.coo))
 TX.ref_sol.f = @(X, Y) TX.ref_sol_u.L(X, Y) + TX.ref_sol_u.f(X, Y);
-    % Analytic solution of the current forward problem 
+    % Analytic solution of the current forward problem
     %  (e.g. in the above example: -\nabla²(u) + u)
     % -> This function handle will be used to set up the rhs of the FE
     %  problem
 
 % Define receiver locations:
-% They may also be included as nodes in the mesh ('create_gmsh') and are 
+% They may also be included as nodes in the mesh ('create_gmsh') and are
 % required to set up the FE interpolation (see FeK.getInterpolation)
 RX = struct();
 RX.coo = [-0.5, 0; -0.25, 0];         % location [x_1, y_1; x_2, y_2; ...]
 % If no observation is required just define an empty vecror.
 RX.coo = [];
-    
+
 % Define topography information:
 % x-y location of known points from surface
 topo = struct();
@@ -118,15 +118,15 @@ topo.coo = [TX.coo; RX.coo; -3, 1; 3, 2]; % location [x_1, y_1; x_2, y_2; ...]
 
 % There are several ways to set up an appropriate mesh for your problem:
 % 1) create a simple mesh by your own:
-mesh_type = 'cube';                    % rectangular domain splitted up 
+mesh_type = 'cube';                    % rectangular domain splitted up
                                        % in triangles
                                        % see +Mesh.createUnitCubeMesh.m
 ref_steps = 1;                         % numer of uniform mesh refinemets
-%             xmin xmax ymin ymax 
+%             xmin xmax ymin ymax
 domain_bnd = [-1,  1,   -1,  1];       % domain boundaries
 mesh = Mesh.initMesh(mesh_type, 'bnd', domain_bnd, ...
         'ref', ref_steps, 'verbosity', verbosity);
-    
+
 % 2) create a custom mesh with Gmsh (used for the DC application):
 % Note that given TX/RX positions and topography points are assumed to form
 %  the surface (i.e. the boundary at ymin). Hence, only if any TX/RX is
@@ -143,12 +143,12 @@ mesh = Mesh.initMesh(mesh_type, 'bnd', domain_bnd, ...
 % 3) load an external mesh (currently only Gmsh is supported)
 % Some information requirements are set, such that an arbitrary grid can be
 % used:
-% - All areas of same constant parameter (Gmsh: surface) have to be 
-%   associated with a name tag (Gmsh: physical surface name) as they will 
+% - All areas of same constant parameter (Gmsh: surface) have to be
+%   associated with a name tag (Gmsh: physical surface name) as they will
 %   be used to identify the parameter domains.
-% - All boundaries of the mesh (Gmsh: line loop, straight line) that should 
-%   be equipped with boundary conditions in the fwp (otherwise homogenous 
-%   Neumann are applied per default) have to be associated with a name tag 
+% - All boundaries of the mesh (Gmsh: line loop, straight line) that should
+%   be equipped with boundary conditions in the fwp (otherwise homogenous
+%   Neumann are applied per default) have to be associated with a name tag
 %   (Gmsh: physical line name)
 mesh_type = 'gmsh_load';
 msh_name = '<meshname>.msh';
@@ -168,12 +168,12 @@ bnd.type = {'dirichlet', 'neumann'};        % boundary type identifier
     % In this cell struct only the different !types! are listed.
 bnd.name = {'ymin', 'ymax', 'xmin', 'xmax'};% boundary part identifier
     % This cell struct contains the boundary part names (as they result e.g.
-    % from the construction by the own mesh creation routines or as they 
+    % from the construction by the own mesh creation routines or as they
     % need to be contained in the external mesh).
-%         ymin ymax  xmin xmax 
+%         ymin ymax  xmin xmax
 bnd.val = {{[];   0;  0;   0}, ...   % 1 for the Dirichlet part
            {0;  [];   [];  []}}; ... % 2 for the Neumann   part
-    % After setting up the boundary type and part identifier, the 
+    % After setting up the boundary type and part identifier, the
     % respective value are asigned.
     %   The outermost cell contains as many elements as bnd.type are set
     %   The innermost cell contains as many elements as bnd.name are set
@@ -181,20 +181,20 @@ bnd.val = {{[];   0;  0;   0}, ...   % 1 for the Dirichlet part
     % covered by an other boundary part.
     %
     % Note that a value might also be a function handle to an analytic
-    % solution 
-%           xmin            xmax            ymin            ymax     
+    % solution
+%           xmin            xmax            ymin            ymax
 bnd.val = {{TX.ref_sol_u.J;             [];             []; TX.ref_sol_u.J}, ...
            {[];             TX.ref_sol_u.f; TX.ref_sol_u.f;             []}};
     % (e.g. see Test.DRIVE_FEvsRefSol)
-bnd.quad_ord = 1;                    % set quadrature order, required for 
+bnd.quad_ord = 1;                    % set quadrature order, required for
                                      % inhomogenous Neumann BC
-  
-% Define domain (i.e. areas of const. conductivity) names (identifiers) and 
+
+% Define domain (i.e. areas of const. conductivity) names (identifiers) and
 % the respective parameter value:
 info = struct();
 info.name =  {'background', 'anomaly'};     % domain part identifier
 info.val = 1./[1e3,          1e-3];         % domain part parameter value
-param = Param.initParam(mesh, info);        
+param = Param.initParam(mesh, info);
     % A parameter vector will be created.
     % Also consistency is checked - i.e. if number of domains and its
     %  identifier are existing.
@@ -212,7 +212,7 @@ fwd_params.TX = TX;
 fwd_params.RX = RX;
 fwd_params.bnd = bnd;
 fwd_params.FE_order = FE_order;
-  
+
 %% Assemble FE problem.
 
 % 1) use the predefined problem assembling subroutines:

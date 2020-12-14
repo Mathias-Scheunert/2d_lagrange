@@ -4,7 +4,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     % Problem in 3D:
     %      x = [x, y, z]
     %   \phi = \phi(x)
-    %           
+    %
     %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
     %                       \phi = 0             at d_Omega_1 (earth interior)
     %               d_\phi / d_n = 0             at d_Omega_2 (surface)
@@ -13,12 +13,12 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     %       x = [x, y]
     %   \phi' = \phi'(x, k_Z)
     %
-    %   -\div(\sigma\grad(\phi')) + k_z^2 \sigma \phi' = I/2 \dirac(x_0)
+    %   -\div(\sigma\grad(\phi')) + k_z^2 \sigma \phi' = I \dirac(x_0)
     %                    \phi' = 0             at d_Omega_1 (earth interior)
     %            d_\phi' / d_n = 0             at d_Omega_2 (surface)
     %
     % such that
-    %    \phi = 2/pi \int_{0}^{\inf} \phi' dk_z
+    %    \phi = 1/pi \int_{0}^{\inf} \phi' dk_z
     %
     % 2.5D Variational problem:
     %   a(u,v,k_z) = \int_Omega \grad(\phi') * \sigma \grad(v) + ...
@@ -46,14 +46,14 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
     % OUTPUT PARAMETER
     %   fe      ... Struct, including all information to set up Lagrange FE.
     %   sol     ... Cell [n x 1] of structs for the n wavenumbers.
-    %               Each containing the information of the DC problem to be 
-    %               solved numerically, i.e. rhs vector, system matrix, 
-    %               interpolation operator. 
+    %               Each containing the information of the DC problem to be
+    %               solved numerically, i.e. rhs vector, system matrix,
+    %               interpolation operator.
     %   FT_info ... Struct, containing the weights and or nodes and the
     %               quadrature type for inverse spatial FT.
-    
+
     %% Check input.
-    
+
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(fwd_params) && all(isfield(fwd_params, ...
@@ -68,16 +68,16 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     % Exclude info.
     RX = fwd_params.RX;
     TX = fwd_params.TX;
     bnd = fwd_params.bnd;
     order = fwd_params.FE_order;
     FT_type = fwd_params.FT_type;
-    
+
     %% Set up FE structure.
-    
+
     fe = FeL.initFiniteElement(order, mesh, RX.coo, verbosity);
     bnd = FeL.assignBC(bnd, fe, mesh, param);
 
@@ -92,10 +92,10 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
 
     % Get parameter for inverse spatial Fourier transform.
     FT_info = App_DC.getInvFTParam(TX.coo, RX.coo, FT_type);
-    
+
     % Set up FE systems for all wave numbers.
     if verbosity
-        fprintf('Assemble linear system and incorporate BC ... '); 
+        fprintf('Assemble linear system and incorporate BC ... ');
     end
     sol = cell(FT_info.n, 1);
     % TODO: avoid storing redundand information.
@@ -104,7 +104,7 @@ function [fe, sol, FT_info] = assembleDC25D(mesh, param, fwd_params, verbosity)
         sol{ii}.A = A_DivGrad + FT_info.k(ii)^2 * A_Mass;
 
         % Set up rhs.
-        sol{ii}.b = (1 / 2) .* rhs;
+        sol{ii}.b = rhs;
 
         % Handle boundary conditions.
         bnd.k = FT_info.k(ii);

@@ -9,11 +9,11 @@ function peak_fun = getPeak(val, pos, eps_peak)
     %   peak_fun = getPeak(eps_peak)
     %
     % INPUT PARAMETER
-    %   val      ... Scalar [or vector] scaling factor[s], denoting source 
+    %   val      ... Scalar [or vector] scaling factor[s], denoting source
     %                strength.
     %   pos      ... Vector [or matrix], providing the peak position[s].
     %   eps_peak ... Scalar, controlling the amplitude and the width of the
-    %                normal distribution function which is used to 
+    %                normal distribution function which is used to
     %                approximate the Dirac impulse.
     %
     % OUTPUT PARAMETER
@@ -24,9 +24,9 @@ function peak_fun = getPeak(val, pos, eps_peak)
     %   See https://de.wikipedia.org/wiki/Mehrdimensionale_Normalverteilung
     %
     % TODO: automatically determine scaling factors w.r.t. the cell sizes.
-    
+
     %% Check input
-    
+
     assert(isscalar(val) || isvector(val), ...
         'val - scalar [or vector], denoting the amplitude[s], expected.');
     assert((isvector(pos) && length(pos) == 2) || ...
@@ -36,12 +36,12 @@ function peak_fun = getPeak(val, pos, eps_peak)
         'eps_peak - scalar, controlling the width, expected.');
     assert(length(val) == size(pos, 1), ...
         'Length of val has to coincide with rows in pos.')
-    
+
     %% Define peak-fuction.
-        
+
     % Get sizes.
     n_peak = length(val);
-    
+
     % Define function (assuming a uniform covariance matrix).
     C = eps_peak * eye(2, 2);
     CI = 1/eps_peak * eye(2, 2);
@@ -52,8 +52,8 @@ function peak_fun = getPeak(val, pos, eps_peak)
             val(ii) * (1/(2 * pi * det(C)) * ...
             exp(-(cord(x,y).' * CI * cord(x,y)) / 2));
     end
-    
+
     %% Set required quadrature order.
-    
+
     peak_fun.quad_ord = 3;
 end

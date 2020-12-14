@@ -1,6 +1,6 @@
 function Uk = get_Uk_HR(k, rTXRX, I, rho)
     % Calculates the line source 2D DC potential for a hom. half-space.
-    % 
+    %
     % SYNTAX
     %   Uk = get_Uk_2layer_2D(k, rTXRX, h, I, rho1, rho2)
     %
@@ -16,7 +16,7 @@ function Uk = get_Uk_HR(k, rTXRX, I, rho)
     % Fetch infos.
     n_r = length(rTXRX);
     n_k = length(k);
-    
+
     % Calculate Uk.
     Uk = zeros(n_r, n_k);
     for jj = 1:n_k

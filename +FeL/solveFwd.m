@@ -2,11 +2,11 @@ function u = solveFwd(sol, fe, verbosity)
     % Provides the solution of the FE linear system.
     %
     % SYNTAX
-    %   u = solveFwd(fe, verbosity)  
+    %   u = solveFwd(fe, verbosity)
     %
     % INPUT PARAMETER
     %   sol  ... Struct, containing the information of the current physical
-    %            problem to be solved numerically, i.e. rhs vector, system 
+    %            problem to be solved numerically, i.e. rhs vector, system
     %            matrix, interpolation operator.
     %   fe   ... Struct, including all information to set up Lagrange FE,
     %            as well as the linear system components.
@@ -17,9 +17,9 @@ function u = solveFwd(sol, fe, verbosity)
     %                 basis functions.
     %   verbosity ... Logical, denoting if current status should be
     %                 printed.
-    
+
     %% Check input.
-    
+
     assert(isstruct(sol) && all(isfield(sol, { 'A', 'b'})), ...
         'sol - struct, containing info about linear system to be solved, expected.');
     assert(isstruct(fe) && all(isfield(fe, {'sizes'})), ...
@@ -30,9 +30,9 @@ function u = solveFwd(sol, fe, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     %% Obtain solution of fwd problem.
-    
+
     if isfield(sol, 'dirichlet')
         % Obtain solution for reduced system.
         if verbosity
@@ -40,12 +40,12 @@ function u = solveFwd(sol, fe, verbosity)
         end
         u_red = sol.A \ sol.b;
         if verbosity
-           fprintf('done.\n'); 
+           fprintf('done.\n');
         end
-        
+
         % Construct full solution vector (containing the Dirichlet values).
         if verbosity
-           fprintf('Treat Dirichlet DOFs ... '); 
+           fprintf('Treat Dirichlet DOFs ... ');
         end
         u = zeros(fe.sizes.DOF, size(sol.b, 2));
         u(sol.dirichlet.DOF_req,:) = u_red;
@@ -53,7 +53,7 @@ function u = solveFwd(sol, fe, verbosity)
         if verbosity
            fprintf('done.\n');
         end
-        
+
     else
         % Obtain solution for the full system.
         if verbosity
@@ -61,7 +61,7 @@ function u = solveFwd(sol, fe, verbosity)
         end
         u = full(sol.A \ sol.b);
         if verbosity
-           fprintf('done.\n'); 
+           fprintf('done.\n');
         end
     end
 

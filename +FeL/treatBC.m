@@ -11,7 +11,7 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     %            For a detailed description of the content of the mesh
     %            struct please read header of Mesh.initMesh.
     %   sol  ... Struct, containing the information of the current physical
-    %            problem to be solved numerically, i.e. rhs vector, system 
+    %            problem to be solved numerically, i.e. rhs vector, system
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
     %
@@ -29,7 +29,7 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
     %                 printed.
 
     %% Check input
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'order', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
@@ -46,16 +46,16 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-       
+
     % Get indices for different BC types.
     idx_D = cellfun(@(x) strcmp(x, 'dirichlet'), bnd.type);
     idx_N = cellfun(@(x) strcmp(x, 'neumann'), bnd.type);
     idx_DtN = cellfun(@(x) strcmp(x, 'dtn'), bnd.type);
-    
+
     % Check consistency.
     assert(all(idx_D | idx_N | idx_DtN), ...
         'Unknown BC types detected.');
-       
+
     %% Treat Neumann.
 
     if any(idx_N)
@@ -69,7 +69,7 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
         % Process.
         sol = treatNeumann(fe, mesh, sol, bnd_N, verbosity);
     end
-    
+
     %% Treat Dirichlet-to-Neumann.
 
     if any(idx_DtN)
@@ -77,7 +77,7 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
         if ~isfield(bnd, 'k')
             bnd.k = 1;
         end
-        
+
         % Initialize.
         obsolet_BC = cellfun(@isempty, bnd.val{idx_DtN});
         bnd_DtN = struct('val', {bnd.val{idx_DtN}(~obsolet_BC).'}, ...
@@ -89,12 +89,12 @@ function sol = treatBC(fe, mesh, sol, bnd, verbosity)
         % Process.
         sol = treatDtN(fe, mesh, sol, bnd_DtN, verbosity);
     end
-    
+
     %% Treat Dirichlet.
 
     % As the entire system might be reduced during the handling of
     % Dirichlet BC, handling has to be processed last.
-    
+
     if any(idx_D)
         % Initialize.
         obsolet_BC = cellfun(@isempty, bnd.val{idx_D});
@@ -116,7 +116,7 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
     %   fe   ... Struct, including all information to set up Lagrange FE,
     %            as well as the linear system components.
     %   sol  ... Struct, containing the information of the current physical
-    %            problem to be solved numerically, i.e. rhs vector, system 
+    %            problem to be solved numerically, i.e. rhs vector, system
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
     %
@@ -126,15 +126,15 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
     %
     % OUTPUT PARAMETER
     %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
-       
+
     %% Reduce the linear system.
-    
+
     if verbosity
-       fprintf('Incorporate Dirichlet BC ... '); 
+       fprintf('Incorporate Dirichlet BC ... ');
     end
-       
-    % As the already known Dirichlet values and the linear equations for 
-    % the respective DOF don't need to be considered in the FE linear 
+
+    % As the already known Dirichlet values and the linear equations for
+    % the respective DOF don't need to be considered in the FE linear
     % system, they can be excluded.
     b_dirichlet = zeros(size(sol.b));
     if any(bnd.val ~= 0)
@@ -143,10 +143,10 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
         % Create rhs vector(s) which only includes Dirichlet values.
         % Pure edge DOF:
         b_dirichlet(bnd.DOF,:) = repmat(bnd.val, 1, size(sol.b,2));
-        
+
         % Map this vector with the full linear system.
         b_dirichlet_mod = sol.A * b_dirichlet;
-        
+
         % Subtract the result from the original rhs vector
         sol.b = sol.b - b_dirichlet_mod;
     end
@@ -156,15 +156,15 @@ function sol = treatDirichlet(fe, sol, bnd, verbosity)
     sol.b = sol.b(DOF_req,:);
     % System matrix.
     sol.A = sol.A(DOF_req, DOF_req);
-    
+
     %% Append Dirichlet bnd info.
-    
+
     sol.dirichlet.val = b_dirichlet(bnd.DOF,1);
     sol.dirichlet.DOF_req = DOF_req;
     sol.dirichlet.bnd_DOF = bnd.DOF;
-    
+
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end
 
@@ -180,7 +180,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges.
     %   sol  ... Struct, containing the information of the current physical
-    %            problem to be solved numerically, i.e. rhs vector, system 
+    %            problem to be solved numerically, i.e. rhs vector, system
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
     %            In case of a function handle, this handle needs to
@@ -194,17 +194,17 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
     %   sol ... Struct, adapted sol struct (see INPUT PARAMETER).
     %           Depending of 'type' nothing is changed (homogenous case) or
     %           the rhs vector is expanded (inhomogenoues case).
-    
+
     if verbosity
-       fprintf('Incorporate Neumann BC ... '); 
+       fprintf('Incorporate Neumann BC ... ');
     end
-    
+
     % Check for homogeneous N-BC.
     if ~any(cellfun(@(x) isa(x, 'function_handle'), bnd.val)) ...
             && all(cellfun(@(x) x == 0, bnd.val))
         % Nothing to do.
     else
-       
+
         % Assembling is similar to assembling of rhs or interpolation,
         % except the fact that the integrals are only along the edges (1D).
         % See Fe.assembleRHS, Fe.getInterpolation
@@ -213,8 +213,8 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % f(v) = \int_dOmega_N param(x,y) g(x,y) v ds
         % where
         % \delta(u) / \delta(n) = n * g(x,y)
-        % Galerkin approx. 
-        % (i.e. piece-wise evaluation w.r.t. simplices including the  
+        % Galerkin approx.
+        % (i.e. piece-wise evaluation w.r.t. simplices including the
         %     numerical quadrature approx for integral evaluation and coord.
         %     shift to reference simplex):
         % \sum_k param_k ( ...
@@ -234,14 +234,14 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         % i - number of basis functions
 
         %% Set up quadrature rule.
-        
+
         % Get quadrature rule for 1D and reshape coordinates such that they
         % can be applied on the basis functions (defined on a 2D reference
         % simplex).
         [gauss_cords, gauss_weights] = Quad.getQuadratureRule(bnd.quad_ord, 1);
         gauss_cords = [gauss_cords, 0 * gauss_cords].';
         gauss_weights = num2cell(gauss_weights).';
-        
+
         % Set up recurring quantity:
         basis_eval_all = cell(3, 1);
         % Set up gauss nodes for evaluation on reference simplex edges.
@@ -260,10 +260,10 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
         else
             gauss_cords_3 = flipud(gauss_cords);
         end
-        
+
         % Evaluate all basis functions for all quadrature nodes referred to
         % all edges of the reference simplex (see Mesh.getAffineMap).
-        % I.e. basis function evaluation takes place  on the reference 
+        % I.e. basis function evaluation takes place  on the reference
         % coords!
         basis_eval_all{1} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords_1(1,:), gauss_cords_1(2,:)).';
@@ -271,16 +271,16 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             gauss_cords_2(1,:), gauss_cords_2(2,:)).';
         basis_eval_all{3} = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
             gauss_cords_3(1,:), gauss_cords_3(2,:)).';
-        
+
         % Iterate over all different Neumann boundaries.
         for kk = 1:length(bnd.val)
-        
+
             %% Set up assembling by obtaining required indices and coords.
-            
+
             % Get only bnd vertices.
             bnd_vtx = bnd.DOF{kk}(bnd.DOF{kk} <= fe.sizes.vtx);
-            
-            % Get edge index corresponding to given DOFs at Neumann 
+
+            % Get edge index corresponding to given DOFs at Neumann
             % boundary.
             % Note: n_edge + 1 = length(bnd_vtx)
             edge_idx_map = sum(ismember(mesh.edge2vtx, bnd_vtx), 2) > 1;
@@ -289,19 +289,19 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
 
             % Get indicex of simplex which belong to current edge.
             [~, cell_2_edge_idx_map] = ismember(mesh.cell2edg, edge_idx);
-            
+
             % Get edge coordinates.
             bnd_edge_coo = mesh.edge2cord(edge_idx);
 
             % Get edge normal vectors (global cords).
             bnd_edge_n = Mesh.getEdgeNormal(mesh, edge_idx);
             bnd_edge_n = vertcat(bnd_edge_n{:});
-            % Check if more than one normal was obtained 
+            % Check if more than one normal was obtained
             % (must not be the case for bnd edges).
             assert(length(bnd_edge_n) == n_edge, ...
                 ['Some considered edges aren`t boundary edges ', ...
                 '(multiple normals obtained).']);
-            
+
             %% Assemble Neumann rhs vector.
 
             % Initialize index and value vector for sparse vector assembling.
@@ -309,9 +309,9 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             [i, j, s] = deal(zeros(n_edge * n_DOF_loc, 1));
             j = j + 1;  % (as this variable is const. 1 for vector assembing)
 
-            % Set up bnd val: 
+            % Set up bnd val:
             if ~isa(bnd.val{kk}, 'function_handle')
-                % If not already given as function handle, 
+                % If not already given as function handle,
                 % transform constant values to this shape.
                 fun_hand = RefSol.getConst(bnd.val{kk});
                 bnd_val = fun_hand.f;
@@ -320,22 +320,22 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 bnd_val = bnd.val{kk};
                 gradient = true;
             end
-            
+
             % Iterate over all edges.
             for ii = 1:n_edge
                 % Obtain respective simplex DOFs and current edge index.
                 [cur_cell, cur_cell_glob_edge] = ...
                     find(cell_2_edge_idx_map == ii);
                 cur_DOF_map = fe.DOF_maps.cell2DOF{cur_cell};
-                
+
                 % Get the local edge index for the current edge.
                 cur_cell_loc_edge = mesh.loc2glo == cur_cell_glob_edge;
-                
-                % Get the basis function evaluations for the current edge 
+
+                % Get the basis function evaluations for the current edge
                 % in local coordinates (and local ordering).
                 basis_eval = basis_eval_all{cur_cell_loc_edge};
 
-                % Get affine map for current edge (represents a 1D 
+                % Get affine map for current edge (represents a 1D
                 % barycentric coordinate system for 2D space).
                 % global maps to local
                 %  vtx_1    ->   0
@@ -345,10 +345,10 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                 bk = bnd_edge_coo{ii}(1, :).';
                 detBk = sqrt(abs(Bk.' * Bk));
 
-                % Get quadrature nodes position in global coords (gauss 
+                % Get quadrature nodes position in global coords (gauss
                 % nodes in 1D edge related coordinates are required).
-                gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;               
-                
+                gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;
+
                 % Set Neumann BC at the quadrature nodes.
                 if gradient
                     % Obtain normal derivative of kernel function.
@@ -376,7 +376,7 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
                         bnd_val(x, y), ...
                         gauss_cords_global(1,:), gauss_cords_global(2,:))).';
                 end
-                
+
                 % Set up integral kernel.
                 kern = cellfun(@(x, y, z) {(x * y) .* z}, ...
                     gauss_weights, neum_eval, basis_eval);
@@ -402,9 +402,9 @@ function sol = treatNeumann(fe, mesh, sol, bnd, verbosity)
             sol.b = sol.b + b_N;
         end
     end
-    
+
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end
 
@@ -420,10 +420,10 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
     %   mesh ... Struct, containing mesh information, i.e. coordinates
     %            of vertices and its relation to the triangles and edges.
     %   sol  ... Struct, containing the information of the current physical
-    %            problem to be solved numerically, i.e. rhs vector, system 
+    %            problem to be solved numerically, i.e. rhs vector, system
     %            matrix, interpolation operator.
     %   bnd  ... Struct, containing the boundary condition information.
-    %            The contianed handle needs to evaluate the function 
+    %            The contianed handle needs to evaluate the function
     %            gradient!
     %
     % OPTIONAL PARAMETER
@@ -437,14 +437,14 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
     %
     % TODO: fix / revise current implementation, as it is focused on 2.5D
     %       -> this should rather be a special case!
-    
+
     % Check integration kernel.
     assert(all(cellfun(@(x) isa(x, 'function_handle'), bnd.val)));
-    
+
     if verbosity
-       fprintf('Incorporate Dirichlet-to-Neumann BC ... '); 
+       fprintf('Incorporate Dirichlet-to-Neumann BC ... ');
     end
-           
+
     % Assembling can be considered as a combination of a Neumann-BC
     % integral including an additional basisfunction, i.e. providing a mass
     % matrix like expression.
@@ -454,8 +454,8 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
     %   a_R(u,v) = \int_dOmega_N param(x,y) n * g_R(x,y,TX) u v ds
     % with the integral kernel
     %   g_R(x,y,TX) = ((x, y) - TX) (k/r) (K_1(k, r)/K_0(k, r))
-    % Galerkin approx. 
-    % (i.e. piece-wise evaluation w.r.t. simplices including the  
+    % Galerkin approx.
+    % (i.e. piece-wise evaluation w.r.t. simplices including the
     %     numerical quadrature approx for integral evaluation and coord.
     %     shift to reference simplex):
     %   a_R(u_i, v_j) = ...
@@ -475,7 +475,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
     %
     % k   - num simplices
     % l   - num quadrature nodes
-    % j,i - num basis functions  
+    % j,i - num basis functions
 
     %% Set up quadrature rule.
 
@@ -523,7 +523,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
         % Get only bnd vertices.
         bnd_vtx = bnd.DOF{kk}(bnd.DOF{kk} <= fe.sizes.vtx);
 
-        % Get edge index corresponding to given DOFs at Neumann 
+        % Get edge index corresponding to given DOFs at Neumann
         % boundary.
         % Note: n_edge + 1 = length(bnd_vtx)
         edge_idx_map = sum(ismember(mesh.edge2vtx, bnd_vtx), 2) > 1;
@@ -539,7 +539,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
         % Get edge normal vectors (global cords).
         bnd_edge_n = Mesh.getEdgeNormal(mesh, edge_idx);
         bnd_edge_n = vertcat(bnd_edge_n{:});
-        % Check if more than one normal was obtained 
+        % Check if more than one normal was obtained
         % (must not be the case for bnd edges).
         assert(length(bnd_edge_n) == n_edge, ...
             ['Some considered edges aren`t boundary edges ', ...
@@ -552,7 +552,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
         n_entry_loc = fe.sizes.DOF_loc^2;
         [i, j, s] = deal(zeros(n_edge * n_entry_loc, 1));
 
-        % Fetch bnd val and set wavenumber. 
+        % Fetch bnd val and set wavenumber.
         bnd_val = bnd.val{kk};
         bnd_val = bnd_val(bnd.k);
 
@@ -566,11 +566,11 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
             % Get the local edge index for the current edge.
             cur_cell_loc_edge = mesh.loc2glo == cur_cell_glob_edge;
 
-            % Get the basis function evaluations for the current edge 
+            % Get the basis function evaluations for the current edge
             % in local coordinates (and local ordering).
             basis_eval = basis_eval_all{cur_cell_loc_edge};
 
-            % Get affine map for current edge (represents a 1D 
+            % Get affine map for current edge (represents a 1D
             % barycentric coordinate system for 2D space).
             % global maps to local
             %  vtx_1    ->   0
@@ -580,14 +580,14 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
             bk = bnd_edge_coo{ii}(1, :).';
             detBk = sqrt(abs(Bk.' * Bk));
 
-            % Get quadrature nodes position in global coords (gauss 
+            % Get quadrature nodes position in global coords (gauss
             % nodes in 1D edge related coordinates are required).
-            gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;               
+            gauss_cords_global = bsxfun(@times, Bk, gauss_cords(1,:)) + bk;
 
             try
             % Obtain normal derivative of kernel function.
             % I.e. function evaluation takes place  on the global coords!
-            % Note:[2x1] or [1x2] vector-shaped output is expected from 
+            % Note:[2x1] or [1x2] vector-shaped output is expected from
             % bnd_val!
             neum_eval = num2cell(arrayfun(@(x, y) ...
                 bnd_val(x, y, bnd_edge_n{ii}(:)), ...
@@ -613,7 +613,7 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
             % of 1D reference coords.
             % Finally incorporate current simplex parameter value.
             s_loc = detBk * sum(cat(3, kern{:}), 3);
-                    
+
             % Fill up index and value vectors.
             [i_loc, j_loc] = ndgrid(cur_DOF_map);
             glob_idx_start = ((ii-1) * n_entry_loc) + 1;
@@ -628,12 +628,12 @@ function sol = treatDtN(fe, mesh, sol, bnd, verbosity)
         % Note, values belonging to the same index pair are automatically
         % summed up by sparse().
         R = sparse(i, j, s, n_DOF_glob, n_DOF_glob);
-        
+
         % Add contribution of current Robin boundary to system matrix.
         sol.A = sol.A + R;
     end
-    
+
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end

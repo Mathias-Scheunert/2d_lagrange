@@ -3,7 +3,7 @@ function params = getInvFTParam(TX, RX, type)
     %
     % For multiple TX a general set of weights w and wavenumbers k is
     % determined.
-    % (Note: w and k can be determined for each m TX positions but this 
+    % (Note: w and k can be determined for each m TX positions but this
     % will lead to m unique linear systems.)
     %
     % SYNTAX
@@ -22,14 +22,14 @@ function params = getInvFTParam(TX, RX, type)
     %
     % REMARKS
     %   The 2.5D approach uses the bahavior of a known analytic solution
-    %   (e.g. point source in 3D half-space) to set up the numerical 
-    %   integration of the seperate 2D solutions (including choice of 
+    %   (e.g. point source in 3D half-space) to set up the numerical
+    %   integration of the seperate 2D solutions (including choice of
     %   wavenumbers and weights) which forms the 2.5D solution.
-    %   This can only act as an approximation for the solution of an 
+    %   This can only act as an approximation for the solution of an
     %   arbitrary shaped underground!
-    %   -> I.e. the solutions should be veryfied by comparing them to a 
+    %   -> I.e. the solutions should be veryfied by comparing them to a
     %   full 3D simulation.
-    %   Furthermore, this implies that only one single point source can be 
+    %   Furthermore, this implies that only one single point source can be
     %   treated by this approach such that multi-pole arrangements have to
     %   be simulated by adding up solutions for several sources.
     %
@@ -39,9 +39,9 @@ function params = getInvFTParam(TX, RX, type)
     %                                  Xu S.; 2000
     %
     % TODO: Debug Bing-variant (where to start/stop summation?).
-    
+
     %% Check input.
-    
+
     assert(ismatrix(TX) && size(TX, 2) == 2, ...
         ['TX - Matrix [m x 2] denoting source position, expected. ', ...
         'This is required in order to derive propper spatial wave ', ...
@@ -52,13 +52,13 @@ function params = getInvFTParam(TX, RX, type)
         'number selection']);
     assert(ischar(type), ...
         'type - Char, denoting the quadrature type, expected.')
-    
+
     %% Get infos.
-    
+
     % Define number of wavenubers.
     % (Bing / Xu)
-    n_k = 17; 
-    
+    n_k = 17;
+
     % Iterate over TX positions.
     params = struct();
     switch type
@@ -104,30 +104,30 @@ function [k, w, n] = getInvFTBoerner(TX, RX)
     %
     % REMARKS
     %   Also see Kemna A, Dissertation, 1999; LaBrecque et al 1996a
-    
-    
+
+
     %% Prepare parameter.
-    
+
     % Get TX-RX offsets.
     r_TX2RX = [];
     for kk = 1:size (TX, 1)
         cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
-        
+
         % Exclude TX == RX.
         cur_TX2RX(cur_TX2RX == 0) = [];
-        
+
         % Summarize.
         r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
     end
     r_TX2RX = unique(r_TX2RX);
-    
+
     % Get critical wavenumber (transition of asymptotic behavior).
     k_crit = 1 / (2 * min(r_TX2RX));
 
-    % Define number of wavenumbers for both parts of the asymptotic 
+    % Define number of wavenumbers for both parts of the asymptotic
     % behavior of the analytic solution.
     % (Adapt unsymmetric distribution of nodes from Kemna)
-    n_k_log = round(3*log(max(r_TX2RX) / min(r_TX2RX)));
+    n_k_log = max(4, round(4*log(max(r_TX2RX) / min(r_TX2RX))));
     n_k_exp = 4;
 
     % Get quadrature rules for both asymptotics.
@@ -164,31 +164,31 @@ function [k, n] = getInvFTBing(TX, RX, n)
     % OUTPUT PARAMETER
     %   k   ... Vector, containing wavenumbers.
     %   n   ... Scalar, denoting number of k or w, respectively.
-    
+
     %% Prepare parameter.
-    
+
     % Get TX-RX offsets.
     r_TX2RX = [];
     for kk = 1:size (TX, 1)
         cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
-        
+
         % Exclude TX == RX.
         cur_TX2RX(cur_TX2RX == 0) = [];
-        
+
         % Summarize.
         r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
     end
     r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
-    
+
     % Set lower bnd for f(k) and k.
-    % (Derived from bessle function behavior for r_min = 0.5 and 
+    % (Derived from bessle function behavior for r_min = 0.5 and
     % r_max = 500 -> we don't expect offsets beyond that range)
     u_min = 1e-4;
     k_min = 1e-3;
-        
+
     %% Get initial k range.
-    
+
     % Predefine a large range of wavenumbers.
     k_range = logspace(log10(k_min), 6, 301);
 
@@ -199,13 +199,13 @@ function [k, n] = getInvFTBing(TX, RX, n)
 
     % Get solutions spectra.
     u = arrayfun(@(k) u_HS(k, r_min), k_range);
-    
+
     % Get k for u_max.
     k_max = k_range(find(u > u_min, 1, 'last'));
-    
+
      % Get k from Boerner.
     k_crit = 1 / (2 * min(r_TX2RX));
-    
+
     % Get range of k.
     k_2max = logspace(log10(k_crit), log10(k_max), 1 + round(n/2));
     k_2min = logspace(log10(k_crit), log10(k_min), n - round(n/2));
@@ -234,31 +234,31 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     % OUTPUT PARAMETER
     %   k   ... Vector, containing wavenumbers.
     %   n   ... Scalar, denoting number of k or w, respectively.
-    
+
     %% Prepare parameter.
-    
+
     % Get TX-RX offsets.
     r_TX2RX = [];
     for kk = 1:size (TX, 1)
         cur_TX2RX = sqrt((TX(kk,1) - RX(:,1)).^2 + (TX(kk,2) - RX(:,2)).^2);
-        
+
         % Exclude TX == RX.
         cur_TX2RX(cur_TX2RX == 0) = [];
-        
+
         % Summarize.
         r_TX2RX = [r_TX2RX; cur_TX2RX]; %#ok
     end
     r_TX2RX = unique(r_TX2RX);
     r_min = min(r_TX2RX);
-    
+
     % Set lower bnd for f(k) and k.
-    % (Derived from bessle function behavior for r_min = 0.5 and 
+    % (Derived from bessle function behavior for r_min = 0.5 and
     % r_max = 500 -> we don't expect offsets beyond that range)
     u_min = 1e-4;
     k_min = 1e-3;
-        
+
     %% Get initial k range.
-    
+
     % Predefine a large range of wavenumbers.
     k_range = logspace(log10(k_min), 6, 301);
 
@@ -269,28 +269,28 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
 
     % Get solutions spectra.
     u = arrayfun(@(k) u_HS(k, r_min), k_range);
-    
+
     % Get k for u_max.
     k_max = k_range(find(u > u_min, 1, 'last'));
-    
+
      % Get k from Boerner.
     k_crit = 1 / (2 * min(r_TX2RX));
-    
+
     % Get range of k.
     k_2max = logspace(log10(k_crit), log10(k_max), 1 + round(n/2));
     k_2min = logspace(log10(k_crit), log10(k_min), n - round(n/2));
-    k = [fliplr(k_2min), k_2max(2:end)].';  
-  
+    k = [fliplr(k_2min), k_2max(2:end)].';
+
     %% Get corresponding w by linear least-squares.
 
-    % The solution of point source over a homogeneous half-space 
+    % The solution of point source over a homogeneous half-space
     %   i) (\rho * I) / (2 * pi * abs(r))
     % is given by the Fourier transform in wavenumberdomain by
     %   ii) (2 / pi) \int_{0}^{\inf} (I * rho) / (2 * pi) * besselk(0, k * r)
     %
     % Hence, i) is approximated by quadrature approach applied on ii)
     %   1 / abs(r) ~ \sum_{j = 1}^{n} besselk(0, k_j * r) w_j
-    % By defining 
+    % By defining
     %   A*w = v
     % with
     %   A = [r_i besselk(0, k_j * r_i)]_{i=1:m,j:n}
@@ -300,14 +300,14 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     % set of given k_j by:
     %   ||v - A*w||_2^2 -> min_w
     %
-    % Procedure: 
+    % Procedure:
     %   1) take k -> Bing-approach
     %   2) optimize for w
-    
+
     % Set up linear system for estimation of weights.
     A = getSys(u_HS, k, r_TX2RX);
     b = 1 + zeros(length(r_TX2RX), 1);
-    
+
     % Obtain SVD.
     [U, S, V] = svd(A);
     sing_val = diag(S);
@@ -319,7 +319,7 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     w = (pi / 2) * invA * b;
 
     %% Optimize k by nonlinear least-squares.
-%{   
+%{
     % Iterate.
     iter_max = 100;
     res = zeros(iter_max, 1);
@@ -327,31 +327,31 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
         % Get Jacobian.
         A0 = getSys(u_HS, k, r_TX2RX);
         J = getSens(u_HS, k, r_TX2RX, A0, w);
-        
+
         % Obtain SVD.
         [U, S, V] = svd(J);
         sing_val = diag(S);
         pseudo_rank = find(sing_val > sing_val(1) * 1e-3, 1, 'last');
         invJ = V(:,1:pseudo_rank) * diag(1./sing_val(1:pseudo_rank)) * U(:, 1:pseudo_rank).';
-        
+
         % Set up rhs.
         b = ones(length(r_TX2RX), 1) - (A0 * w);
         res(kk) = norm(b);
-        
+
         % Solve minimization by Pseudoinverse.
         % (Add prefactor to derive weights,  equivalent to Boerner and Bing.)
         dk = invJ * b;
-        
+
         % Get model update.
         k = k + dk;
-        
+
 %         if norm(dk) < norm(k)*1e-6
 %             break;
 %         end
     end
 %}
     %% Optimize w and k by nonlinear least-squares.
-%{   
+%{
     % Nonlinear least-squares approach:
     %   ||I - F(k_j,w_j)||_2^2 -> min_[k_j,w_j]
     %
@@ -361,58 +361,58 @@ function [k, w, n] = getInvFTXu(TX, RX, n)
     %
     % Gauss-Newton problem:
     %   ||I - F(k0_j,w0_j) - [\d_F(k0_j,w0_j) / d_k_j; * [d_k_j,d_w_j] ||_2^2 -> min_[d_k_j,d_w_j]
-    %                         \d_F(k0_j,w0_j) / d_w_j] 
+    %                         \d_F(k0_j,w0_j) / d_w_j]
     %     |______ ______|  - |_________ _____________| * |_____ _____|
     %            V                     V                       V
     %            b         -     J(k0_j, w0_j)         *      d_m
-    
+
     % Set up optimization for m = [k; w].
     w = 1 + 0*k;
     m = log([k; w]);
-    
+
     iter = 1;
     iter_max = 300;
     res = zeros(iter_max, 1);
     while iter <= iter_max
-        
-        % Get derivative w.r.t. w at k_start: 
+
+        % Get derivative w.r.t. w at k_start:
         % (== A since dependencies are linear!)
         S_w = getSys(u_HS, exp(m(1:n)), r_TX2RX);
-        
+
         % Get derivative w.r.t. k: (using perturbation method)
         S_k = getSens(u_HS, exp(m(1:n)), r_TX2RX, S_w, exp(m(n + 1:end)));
-        
+
         % Apply chain rule for darivatives w.r.t. log(k, w):
         S_w = S_w * diag(exp(m(n + 1:end)));
         S_k = S_k * diag(exp(m(1:n)));
-        
+
         % Summarize Jacobian.
         J = [S_k, S_w];
-        
+
         % Set up rhs.
         b = ones(length(r_TX2RX), 1) - (S_w * m(n + 1:end));
 
         % Get current residuum.
         res(iter) = norm(b);
-        
+
 %         % Obtain SVD.
 %         [U, S, V] = svd(J);
 %         sing_val = diag(S);
 %         pseudo_rank = find(sing_val > sing_val(1)*1e-4, 1, 'last');
 %         invJ = V(:,1:pseudo_rank) * diag(1./sing_val(1:pseudo_rank)) * U(:, 1:pseudo_rank).';
-%         
+%
 %         % Solve.
 %         d_m = invJ * b;
-        
+
         % Solve.
         JTJ = J.'*J;
         d_m = (JTJ + 1e-6*eye(size(JTJ))) \ (J.'*b);
-        
+
         % Get model update.
         m = m + d_m;
         iter = iter + 1;
     end
-    
+
     % Exclude wavenumbers and weights.
     % (Add prefactor to derive weights, equivalent to Boerner and Bing.)
     k = exp(m(1:n));
@@ -422,7 +422,7 @@ end
 
 function A = getSys(fun, k, r)
     % Calculates system matrix of linear problem w.r.t. w.
-   
+
     A = zeros(length(r), length(k));
     for ii = 1:length(r)
         A(ii,:) = r(ii) * arrayfun(@(x) fun(x,r(ii)), k);
@@ -435,7 +435,7 @@ function S = getSens(fun, k, r, A0, w) %#ok
     % F(k,w) := r_l * A_lj(k_j, r_l) * w_j
     % -> getSys provides: r_l * A_lj(k_j, r_l)
     % TODO: add Taylor test for verification.
-    
+
     % Initialize.
     S = ones(length(r), length(k));
     noise = 1e-6;
@@ -445,10 +445,10 @@ function S = getSens(fun, k, r, A0, w) %#ok
         % Set current k_dist to original and add noise.
         k_dist = k;
         k_dist(ii) = k(ii).*(1 + noise);
-        
+
         % Get corresponding solution.
         A_dist = getSys(fun, k_dist, r);
-        
+
         % Calculate colums of sensitivity.
         S(:, ii)= ((A_dist - A0) * w) / (k(ii).*noise);
     end

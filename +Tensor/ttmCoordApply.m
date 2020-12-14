@@ -53,7 +53,7 @@ function [res_i, res_v] = ttmCoordApply(ten_i, ten_m, ten_v, mat_i, mat_j, mat_m
     %   to multiply, i.e. along which to perform the inner products.
     %
     % See also ttmCoordCount, Tensor3Coord.
-    
+
     res_i = zeros(num_nnz, 3);
     res_v = zeros(num_nnz, 1);
     %

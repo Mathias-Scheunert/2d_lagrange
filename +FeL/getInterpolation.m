@@ -18,11 +18,11 @@ function I = getInterpolation(fe, mesh, point)
     %   Usage:
     %       sol = I * u
     %   where
-    %       sol - DC potential at point 
+    %       sol - DC potential at point
     %       u   - solution vector of the FE problem
-    
+
     %% Check input.
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'base', 'DOF_maps'})), ...
         'fe - struct, including all information to set up Lagrange FE, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
@@ -34,12 +34,12 @@ function I = getInterpolation(fe, mesh, point)
         I = eye(fe.sizes.DOF);
         return;
     end
-    
+
     %% Find cell(s) at which the solution is required.
-    
+
     % Get sizes.
-    n_point = size(point, 1);    
-    
+    n_point = size(point, 1);
+
     % Try to identify cells by matlab builtin.
     % Ultra fast variant but may provide NaNs.
     % (May be due to the basic mesh definition or refinemet, inconsistent
@@ -51,7 +51,7 @@ function I = getInterpolation(fe, mesh, point)
     if n_cell_idx_fail ~= 0
         warning('tsearchn failed to identify cells for some RX points.');
     end
-   
+
     for ii = 1:n_cell_idx_fail
         % Use 'own' functionality to obtain cell index for corrupt points.
         % Get point coordinates w.r.t. the reference simplex.
@@ -68,7 +68,7 @@ function I = getInterpolation(fe, mesh, point)
             all(x.xy_ref <= 1 + tol, 2) & ...
             (sum(x.xy_ref, 2) - 1 < tol)).'}, ...
             maps_fail));
-    
+
         % Obtain cell indices w.r.t to each obervation point.
         % (For multiple hits just take the first cell)
         if isempty(find(cells_fit, 1, 'first'))
@@ -78,15 +78,15 @@ function I = getInterpolation(fe, mesh, point)
         end
         cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
     end
-    
+
     % Get DOF index for respective cells.
     cell_idx = num2cell(cell_idx);
     cells2DOF = cell2mat(cellfun(@(x) {fe.DOF_maps.cell2DOF{x}.'}, cell_idx)).';
-    
+
     % Get affine maps for all found cells w.r.t. the respective points.
     maps = cellfun(@(x, y) {Mesh.getAffineMap(x, mesh, y)}, ...
         cell_idx, mat2cell(point, ones(n_point, 1), 2));
-    
+
     % Get basis function values at observation point(s).
     % (acting as additional scaling in I)
     cur_base = zeros(fe.sizes.DOF_loc, n_point);
@@ -95,8 +95,8 @@ function I = getInterpolation(fe, mesh, point)
         cur_y_ref = maps{kk}.xy_ref(2);
         cur_base(:, kk) = fe.base.Phi(cur_x_ref, cur_y_ref).';
     end
-    
-    % Set up interpolation matrix for the linear combination of respective 
+
+    % Set up interpolation matrix for the linear combination of respective
     % basis functions.
     n_DOF = fe.sizes.DOF;
     n_DOF_loc = fe.sizes.DOF_loc;

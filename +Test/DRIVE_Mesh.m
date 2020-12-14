@@ -69,7 +69,7 @@ lambda_all = cellfun(@(x,y) {Mesh.getAffineMap(x, mesh, test_point)}, ...
 lambda_all = cellfun(@(x) {x.xy_ref.'}, lambda_all);
 
 % Use barycentric coordinates to find cell_num(s) containing test_point:
-% Check affiliation: Only if all three lambdas are >= 0, the point belongs 
+% Check affiliation: Only if all three lambdas are >= 0, the point belongs
 % to the triangle.
 % (note: as only two coordinates are used, the test differs slightly)
 cells_fit = cellfun(@(x) all(x >= -eps & x <= 1 + eps) && (sum(x) - 1 < eps), ...

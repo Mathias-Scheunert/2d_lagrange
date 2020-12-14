@@ -7,22 +7,22 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
     % discretization in separate slices of the tensor.
     %
     % See also Tensor3Base, Tensor3Coord.
-    
+
     properties (Access = private)
         size_;
         index_;
         value_;
         cache_;
     end
-    
+
     methods (Access = protected)
         function s = querySize(val)
             % Implements the abstract method from 'behavior.ManagedSize'.
-            
+
             s = val.size_;
         end
     end
-    
+
     % Construction of empty array.
     methods (Static)
         function val = empty(varargin)
@@ -55,7 +55,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             val = Tensor.Tensor3Coord(Tensor.Tensor3Base.preEmpty(varargin{:}));
         end
     end
-    
+
     % Construction.
     methods
         function self = Tensor3Coord(sz, varargin)
@@ -84,28 +84,28 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   self  ... Resulting sparse tensor.
             %
             % See also accumarray, sparse.
-            
+
             % Pass-through constructor.
             if nargin == 1 && isa(sz, 'Tensor3Coord')
                 self = sz;
                 return
             end
-            
+
             % Process arguments.
             [empty, sz, i, v] = Tensor.Tensor3Base.preConstruct(sz, varargin{:});
-            
+
             % Process indices and values.
             if ~empty
                 % Add values at same index.
                 [i, ~, p] = unique(i, 'rows');
                 v = accumarray(p, v, [length(p), 1]);
-                
+
                 % Eliminate zeros.
                 mask = (v ~= 0);
                 i = i(mask, :);
                 v = v(mask);
             end
-            
+
             % Assign properties.
             self.size_ = sz;
             self.index_ = i;
@@ -113,7 +113,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             self.cache_ = containers.Map();
         end
     end
-    
+
     % Conversion.
     methods
         function data = struct(self)
@@ -124,7 +124,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   data = struct(self)
             %
             % See also Tensor3Base/struct.
-            
+
             prop = struct(...
                 'size' , self.size_ , ...
                 'index', self.index_, ...
@@ -135,7 +135,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
                 'vers', 1          );
         end
     end
-    
+
     % Tensor-specific functionality.
     methods
         function [index, value] = find(val)
@@ -146,11 +146,11 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   [index, value] = find(val)
             %
             % See also Tensor3Base/find.
-            
+
             index = val.index_;
             value = val.value_;
         end
-        
+
         function res = full(val)
             % Converts sparse tensor to full 3D array.
             %
@@ -159,11 +159,11 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   res = full(val)
             %
             % See also Tensor3Base/full.
-            
+
             % Convert to dense ND array.
             res = accumarray(val.index_, val.value_, val.size_);
         end
-        
+
         function nz = nnz(val)
             % Returns number of nonzero tensor elements.
             %
@@ -172,10 +172,10 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   nz = nnz(val)
             %
             % See also Tensor3Base/nnz.
-            
+
             nz = numel(val.value_);
         end
-        
+
         function s = nonzeros(val)
             % Returns nonzero tensor elements.
             %
@@ -184,11 +184,11 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   s = nonzeros(val)
             %
             % See also Tensor3Base/nonzeros.
-            
+
             % Return only nonzeros.
             s = val.value_;
         end
-        
+
         function res = ttm(ten, mat, dim)
             % Computes a tensor-matrix product (ttm = tensor times matrix).
             %
@@ -197,7 +197,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   res = ttm(ten, mat, dim)
             %
             % See also Tensor3Base/ttm.
-            
+
             % Validate tensor and matrix arguments.
             assert(isa(ten, 'Tensor.Tensor3Coord'), ...
                 'Expected first argument to be a tensor.');
@@ -209,10 +209,10 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
                 'Invalid dimension argument.');
             assert(size(mat, 1) == ten.size_(dim), ...
                 'Incompatible size of tensor and matrix.');
-            
+
             % Get size, values, and indices for easier access.
             sz = ten.size_;
-            
+
             % Get presorted 'i', 'm', and 'v' from cache or generate them.
             dim_key = char('0' + dim);
             if ~isKey(ten.cache_, dim_key)
@@ -227,23 +227,23 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             ten_i = dim_ijv.i;
             ten_m = dim_ijv.m;
             ten_v = dim_ijv.v;
-            
+
             % Preprocess matrix.
             mat_sz = size(mat);
             [mat_i, mat_j, mat_v] = find(mat);
             mat_m = [true; logical(diff(mat_j, 1, 1)); true];
-            
+
             % Result size.
             res_sz = [sz(1:dim - 1), mat_sz(2), sz(dim + 1:3)];
             if size(mat_i, 1) == 0
                 res = Tensor.Tensor3Coord(res_sz);
                 return
             end
-            
+
             % Walk index vectors to determine number of nonzeros.
             num_nnz = Tensor.ttmCoordCount(...
                 ten_i, ten_m, mat_i, mat_m, dim);
-            
+
             % Walk index vectors again to populate result.
             [res_i, res_v] = Tensor.ttmCoordApply(...
                 ten_i, ten_m, ten_v, mat_i, mat_j, mat_m, mat_v, dim, num_nnz);
@@ -251,7 +251,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             % Construct sparse tensor eliminating duplicate indices.
             res = Tensor.Tensor3Coord(res_sz, res_i, res_v);
         end
-        
+
         function res = ttv(ten, vec, dim)
             % Computes a tensor-vector product (ttv = tensor times vector).
             %
@@ -260,7 +260,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             %   res = ttv(ten, vec, dim)
             %
             % See also Tensor3Base/ttv.
-            
+
             % Validate tensor and vector arguments.
             assert(isa(ten, 'Tensor.Tensor3Coord'), ...
                 'Expected first argument to be a tensor.');
@@ -272,7 +272,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
                 'Invalid dimension argument.');
             assert(size(vec, 1) == ten.size_(dim), ...
                 'Incompatible size of tensor and vector.');
-            
+
             % Get values and indices for easier access.
             v = ten.value_;
             i = ten.index_;
@@ -280,7 +280,7 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             % Which two dimensions to keep?
             keep = 1:3;
             keep(dim) = [];
-            
+
             % Handle sparse and dense vectors differently for performance.
             if issparse(vec)
                 % Get 'ten_idx' and 'ten_ptr' from cache or generate them.
@@ -297,11 +297,11 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
                 dim_ttv = ten.cache_(dim_key);
                 ten_idx = dim_ttv.idx;
                 ten_ptr = dim_ttv.ptr;
-                
+
                 % Dissect given sparse vector into row indices and entries.
                 vec_i = find(vec);
                 vec_v = nonzeros(vec);
-                
+
                 % Optimize the very common case of a (scaled) unit vector.
                 if isscalar(vec_i)
                     % Compute values and restrict indices for nonzero.
@@ -325,5 +325,48 @@ classdef (Sealed) Tensor3Coord < Tensor.Tensor3Base
             sz = ten.size_(keep);
             res = sparse(i(:, 1), i(:, 2), v, sz(1), sz(2));
         end
+        function res = plus(ten1,ten2)
+            assert(isa(ten1, 'Tensor.Tensor3Coord'), ...
+                'Expected first argument to be a tensor.');
+            assert(isa(ten2, 'Tensor.Tensor3Coord'), ...
+                'Expected second argument to be a tensor.');
+            assert(all(eq(ten1.size_,ten2.size_)), ...
+                'Tensors must be the same size.');
+
+            % Get size, values, and indices for easier access.
+            % %%%%%%%%%%%%%%%%%%%%%%%
+            sz1 = ten1.size_;
+            v1 = ten1.value_;
+            i1 = ten1.index_;
+
+            v2 = ten2.value_;
+            i2 = ten2.index_;
+
+
+            index = [i1; i2];
+            v = [v1; v2];
+
+            % Construct sparse tensor eliminating duplicate indices and summing them sup.
+            res = Tensor.Tensor3Coord(sz1, index, v);
+        end
+
+        function res = times(ten, num)
+            assert(isa(ten, 'Tensor.Tensor3Coord'), ...
+                'Expected first argument to be a tensor.');
+            assert(isscalar(num), ...
+                'Expected second argument to be a scalar.');
+
+            % Get size, values, and indices for easier access.
+            sz = ten.size_;
+            v = ten.value_;
+            i = ten.index_;
+
+            v = v*num;
+            % Construct sparse tensor eliminating duplicate indices.
+            res = Tensor.Tensor3Coord(sz, i, v);
+        end
+
+
+
     end
 end

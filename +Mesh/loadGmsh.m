@@ -18,13 +18,13 @@ function mesh = loadGmsh(name, varargin)
     %   mesh = loadGmsh(name[, varargin])
     %
     % INPUT PARAMETER
-    %   name ... Char, denoting the file name (with extention) to import 
+    %   name ... Char, denoting the file name (with extention) to import
     %            from.
     %
     % OPTIONAL PARAMETER
     %   verbosity ... Logical, denoting if current status should be
     %                 printed [default = false].
-    %   ref       ... Scalar, denoting the number of uniform 
+    %   ref       ... Scalar, denoting the number of uniform
     %                 refinement steps [default = 0].
     %   force     ... Logical, forcing operation mode 2) even if phys.
     %                 names are available [default = false].
@@ -36,7 +36,7 @@ function mesh = loadGmsh(name, varargin)
     %       2) dimension,
     %          vertices,
     %          points, point names,
-    %          simplex2vertex list, 
+    %          simplex2vertex list,
     %          simplex2parameter domain list, parameter domain names,
     %          boundary2vertex list,
     %          boundary2boundary(id) parts, boundary part names
@@ -44,7 +44,7 @@ function mesh = loadGmsh(name, varargin)
     % REMARKS
     %
     %   If no physical entities at all are set for geometrical entities in
-    %   mesh, Gmsh seems to store every occuring geometric element in the 
+    %   mesh, Gmsh seems to store every occuring geometric element in the
     %   element list of the .msh file (e.g. all points are listed).
     %   -> there physical entity id is set to '0' by default
     %
@@ -53,7 +53,7 @@ function mesh = loadGmsh(name, varargin)
     %   remaining gometric entities anymore!
     %
     %   To be able to handle arbitrary .msh inputs in order to use their
-    %   information for setting up FEM simulations, some requirements 
+    %   information for setting up FEM simulations, some requirements
     %   on the Gmsh files / meshes are made:
     %
     %   - physical entities including physical entity names for all
@@ -65,7 +65,7 @@ function mesh = loadGmsh(name, varargin)
     %   - the names can be arbitrary char strings
     %
     %   - each physical_surface has a physical surface name. These are
-    %     consired to be parameter domains (2D mesh) or boundaries 
+    %     consired to be parameter domains (2D mesh) or boundaries
     %     (3D mesh).
     %   - the names can be arbitrary char strings
     %
@@ -76,7 +76,7 @@ function mesh = loadGmsh(name, varargin)
     %   Note 2D mesh:
     %   The obtained (boundary) edge list does only comprise a subset of
     %   the entire list of edges in the mesh.
-    %   To achieve this relations additional routines 
+    %   To achieve this relations additional routines
     %   (e.g. Mesh.appendEdgeInfo) are required.
     %
     %   Note 3D mesh:
@@ -86,13 +86,13 @@ function mesh = loadGmsh(name, varargin)
     %
     %   Depending on the applied gmsh meshing variant during the mesh
     %   generation (i.e gmsh -2 [-> 2D mesh] or gmsh -3 [-> 3D]) the
-    %   element list always comprises the complete list of triangels [2D] 
+    %   element list always comprises the complete list of triangels [2D]
     %   or thedrahera [3D].
     %   The node list always comprises the complete list of vertices,
     %   forming the mesh.
-    
+
     %% Check input.
-    
+
     assert(ischar(name), ...
         ['name - Character of Gmsh file name to load ', ...
         '(including file extention!).']);    % Define possible input keys and its properties checks.
@@ -101,19 +101,19 @@ function mesh = loadGmsh(name, varargin)
         'ref - Scalar, denoting the number of uniform ref steps, expected.');
     assertLogic = @(x) assert(islogical(x), ...
         'logical, denoting if status should be printed, expected');
-    
+
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
     parser_obj.addParameter(input_keys{1}, 0, assertRef);
     parser_obj.addParameter(input_keys{2}, false, assertLogic);
     parser_obj.addParameter(input_keys{3}, false, assertLogic);
-   
+
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
     args = parser_obj.Results;
-    
+
     %% Check Gmsh version.
-    
+
     gmsh_path = dir('**/gmsh');
     if isempty(gmsh_path)
         error('Gmsh executable could not be found in path.');
@@ -128,45 +128,45 @@ function mesh = loadGmsh(name, varargin)
 %             'Function was tested only for version 3.x.'], gmsh_ver(1)));
 %         warning('off', 'Gmsh:versionNum');
     end
-    
+
     %% Refine uniformly.
-    
+
     if args.verbosity && args.ref > 0
-        fprintf('Refine mesh ... '); 
+        fprintf('Refine mesh ... ');
     end
     name_tmp = [name(1:end-4), '_tmp', name(end-3:end)];
     copyfile(name, name_tmp);
     for i = 1:args.ref
-        
+
         system([gmsh_path.folder, '/gmsh -refine -format msh2 -v 0 ', ...
             name_tmp]);
     end
     if args.verbosity && args.ref > 0
        fprintf('done.\n');
     end
-    
+
     %% Load .msh file.
-    
+
     if args.verbosity
-       fprintf('Load Gmsh output ... '); 
+       fprintf('Load Gmsh output ... ');
     end
-    
+
     % Get whole content from file.
     file_content = fileread(name_tmp);
     delete(name_tmp);
-    
+
     % Remove obsolete pattern.
     file_content = regexprep(file_content, '"', '');
-    
+
     % Store each line of the input file in a seperate cell.
     file_content = textscan(file_content, '%s', 'delimiter', '\n', ...
         'whitespace', '');
     file_content = file_content{1};
-    
+
     % Check file.
     assert(~isempty(file_content), ...
         'Empty file detected.');
-    
+
     % Go through content and search for leading keywords which separates
     % information blocks (see gmsh file format documentation).
     name_list = {'$MeshFormat', '$EndMeshFormat', ...
@@ -201,7 +201,7 @@ function mesh = loadGmsh(name, varargin)
             'Only MSH file format version 2.x is supported yet.'], ...
             format_content{1}));
     end
-       
+
     %% Get element information.
 
     % Information structure:
@@ -210,7 +210,7 @@ function mesh = loadGmsh(name, varargin)
     % ele. number, ele. type, number of ele. tags, [tag list], [vertex list]
     % $End
     %
-    % Note: 
+    % Note:
     %   [tag list] as many columns/entries as given by number of ele. tags
     %   [vertex list] differs in length for edges and cells
     %
@@ -251,7 +251,7 @@ function mesh = loadGmsh(name, varargin)
         ['File solely contains point and/or edge information. ', ...
         'Only 2D meshes (containing triangle-elements) or 3D meshes ', ...
         '(containing thetrahedra-elements) are supported.']);
-    
+
     % Determine the mesh dimension.
     if any(found_ele_types == 4)
         dim = 3;
@@ -262,7 +262,7 @@ function mesh = loadGmsh(name, varargin)
     % Extract point information.
     point_content_idx = ele_types == 15;
     points = cell2mat(ele_content(point_content_idx));
-    
+
     % Extract edge information.
     edge_content_idx = ele_types == 1;
     edges = cell2mat(ele_content(edge_content_idx));
@@ -299,7 +299,7 @@ function mesh = loadGmsh(name, varargin)
     vtx_content_num = file_content(idx_node_start - 1);
     vtx_content_num = str2double(vtx_content_num{:});
     vtx_content = file_content(idx_node_start:idx_node_stop);
-    
+
     % Use a trick to speed up transforming the strings within the cells
     % into an array of numbers (as number of rows and cols don't change).
     cols = size(str2double(strsplit(vtx_content{1})), 2);
@@ -345,7 +345,7 @@ function mesh = loadGmsh(name, varargin)
                     'fields may not refer to the complete list of ', ...
                     'respective elements.'];
         end
-        
+
     else
         % Information structure of file header:
         % $
@@ -355,14 +355,14 @@ function mesh = loadGmsh(name, varargin)
         % phys. dimension == 0 -> point
         %                 == 1 -> line (edge)
         %                 == 2 -> face (triangle)
-        %                 == 3 -> volume (tetrahedron) 
+        %                 == 3 -> volume (tetrahedron)
         % phys. number == physical entity id (-> see above)
         % Note: Only those four dimension, i.e. entity types are considered!
         % -> Don't change order of the following definitions:
         supported_phys_types = [0, 1, 2, 3];
         supported_phys_type_names = {'point', 'edge', 'face', 'volume'};
         supported_phys_types_num = length(supported_phys_types);
-        
+
         % Get physical entities content from file header.
         phys_content = file_content(idx_phys_start:idx_phys_stop);
         phys_num = str2double(phys_content{1});
@@ -405,7 +405,7 @@ function mesh = loadGmsh(name, varargin)
         phys_ids_in_ele_cont = cell(supported_phys_types_num, 1);
         phys_ids_in_ele_cont(element_type_exist) = ...
             cellfun(@(x) {unique(x(:,4))}, element_content(element_type_exist));
-        
+
         % Check if complete entity types are not related to phys. names.
         if ~isequal(element_exist(:), phys_exist(:))
             tmp_names = supported_phys_type_names(...
@@ -416,26 +416,26 @@ function mesh = loadGmsh(name, varargin)
                 'entity types: \n', ...
                 repmat('- %s\n', 1, length(tmp_names))], ...
                 tmp_names{:}));
-            
+
             % Remove obsolete entity types.
             element_exist(:) = element_exist(:) & phys_exist(:);
             element_type_exist = find(element_exist);
             element_content(~element_exist) = {[]};
             phys_ids_in_ele_cont(~element_exist) = {[]};
         end
-        
+
         % Check if parts of existing entities are not related to
         % appropriate phys. names.
         pid_vs_pid_ele = cellfun(@(x, y) {ismember(x, y)}, ...
             phys_ids_in_ele_cont, phys_ids);
         pid_mismatch = cellfun(@(x) {~all(x)}, pid_vs_pid_ele);
-        
+
         % Reduce information from element list to only comprise entity data
         % related to the observed physical names.
         if pid_mismatch{1}
             warning(['Number of physical point names differ from the ', ...
             'number of physical point ids. Ignoring unrelated point ids.']);
-        
+
            % Reduce point_content.
            obsolete_idx = ~ismember(points(:,4), ...
                str2double(phys_content(phys_point_id, 2)));
@@ -455,7 +455,7 @@ function mesh = loadGmsh(name, varargin)
             warning(['The number of physical face names differ from ', ...
                'the number of physical face ids. Ignoring unrelated ', ...
                'face ids.']);
-        
+
             % Reduce face_content.
            obsolete_idx = ~ismember(faces(:,4), ...
                str2double(phys_content(phys_face_id, 2)));
@@ -465,7 +465,7 @@ function mesh = loadGmsh(name, varargin)
             warning(['The number of physical volume names differ from ', ...
                'the number of physical volume ids. Ignoring unrelated ', ...
                'volume ids.']);
-        
+
             % Reduce volume_content.
            obsolete_idx = ~ismember(volumes(:,4), ...
                str2double(phys_content(phys_volume_id, 2)));
@@ -475,7 +475,7 @@ function mesh = loadGmsh(name, varargin)
         % Generate entity/entity name mappings.
         % (Provide a new progressive indexing, starting from 1 - that
         % matches the ordering of names.)
-        
+
         % Map point information.
         if ~isempty(element_content{1})
             % Expand point list to entire vertex list size.
@@ -488,7 +488,7 @@ function mesh = loadGmsh(name, varargin)
             point_id_map = [];
             phys_point_names = {[]};
         end
-        
+
         % Map edge(= bnd in 2D) information.
         if ~isempty(element_content{2})
             phys_edge_content = phys_content(phys_edge_id,:);
@@ -520,7 +520,7 @@ function mesh = loadGmsh(name, varargin)
                 warning('No boundary information provided.');
             end
         end
-        
+
         % Map volume information(= cell/parameter in 3D).
         if ~isempty(element_content{4})
             phys_volume_content = phys_content(phys_volume_id,:);
@@ -568,8 +568,8 @@ function mesh = loadGmsh(name, varargin)
                     (:,end-(req_cols(element_type_exist(ii))-1):end);
         end
     end
-   
+
     if args.verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end

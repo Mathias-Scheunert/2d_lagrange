@@ -12,7 +12,7 @@ function poisson_fun = getPoisson2D(TX)
     %
     % OUTPUT PARAMETER
     %   poisson_fun ... Struct, containing function and gradient handles.
-    
+
     %% Define function.
 
     poisson_fun.f = @(x, y) -1 / (2 * pi) * log(norm([x; y] - TX(:)));
@@ -31,8 +31,8 @@ function poisson_fun = getPoisson2D(TX)
     else
         % Skip derivation.
     end
-    
+
     %% Set required quadrature order.
-    
+
     poisson_fun.quad_ord = 4;
 end

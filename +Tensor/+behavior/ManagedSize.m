@@ -9,14 +9,14 @@ classdef ManagedSize
         %
         % Abstract method - concrete definition is given in Tensor3Base or
         % within one of its subclasses.
-        
+
         sz = querySize(val)
     end
 
     methods (Access = protected)
         function n = subscriptedNumel(val, varargin) %#ok<VANUS,MANU,STOUT>
             % TODO: Help.
-            
+
             error('Subscripted access is unsupported.');
         end
     end
@@ -24,7 +24,7 @@ classdef ManagedSize
     methods
         function ind = end(val, k, n)
             % TODO: Help.
-            
+
             sz = querySize(val);
             if k <= length(sz)
                 if k < n
@@ -39,28 +39,28 @@ classdef ManagedSize
 
         function tf = isempty(val)
             % TODO: Help.
-            
+
             sz = querySize(val);
             tf = any(sz == 0);
         end
 
         function n = length(val)
             % TODO: Help.
-            
+
             sz = querySize(val);
             n = max([sz, 0]);
         end
 
         function n = ndims(val)
             % TODO: Help.
-            
+
             sz = querySize(val);
             n = max(2, find([0, sz] ~= 1, 1, 'last') - 1);
         end
 
         function n = numel(val, varargin)
             % TODO: Help.
-            
+
             if nargin == 1
                 sz = querySize(val);
                 n = prod(sz);
@@ -71,7 +71,7 @@ classdef ManagedSize
 
         function varargout = size(val, dim)
             % TODO: Help.
-            
+
             sz = querySize(val);
             n = max(2, find([0, sz] ~= 1, 1, 'last') - 1);
             sz = sz(1:n);
@@ -97,13 +97,13 @@ classdef ManagedSize
 
         function val = subsasgn(val, subs, data) %#ok<INUSD,MANU>
             % TODO: Help.
-            
+
             error('Subscripted access is unsupported.');
         end
 
         function varargout = subsref(val, subs) %#ok<INUSD,MANU,STOUT>
             % TODO: Help.
-            
+
             error('Subscripted access is unsupported.');
         end
     end

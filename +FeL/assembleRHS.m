@@ -3,8 +3,8 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     %
     % continuous:
     % f(v) = \int_Omega f v d(x,y) = ...
-    % Galerkin approx. 
-    % (i.e. piece-wise evaluation w.r.t. simplices including the  
+    % Galerkin approx.
+    % (i.e. piece-wise evaluation w.r.t. simplices including the
     %     numerical quadrature approx for integral evaluation and coord.
     %     shift to reference simplex):
     % f(v_i) = ...
@@ -18,7 +18,7 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     %
     % k - num simplices
     % l - num quadrature nodes
-    % i - num basis functions   
+    % i - num basis functions
     %
     % SYNTAX
     %   b = assembleRHS(fe, mesh, TX[, verbosity])
@@ -36,9 +36,9 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
     %
     % OUTPUT PARAMETER
     %   b ... Vector, representing the given source w.r.t. the DOF.
-    
+
     %% Check input.
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'base', 'DOF_maps'})), ...
         'fe - struct, including all information to set up Lagrange FE, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2cord', 'maps'})), ...
@@ -51,42 +51,42 @@ function b = assembleRHS(fe, mesh, TX, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     %% Assemble rhs vector.
 
     if verbosity
-       fprintf('Assemble rhs ... '); 
+       fprintf('Assemble rhs ... ');
     end
-    
+
     switch TX.type
         case {'reference'}
             assert(all(isfield(TX, {'ref_sol'})), ...
                 'TX.ref_sol - function handle to ref. solution, expected.');
             getRHS = @getFunctionRHS;
-            
+
         case 'point_exact'
             getRHS = @getDistributionRHS;
-            
+
         case 'point_approx'
             error(['Using approximate point source is not recommended. ', ...
                 'Please rather use "point_exact".']);
-            
+
         case 'none'
             getRHS = @(x, y, z) zeros(x.sizes.DOF, 1);
-            
+
         otherwise
             error('Unknown soure type.');
     end
-    
+
     b = getRHS(fe, mesh, TX);
-    
+
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end
 
 function b = getDistributionRHS(fe, mesh, TX)
-    % The assembling of the rhs vector(s) for a distribution rhs (Dirac) 
+    % The assembling of the rhs vector(s) for a distribution rhs (Dirac)
     % follows the same procedure as assembling the interpolation operator.
     % I.e. the evaluation of basisfunctions at the source location whereas
     % the source strengh acts as scaling.
@@ -97,7 +97,7 @@ function b = getDistributionRHS(fe, mesh, TX)
 
     % Get common sizes.
     n_point = size(TX.coo, 1);
-    
+
     % Try to identify cells belonging to TX.pos by matlab builtin.
     cell_idx = tsearchn(mesh.vertices, mesh.cell2vtx, TX.coo);
     cell_idx_fail = isnan(cell_idx);
@@ -106,7 +106,7 @@ function b = getDistributionRHS(fe, mesh, TX)
     if n_cell_idx_fail ~= 0
         warning('tsearchn failed to identify cells for some RX points.');
     end
-   
+
     for ii = 1:n_cell_idx_fail
         % Use 'own' functionality to obtain cell index for corrupt points.
         % Get point coordinates w.r.t. the reference simplex.
@@ -121,7 +121,7 @@ function b = getDistributionRHS(fe, mesh, TX)
             all(x.xy_ref <= 1 + tol, 2) & ...
             (sum(x.xy_ref, 2) - 1 < tol)).'}, ...
             maps_fail));
-    
+
         % Obtain cell indices w.r.t to each TX point.
         % (For multiple hits just take the first cell)
         if isempty(find(cells_fit, 1, 'first'))
@@ -132,15 +132,15 @@ function b = getDistributionRHS(fe, mesh, TX)
             cell_idx(cell_idx_fail(ii)) = find(cells_fit, 1, 'first');
         end
     end
-    
+
     % Get DOF index for respective cells.
     cell_idx = num2cell(cell_idx);
     cells2DOF = cell2mat(cellfun(@(x) {fe.DOF_maps.cell2DOF{x}.'}, cell_idx)).';
-    
+
     % Get affine maps for all found cells w.r.t. the respective points.
     maps = cellfun(@(x, y) {Mesh.getAffineMap(x, mesh, y)}, ...
         cell_idx, mat2cell(TX.coo, ones(n_point, 1), 2));
-    
+
     % Evaluate basis functions at TX point(s) and scale it.
     cur_base = zeros(fe.sizes.DOF_loc, n_point);
     for kk = 1:n_point
@@ -148,7 +148,7 @@ function b = getDistributionRHS(fe, mesh, TX)
         cur_y_ref = maps{kk}.xy_ref(2);
         cur_base(:, kk) = TX.val(kk) * fe.base.Phi(cur_x_ref, cur_y_ref).';
     end
-    
+
     % Set up rhs vector(s) for the linear combination of respective basis
     % functions.
     n_DOF = fe.sizes.DOF;
@@ -160,51 +160,51 @@ function b = getDistributionRHS(fe, mesh, TX)
 end
 
 function b = getFunctionRHS(fe, mesh, TX)
-    % The assembling of the rhs vector for a function-like rhs follows the 
+    % The assembling of the rhs vector for a function-like rhs follows the
     % same procedure as assembling the mass matrix.
     % I.e. the numerical evaluation of an integral over the single
     % elements/cells is required, whereas the product of the basis
     % functions with a function (describing the source) forms the integral
     % kernel.
-    
+
     % Get common sizes.
     n_cell = fe.sizes.cell;
     n_DOF_glob = fe.sizes.DOF;
     n_entry_loc = fe.sizes.DOF_loc;
-    
+
     % Extract quadrature info from struct.
     gauss_cords = fe.quad.nodes;
     gauss_weights = num2cell(fe.quad.weights.');
-        
+
     % Initialize index and value vector for sparse matrix assembling.
     [i, s] = deal(zeros(n_cell * n_entry_loc, 1));
-    
+
     % Set up recurring quantity.
     % Get basis functions for all quadrature nodes referred to
     % the reference simplex.
     basis_eval = arrayfun(@(x,y) {fe.base.Phi(x, y)}, ...
         gauss_cords(:,1), gauss_cords(:,2)).';
-        
+
     % Iterate over all simplices.
     for ii = 1:n_cell
-        
+
         % Get reference/source function for all quadrature nodes in simplex
         % w.r.t. to the global coordinate system.
         coord_ref = bsxfun(@plus, mesh.maps{ii}.B * gauss_cords.', mesh.maps{ii}.b);
         fun_eval = arrayfun(@(x, y) {TX.ref_sol.f(x, y)}, ...
                 coord_ref(1,:), coord_ref(2,:));
-            
+
         % Set up kernel for integral (quadrature summation).
         % By multiplying the vector of basis functions with the
         % reference/source function.
         quad_kern = cellfun(@(x, y, z) {x * (y * z)}, ...
             basis_eval, fun_eval, gauss_weights);
-        
-        % Evaluate numerical integration and incorporate the norm of the 
-        % Jacobi-determinat due to mapping back from reference simplex to 
+
+        % Evaluate numerical integration and incorporate the norm of the
+        % Jacobi-determinat due to mapping back from reference simplex to
         % global coordinates.
         m_loc = abs(mesh.maps{ii}.detB) * sum(cat(3, quad_kern{:}), 3);
-                  
+
         % Fill up index and value vectors.
         i_loc = fe.DOF_maps.cell2DOF{ii};
         glob_idx_start = ((ii-1) * n_entry_loc) + 1;
@@ -212,7 +212,7 @@ function b = getFunctionRHS(fe, mesh, TX)
         i(glob_idx_start:glob_idx_end) = i_loc(:);
         s(glob_idx_start:glob_idx_end) = m_loc(:);
     end
-    
+
     % Create sparse rhs vector.
     b = sparse(i, 1, s, n_DOF_glob, 1);
 end

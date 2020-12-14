@@ -1,9 +1,9 @@
 function DtN_fun = getD2NBCVals(TX)
     % Get kernel value handle for Dirichlet-to-Neumann operator.
     %
-    % The idea is to formulate a mixed / Robin BC exploiting the known 
+    % The idea is to formulate a mixed / Robin BC exploiting the known
     % behavior of a electrode on top of a half-space.
-    % 
+    %
     % u_ref(x,y)   = I / (pi * sigma) * K_0(k, r)
     % Grad_(u_ref) = - I / (pi * sigma) * k * K_1(k, r) * ((x, y) - TX) / r]
     % Grad_(u_ref) = - [((x, y) - TX) * k / r * K_1(k, r) / K_0(k, r)] * u_ref
@@ -34,7 +34,7 @@ function DtN_fun = getD2NBCVals(TX)
     %   k  ... Scalar, wavenumber.
     %
     % OUTPUT PARAMETER
-    %   DtN_fun ... Struct, containing function handle and quadrature order.          
+    %   DtN_fun ... Struct, containing function handle and quadrature order.
     %
     % REMARKS
     % See Dey & Morrision, 1979
@@ -46,12 +46,12 @@ function DtN_fun = getD2NBCVals(TX)
 
     % Check input.
     assert(isvector(TX), 'Only single source position supported.');
-    
+
     % Set handles.
     r = @(x, y) sqrt((x - TX(1))^2 + (y - TX(2))^2);
     % Note: DtN_fun is set as an factory function, such that the parameter
     % k can be modified on demand.
-    % I.e. the entire expression does not have to be fully defined 
+    % I.e. the entire expression does not have to be fully defined
     % in the DRIVE_ script but can rather be passed as a kind of template
     % to assembleDC25D.m and treatBC.m.
     % Therein, the wavenumber is finally set.
@@ -68,9 +68,8 @@ end
 function kernel = getBesselKernel(k, r)
     % Evaluate ratio.
     kernel = besselk(1, k * r) / besselk(0, k * r);
-    
+
     % Handle NaN.
-    % TODO: fix - is that a hack or legit?
     if isnan(kernel)
         kernel = 1;
     end

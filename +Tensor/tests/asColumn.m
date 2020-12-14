@@ -22,6 +22,6 @@ function x = asColumn(x)
     %   direct reshaping of a function's return value.
     %
     % See also asRow.
-    
+
     x = reshape(x, numel(x), 1);
 end

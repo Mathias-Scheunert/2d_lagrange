@@ -13,8 +13,8 @@ function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
     %   verbosity ... Logical, denoting if verbose output is desired.
     %
     % OUTPUT PARAMETER
-    %   mesh ... Struct, containing vertex2coordinates (vertices), 
-    %            simplex2vertex (cell2vtx), and simplex parameter domains 
+    %   mesh ... Struct, containing vertex2coordinates (vertices),
+    %            simplex2vertex (cell2vtx), and simplex parameter domains
     %            (parameter_domains).
     %
     % REMARKS
@@ -29,30 +29,30 @@ function mesh = createUnitCubeMesh(bnd, divisions, verbosity)
     %
     % COPYRIGHT
     %   Code originally written by Jan Blechta (CurlCurl-Toolbox).
-    
+
     %% Check input.
-    
+
     assert(isvector(bnd) && length(bnd) == 4, ...
         'bnd - Vector [4 x 1] denoting the domain boundaries, expected.');
     assert(isvector(divisions) && length(divisions) == 2, ...
         ['divisions - Vector [2 x 1] denoting the number of divisions ', ...
         'along axes, expected.']);
-    
+
     if nargin < 3
         verbosity = false;
     else
         assert(islogical(verbosity), ...
-            'verbosity - Logical, denoting if verbose output is desired, expected.');        
+            'verbosity - Logical, denoting if verbose output is desired, expected.');
     end
-    
+
     %% Create mesh.
-    
+
     if verbosity
-       fprintf('Create basic mesh ... '); 
+       fprintf('Create basic mesh ... ');
     end
 
     mesh = generate_unit_2cube_mesh(bnd, divisions(1), divisions(2));
-    
+
     if verbosity
        fprintf('done.\n');
     end
@@ -63,7 +63,7 @@ function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
     if nx == 0
         nx = 1;
     end
-    if ny == 0 
+    if ny == 0
         ny = 1;
     end
 
@@ -95,7 +95,7 @@ function mesh = generate_unit_2cube_mesh(bnd, nx, ny)
     mesh = struct();
     mesh.type = 'cube';
     mesh.bnd = bnd;
-    mesh.dim = 2;    
+    mesh.dim = 2;
     mesh.vertices = vertex_coords.';
     mesh.cell2vtx = cells.';
     mesh.parameter_domain = ones(size(mesh.cell2vtx, 1), 1);

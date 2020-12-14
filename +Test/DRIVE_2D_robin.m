@@ -1,7 +1,7 @@
 % Script for solving 2D Laplace problem for manufactured solution.
 %
 % Coordinate system (Kartesian):
-%  0,0 ------> 
+%  0,0 ------>
 %      |      x
 %      |
 %      |
@@ -38,7 +38,7 @@ mesh_type = 'disc';
 % Set up boundary conditions.
 % Note: ymin denotes earth's surface.
 bnd.type = {'dtn', 'neumann'};
-%         ymin       ymax       xmin       xmax 
+%         ymin       ymax       xmin       xmax
 % @(x, n) 1/pi
 dtn_fun = struct();
 dtn_fun.f = @(k) @(x, y, n) 1/pi;

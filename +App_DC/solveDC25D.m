@@ -5,11 +5,11 @@ function u = solveDC25D(fe, sol, FT, verbosity)
     %   u = solveDC25D(fe, sol, FT, verbosity)
     %
     % INPUT PARAMETER
-    %   fe  ... Struct, including all information to set up Lagrange 
+    %   fe  ... Struct, including all information to set up Lagrange
     %           FE, as well as the linear system components.
     %   sol ... Cell [n x 1] of structs for the n wavenumbers.
-    %           Each containing the information of the DC problem to be 
-    %           solved numerically, i.e. rhs vector, system matrix, 
+    %           Each containing the information of the DC problem to be
+    %           solved numerically, i.e. rhs vector, system matrix,
     %           interpolation operator.
     %   FT  ... Struct, containing the weights and or nodes and the
     %           quadrature type for inverse spatial FT.
@@ -20,9 +20,9 @@ function u = solveDC25D(fe, sol, FT, verbosity)
     %
     % OUTPUT PARAMETER
     %   u ... Solution vector for 2.5D DC Lagrange FE problem.
-    
+
     %% Check input.
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
     assert(iscell(sol), ...
@@ -35,24 +35,24 @@ function u = solveDC25D(fe, sol, FT, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     %% Solve fwd problems.
 
     if verbosity
-        fprintf('Solve linear systems for all wavenumbers ... '); 
+        fprintf('Solve linear systems for all wavenumbers ... ');
     end
     u_2D = cell(FT.n, 1);
     for jj = 1:(FT.n)
         u_2D{jj} = FeL.solveFwd(sol{jj}, fe);
     end
     if verbosity
-        fprintf('done.\n'); 
+        fprintf('done.\n');
     end
-    
+
     %% Apply numerical integration over wavenumber domain.
-    
+
     if verbosity
-        fprintf('Apply integration over wavenumber domain ... '); 
+        fprintf('Apply integration over wavenumber domain ... ');
     end
     switch FT.type
         case {'Boerner', 'Xu'}
@@ -60,8 +60,8 @@ function u = solveDC25D(fe, sol, FT, verbosity)
             u = cellfun(@(x, y) {x * y}, u_2D, num2cell(FT.w));
 
             % Sum up solutions (apply quadrature).
-            u = (2 / pi) .* sum(cat(3, u{:}), 3);
-            
+            u = (1 / pi) .* sum(cat(3, u{:}), 3);
+
         case 'Bing'
             % Sum up solutions (apply quadrature).
             u_rect = (2  * FT.k(1) / pi) * u_2D{1};

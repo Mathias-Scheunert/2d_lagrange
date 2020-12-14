@@ -2,7 +2,7 @@ function mesh = appendBndInfo(mesh)
     % Append assignment of boundary edges.
     %
     % Do NOT call this function during/after Mesh.refineMeshUniform().
-    % 
+    %
     % SYNTAX
     %   mesh = appendBndInfo(mesh)
     %
@@ -17,10 +17,10 @@ function mesh = appendBndInfo(mesh)
     %            information.
 
     %% Check input.
-    
+
     assert(isstruct(mesh) && all(isfield(mesh, {'edge2cord'})), ...
         'mesh - appended struct expected as input paramerter.');
-    
+
     % Check if function was called during refinement of gmsh.
     if any(strcmp(mesh.type, {'gmsh_create', 'gmsh_load'}))
         if ~isfield(mesh, 'gmsh_bnd_edge2total_edge') || ...
@@ -28,9 +28,9 @@ function mesh = appendBndInfo(mesh)
             return;
         end
     end
-    
+
     %% Add or handle bnd edge identifier.
-    
+
     switch mesh.type
         case {'cube'}
             % Get indices from domain boundaries.
@@ -39,7 +39,7 @@ function mesh = appendBndInfo(mesh)
             bnd_ymin = cellfun(@(x) all(x(:,2) == mesh.bnd(3)), mesh.edge2cord);
             bnd_ymax = cellfun(@(x) all(x(:,2) == mesh.bnd(4)), mesh.edge2cord);
             mesh.bnd_edge = bnd_ymin | bnd_ymax | bnd_xmin | bnd_xmax;
-            
+
             % Summarize.
             mesh.bnd_edge_part_name = {'xmin', 'xmax', 'ymin', 'ymax'};
             mesh.bnd_edge_part = [bnd_xmin, bnd_xmax, bnd_ymin, bnd_ymax] * ...
@@ -53,16 +53,16 @@ function mesh = appendBndInfo(mesh)
             bnd_rmax = cellfun(@(x) all(r_fun(x(:, 1), x(:,2)) > 1-tol), ...
                                         mesh.edge2cord);
             mesh.bnd_edge = bnd_ymin | bnd_rmax;
-            
+
             % Summarize.
             mesh.bnd_edge_part_name = {'surface', 'subsurface'};
             mesh.bnd_edge_part = [bnd_ymin, bnd_rmax] * ...
                                    (1:length(mesh.bnd_edge_part_name)).';
-            
+
         case {'gmsh_create', 'gmsh_load'}
             % Nothing to do, as these information are already part of the
             % imported mesh.
-            
+
         otherwise
             error('Unkown mesh type');
     end

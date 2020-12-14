@@ -3,7 +3,7 @@
 % Problem in 3D:
 %      x = [x, y, z]
 %   \phi = \phi(x)
-%           
+%
 %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
 %                       \phi = 0             at d_Omega_1 (earth interior)
 %               d_\phi / d_n = 0             at d_Omega_2 (surface)
@@ -28,7 +28,7 @@
 %   \phi = \sum_{l = 1}^{N} w_l \phi'(k_{z,l})
 %
 % Coordinate system (Kartesian):
-%  0,0 ------> 
+%  0,0 ------>
 %      |      x
 %      |
 %      |
@@ -37,15 +37,15 @@
 %
 % REMARKS
 %   The 2.5D approach uses the bahavior of a known analytic solution
-%   (e.g. point source in 3D half-space) to set up the numerical 
-%   integration of the seperate 2D solutions (including choice of 
+%   (e.g. point source in 3D half-space) to set up the numerical
+%   integration of the seperate 2D solutions (including choice of
 %   wavenumbers and weights) which forms the 2.5D solution.
-%   This can only act as an approximation for the solution of an arbitrary 
+%   This can only act as an approximation for the solution of an arbitrary
 %   shaped underground!
 %   -> I.e. the solutions should be veryfied by comparing them to a full 3D
 %   simulation.
-%   Furthermore, this implies that only one single point source can be 
-%   treated by this approach such that multi-pole arrangements have to be 
+%   Furthermore, this implies that only one single point source can be
+%   treated by this approach such that multi-pole arrangements have to be
 %   simulated by adding up solutions for several sources.
 %
 %   2.5D approach derived from:    Dey A., Morrison H.F.; 1979
@@ -72,7 +72,7 @@ TX.coo = [1, 1];
 TX.val = 1;
 RX.coo = [0, 0; 0, 5];
 
-% Define mesh.       
+% Define mesh.
 mesh_type = 'gmsh_load';
 file_name = [pwd, '/+Test/', '2D_circ_complex.msh'];
 
@@ -107,9 +107,9 @@ fwd_params.ref = refinement;
 fwd_params.param = params;
 clear('TX', 'RX', 'bnd', 'FT_type', 'FE_order', ...
       'refinement', 'param');
-  
+
 %% Set up mesh.
-    
+
 mesh = Mesh.initMesh(mesh_type, ...
     'name', file_name, ...
     'ref', fwd_params.ref, ...

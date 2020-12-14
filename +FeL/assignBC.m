@@ -24,13 +24,13 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
     %   Three types of given bnd information for the sides of a predefined
     %   mesh can be handled:
     %       scalar          - consant value is set on every edge DOF
-    %       vector          - each element is assigned to the respective 
+    %       vector          - each element is assigned to the respective
     %                         edge DOF
-    %       function handle - the value is calculated from the @fun... for 
+    %       function handle - the value is calculated from the @fun... for
     %                         (the coordinate of) each edge DOF
 
     %% Check input.
-    
+
     assert(isstruct(fe) && all(isfield(fe, {'order', 'sizes'})), ...
         'fe - struct, including all information of FE linear system, expected.');
     assert(isstruct(mesh) && all(isfield(mesh, {'vertices', 'edge2vtx', 'bnd_edge'})), ...
@@ -45,16 +45,16 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     %% Get or load bnd DOF.
-    
+
     if verbosity
-       fprintf('Get or load bnd DOFs ... '); 
+       fprintf('Get or load bnd DOFs ... ');
     end
-    
+
     % Appand bndDOF information.
     switch mesh.type
-        case {'cube', 'disc', 'gmsh_create', 'gmsh_load'}          
+        case {'cube', 'disc', 'gmsh_create', 'gmsh_load'}
             if ~isfield(bnd, 'bndDOF')
                 bnd = FeL.getBndDOF(fe, mesh, bnd);
             end
@@ -62,15 +62,15 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
             error('BC handling only supported for known mesh types.');
     end
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
-    
+
     %% Assign values for bnd DOFs.
-    
+
     if verbosity
-       fprintf('Assign or load bnd DOF values ... '); 
+       fprintf('Assign or load bnd DOF values ... ');
     end
-    
+
     % Check if every domain boundary will be handled.
     check_BC = cell2mat(cellfun(@(cur_val) ...
         {cellfun(@(x) ~isempty(x), cur_val)}, bnd.val));
@@ -152,13 +152,13 @@ function bnd = assignBC(bnd, fe, mesh, param, verbosity)
                 error('Bnd type: "%s" not supported yet.', bnd.type{ii});
         end
     end
-    
+
     % Add parameter info (required in case of inhomogeneous Neumann BC).
     if any(strcmp(bnd.type, 'neumann'))
-       bnd.param = param; 
+       bnd.param = param;
     end
-    
+
     if verbosity
-       fprintf('done.\n'); 
+       fprintf('done.\n');
     end
 end

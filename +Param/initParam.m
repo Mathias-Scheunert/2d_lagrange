@@ -1,6 +1,6 @@
 function param = initParam(mesh, info)
     % Creates a parameter vector living on provided mesh.
-    % 
+    %
     % SYNTAX
     %   param = initParam(mesh, info)
     %
@@ -8,14 +8,14 @@ function param = initParam(mesh, info)
     %   mesh ... Struct, containing the mesh information.
     %            For a detailed description of the content of the mesh
     %            struct please read header of Mesh.initMesh.
-    %   info ... Struct, containing initial parameter name (Cell) and its 
+    %   info ... Struct, containing initial parameter name (Cell) and its
     %            conductivity value (Vector).
     %
     % OUTPUT PARAMETER
     %   param ... Vector [m x 1] of constant cell parameter values.
-    
+
     %% Check input.
-    
+
     assert(isstruct(mesh) && all(isfield(mesh, ...
             {'parameter_domain', 'parameter_domain_name'})), ...
         'mesh - Struct, including parameter domain mapping information, expected.');
@@ -43,10 +43,10 @@ function param = initParam(mesh, info)
     end
 
     %% Map parameter domains to parameter vector.
-    
+
     % Get assingement.
     [~, name_at_input] = ismember(mesh.parameter_domain_name, info.name);
-    
+
     % Map parameter values to domain parts.
     domain2idx = mesh.parameter_domain == unique(mesh.parameter_domain).';
     param = domain2idx * info.val(name_at_input).';

@@ -10,7 +10,7 @@
 %   f(v)   = \int_Omega f v
 %
 % Galerkin discretization:
-%   \sum_i^num(DOF) u_i \int_Omega \grad(u_i) * \sigma(x,y) \grad(v_j) d(x,y) 
+%   \sum_i^num(DOF) u_i \int_Omega \grad(u_i) * \sigma(x,y) \grad(v_j) d(x,y)
 % forall
 %   j = 1:num(DOF)
 
@@ -28,7 +28,7 @@ if debuging
     profile on
 end
 if verbosity
-   fprintf('2D Laplace/Poisson problem\n'); 
+   fprintf('2D Laplace/Poisson problem\n');
 end
 
 % Define (geometry) scaling factor.
@@ -53,11 +53,11 @@ RX = scale * RX;
 % Define source point and strength.
 [TXp, TXd, TXq, TXh] = deal(struct());
 TXp.type = 'point_exact';
-TXp.coo = scale * pick(1, [0, -1], [0, 0]); 
+TXp.coo = scale * pick(1, [0, -1], [0, 0]);
 % Note: source AT bnd only reasonable with h. N-BC
 TXp.val = 1;                  % discrete    Poisson problem (pole)
 TXd.type = 'point_exact';
-TXd.coo = scale * pick(1, [.8, .95; -0.02, -0.02], [-0.5, -0.5; 0.5,  0.5]);             
+TXd.coo = scale * pick(1, [.8, .95; -0.02, -0.02], [-0.5, -0.5; 0.5,  0.5]);
 TXd.val = [-1, 1];            % discrete    Poisson problem (dipole)
 TXq.type = 'point_approx';
 TXq.coo = scale * [0.5, 0.5; -0.5, -0.5; -0.5, 0.5; 0.5, -0.5];
@@ -92,7 +92,7 @@ bnd_mix.val = {{   0;  0;  [];   0}, ...   % 1 for Dirichlet
                {  [];  [];  0; []}}; ...  % 2 for Neumann
 bnd_mix.name = {'xmin', 'xmax', 'ymin', 'ymax'};
 bnd_mix.quad_ord = 1;
-%                 1      2        3      
+%                 1      2        3
 bnd = pick(3, bnd_N, bnd_D, bnd_mix);
 
 % Choose basic grid type.
@@ -117,7 +117,7 @@ if verbosity
    fprintf(sprintf('- use oder "%d" Lagrange elements\n', order));
 end
 if verbosity
-   fprintf('... FE-FWP set up.\n \n'); 
+   fprintf('... FE-FWP set up.\n \n');
 end
 
 %% Set up mesh.
@@ -170,7 +170,7 @@ sol.b = FeL.assembleRHS(fe, mesh, TX, verbosity);
 % Handle boundary conditions.
 sol = FeL.treatBC(fe, mesh, sol, bnd, verbosity);
 if verbosity
-   fprintf('... Linear system and BC set up.\n \n'); 
+   fprintf('... Linear system and BC set up.\n \n');
 end
 
 %% Solve fwd problem.

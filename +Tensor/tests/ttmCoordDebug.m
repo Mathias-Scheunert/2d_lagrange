@@ -1,13 +1,13 @@
 function [res_i, res_v, used] = ttmCoordDebug(ten_i, ten_m, ten_v, mat_i, mat_j, mat_m, mat_v, dim, sz, mat_sz)
     % TODO: Help.
-    
+
     % Debug version ('ttmCoordCount' & 'ttmCoordApply') to be inserted in
     % 'Tensor3Coord.ttm'.
     %{
     [res_i, res_v, used] = ttmCoordDebug(...
         ten_i, ten_m, ten_v, mat_i, mat_j, mat_m, mat_v, dim, sz, mat_sz);
     %}
-    
+
     used_sz = [sz(1:dim - 1), mat_sz, sz(dim + 1:3)];
     used = false(used_sz);
     res_i = zeros(0, 3);

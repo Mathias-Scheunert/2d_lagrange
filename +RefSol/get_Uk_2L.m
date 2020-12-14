@@ -1,6 +1,6 @@
 function Uk = get_Uk_2L(k, rTXRX, h, I, rho1, rho2)
     % Calculates the line source 2D DC potential for a 2-layered earth.
-    % 
+    %
     % SYNTAX
     %   Uk = get_Uk_2L(k, rTXRX, h, I, rho1, rho2)
     %
@@ -16,14 +16,14 @@ function Uk = get_Uk_2L(k, rTXRX, h, I, rho1, rho2)
     % COPYRIGHT
     %
     %   Function originally introduced by Z.Bing, 1998, Dissertation.
-    
+
     % Fetch infos.
     n_r = length(rTXRX);
     n_k = length(k);
-    
+
     % Set reflection coefficient.
     R12 = (rho2 - rho1) / (rho2 + rho1);
-    
+
     % Calculate Uk.
     Uk = zeros(n_r, n_k);
     for ii = 1:n_k
@@ -39,7 +39,7 @@ function sum = get_summation(h, k, rTXRX, R12)
     max_iter = 1000;
     sum = R12 * besselk(0, k * sqrt(rTXRX.^2 + (2*h)^2)); % initial summand
     tol = 1e-5 * norm(sum);
-    
+
     % Loop until convergence is reached.
     for ii = 2:max_iter
        sum_add = R12^ii * besselk(0, k * sqrt(rTXRX.^2 + (2*ii*h)^2));

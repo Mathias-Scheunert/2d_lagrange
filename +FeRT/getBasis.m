@@ -5,15 +5,15 @@ function base = getBasis()
     %   base = getBasis()
     %
     % OUTPUT PARAMETER
-    %   base ... Struct, including the function handles to the basis 
+    %   base ... Struct, including the function handles to the basis
     %            functions and their divergence.
-        
+
     %% Get function and divergence.
-        
+
     % Set up struct.
     base = struct();
     base.name = 'Raviart-Thomas';
-    
+
     % Define basis functions.
     % TODO: Debug! Check if sqrt(2) has to be added to [x_hat; y_hat].
     % -> I.g. Ensures the normal component of the function to have norm=1,
@@ -36,7 +36,7 @@ function base = getBasis()
     base.DOF = [0.5, 0;
                 0.5, 0.5;
                 0,   0.5];
-    
+
     % Set local DOF direction (normal vector).
     base.DOF_normals = [[0, -1];
                         [1,  1] / sqrt(2);

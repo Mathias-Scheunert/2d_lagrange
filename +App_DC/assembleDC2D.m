@@ -4,7 +4,7 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     % Problem in 2D:
     %      x = [x, y]
     %   \phi = \phi(x)
-    %           
+    %
     %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
     %                       \phi = phi_1         at d_Omega_1 (left)
     %                       \phi = phi_2         at d_Omega_2 (right)
@@ -32,12 +32,12 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
     % OUTPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
     %   sol   ... Cell [n x 1] of structs for the n wavenumbers.
-    %             Each containing the information of the DC problem to be 
-    %             solved numerically, i.e. rhs vector, system matrix, 
+    %             Each containing the information of the DC problem to be
+    %             solved numerically, i.e. rhs vector, system matrix,
     %             interpolation operator.
-    
+
     %% Check input.
-    
+
     assert(isstruct(mesh) && all(isfield(mesh, {'cell2vtx', 'edge2vtx'})), ...
         'mesh - appended struct, including edge and mapping information, expected.');
     assert(isstruct(fwd_params) && all(isfield(fwd_params, ...
@@ -52,15 +52,15 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
         assert(islogical(verbosity), ...
             'verbosity - logical, denoting if status should be printed, expected');
     end
-    
+
     % Exclude info.
     RX = fwd_params.RX;
     TX = fwd_params.TX;
     bnd = fwd_params.bnd;
     order = fwd_params.FE_order;
-    
+
     %% Set up FE structure.
-    
+
     fe = FeL.initFiniteElement(order, mesh, RX.coo, verbosity);
     bnd = FeL.assignBC(bnd, fe, mesh, param);
 
@@ -71,7 +71,7 @@ function [fe, sol] = assembleDC2D(mesh, param, fwd_params, verbosity)
 
     % Set up invariant system matrix parts.
     sol.A = FeL.assembleStiff(fe, mesh, param, verbosity);
-    
+
     % Handle BC.
     sol = FeL.treatBC(fe, mesh, sol, bnd);
 

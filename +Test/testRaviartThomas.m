@@ -5,26 +5,26 @@ classdef testRaviartThomas < matlab.unittest.TestCase
     %   runtests('Test.testRaviartThomas')
 
     properties (TestParameter)
-               
+
         factory = {[]};
     end
 
     methods (Test)
-        
+
         function Basis(~)
             % Tests on basis (function) definitions.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
         function Assembling(~)
             % Tests on assembling of mass and divergence matrix.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
         function Mapping(~)
             % Tests on DOF mapping.
-            % TODO: implement. 
+            % TODO: implement.
         end
-        
+
     end
 end

@@ -1,13 +1,13 @@
 % Script for setting up the 2D DC problem.
 %
 % Considered is a homogenous electrical background field in a rectangular
-% domain including a infinit long conductive cylinder, perpendicular to 
+% domain including a infinit long conductive cylinder, perpendicular to
 % the E-field.
 %
 % Problem in 2D.
 %      x = [x, y]
 %   \phi = \phi(x)
-%           
+%
 %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
 %                       \phi = phi_1         at d_Omega_1 (left)
 %                       \phi = phi_2         at d_Omega_2 (right)
@@ -19,7 +19,7 @@
 %   f(v)   = 0
 %
 % Coordinate system (Kartesian):
-%  0,0 ------> 
+%  0,0 ------>
 %      |      x
 %      |
 %      |
@@ -84,7 +84,7 @@ fwd_params.RX = RX;
 fwd_params.bnd = bnd;
 fwd_params.FE_order = FE_order;
 clear('TX', 'RX', 'bnd', 'FE_order');
-  
+
 %% Assemble 2D DC problem.
 
 [fe, sol] = App_DC.assembleDC2D(mesh, param, fwd_params, verbosity);

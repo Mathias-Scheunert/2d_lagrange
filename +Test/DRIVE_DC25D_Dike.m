@@ -3,7 +3,7 @@
 % Problem in 3D:
 %      x = [x, y, z]
 %   \phi = \phi(x)
-%           
+%
 %   -\div(\sigma\grad(\phi)) = I \dirac(x_0) in Omega
 %                       \phi = 0             at d_Omega_1 (earth interior)
 %               d_\phi / d_n = 0             at d_Omega_2 (surface)
@@ -12,12 +12,12 @@
 %       x = [x, y]
 %   \phi' = \phi'(x, k_Z)
 %
-%   -\div(\sigma\grad(\phi')) + k_z^2 \sigma \phi' = I/2 \dirac(x_0)
+%   -\div(\sigma\grad(\phi')) + k_z^2 \sigma \phi' = I \dirac(x_0)
 %                    \phi' = 0             at d_Omega_1 (earth interior)
 %            d_\phi' / d_n = 0             at d_Omega_2 (surface)
 %
 % such that
-%    \phi = 2/pi \int_{0}^{\inf} \phi' dk_z
+%    \phi = 1/pi \int_{0}^{\inf} \phi' dk_z
 %
 % 2.5D Variational problem:
 %   a(u,v,k_z) = \int_Omega \grad(\phi') * \sigma \grad(v) + ...
@@ -28,7 +28,7 @@
 %   \phi = \sum_{l = 1}^{N} w_l \phi'(k_{z,l})
 %
 % Coordinate system (Kartesian):
-%  0,0 ------> 
+%  0,0 ------>
 %      |      x
 %      |
 %      |
@@ -37,15 +37,15 @@
 %
 % REMARKS
 %   The 2.5D approach uses the bahavior of a known analytic solution
-%   (e.g. point source in 3D half-space) to set up the numerical 
-%   integration of the seperate 2D solutions (including choice of 
+%   (e.g. point source in 3D half-space) to set up the numerical
+%   integration of the seperate 2D solutions (including choice of
 %   wavenumbers and weights) which forms the 2.5D solution.
-%   This can only act as an approximation for the solution of an arbitrary 
+%   This can only act as an approximation for the solution of an arbitrary
 %   shaped underground!
 %   -> I.e. the solutions should be veryfied by comparing them to a full 3D
 %   simulation.
-%   Furthermore, this implies that only one single point source can be 
-%   treated by this approach such that multi-pole arrangements have to be 
+%   Furthermore, this implies that only one single point source can be
+%   treated by this approach such that multi-pole arrangements have to be
 %   simulated by adding up solutions for several sources.
 %
 %   2.5D approach derived from:    Dey A., Morrison H.F.; 1979
@@ -56,7 +56,7 @@
 %% Set up script.
 
 % Clean up and set verbosity.
-% clean();
+clean();
 warning('on');
 verbosity = pick(2, false, true);
 
@@ -97,7 +97,7 @@ param_info.name = {'left', 'middle', 'right'};
 % Note: ymin denotes earth's surface.
 bnd = struct();
 bnd.type = {'dirichlet', 'neumann'};
-%         ymin ymax  xmin xmax 
+%         ymin ymax  xmin xmax
 bnd.val = {{[];   0;  0;   0}, ...   % 1 for Dirichlet
            {0;  [];   [];  []}}; ... % 2 for Neumann
 bnd.name = {'top', 'bot', 'left', 'right'};
@@ -189,7 +189,7 @@ subplot(2, 1, 2)
 
 %%
 Plot.plotMesh(mesh, param), ylim([-10, 20]), xlim([-20, 60]);
-hold on; 
+hold on;
 plot(RX.coo(:,1), RX.coo(:,2), '*b');
 
 %%
