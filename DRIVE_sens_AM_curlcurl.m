@@ -56,7 +56,7 @@ fprintf('.');
 
 %% Set up mesh.
 
-file_name = 'tmp_mesh_AM';
+file_name = 'tmp_mesh_ABMN';
 system(['gmsh -save ', file_name, '.geo -v 0 -format msh2']);
 mesh_type = 'gmsh_load';
 mesh_2d = Mesh.initMesh(mesh_type, 'name', [file_name, '.msh'], ...

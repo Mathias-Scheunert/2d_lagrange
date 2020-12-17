@@ -114,11 +114,11 @@ function mesh = loadGmsh(name, varargin)
 
     %% Check Gmsh version.
 
-    gmsh_path = dir('**/gmsh');
+    [~, gmsh_path] = system('which gmsh');
     if isempty(gmsh_path)
         error('Gmsh executable could not be found in path.');
     end
-    [~, gmsh_ver] = system([gmsh_path.folder, '/gmsh -version']);
+    [~, gmsh_ver] = system('gmsh -version');
     gmsh_ver = textscan(gmsh_ver, '%s', 'delimiter', '\n', ...
                        'whitespace', '');
     gmsh_ver = gmsh_ver{1}{end};
@@ -138,8 +138,7 @@ function mesh = loadGmsh(name, varargin)
     copyfile(name, name_tmp);
     for i = 1:args.ref
 
-        system([gmsh_path.folder, '/gmsh -refine -format msh2 -v 0 ', ...
-            name_tmp]);
+        system(['gmsh -refine -format msh2 -v 0 ', name_tmp]);
     end
     if args.verbosity && args.ref > 0
        fprintf('done.\n');

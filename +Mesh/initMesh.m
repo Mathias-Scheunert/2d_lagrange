@@ -55,7 +55,7 @@ function mesh = initMesh(var, varargin)
 
     % Define possible input keys and its properties checks.
     input_keys = {'bnd', 'ref', 'TX', 'RX', 'topo', 'dom_name', 'name', ...
-                  'dike', 'verbosity'};
+                  'dike', 'verbosity','anzChecker', 'sizeChecker', 'groupChecker', 'start_Checker', 'ele'};
     assertBnd = @(x) assert(isvector(x) && length(x) == 4 && ...
         x(1) < x(2) && x(3) < x(4), ...
         ['bnd - Vector [1 x 4] denoting the lower and the upper ', ...
@@ -72,10 +72,20 @@ function mesh = initMesh(var, varargin)
         'dike - Vector [1 x 2] of left boundary and width,m expected.');
     assertVerbose = @(x) assert(islogical(x), ...
         'verbosity - logical, denoting if status should be printed, expected');
-
+    assertanzChecker = @(x) assert(isvector(x) && length(x) == 2, ...
+        'anzChecker - Vector [1 x 2] for m x n of Checkerboard expected.');
+    assertsizeChecker = @(x) assert(isvector(x)|| ismatrix(x), ...
+        'sizeChecker - Vector or Matrix .');
+    assertgroupChecker = @(x) assert((isscalar(x) || isvector(x) || ismatrix(x)) && eq(sum(sum(x>1)),0), ...
+        'groupChecker - Scalar,Vector or Matrix only containing 0 and/or 1 expected.');
+    assertstart_Checker = @(x) assert(isscalar(x),  ...
+        'start_Checker - Scalar expected.');
+    assertEle = @(x) assert(isvector(x),  ...
+        'ele - Vector exspected.');
     % Create inputParser object and set possible inputs with defaults.
     parser_obj = inputParser();
-    parser_obj.addParameter(input_keys{1}, [-1, 1, -1, 1], assertBnd);
+    %parser_obj.addParameter(input_keys{1}, [-1, 1, -1, 1], assertBnd);
+    parser_obj.addParameter(input_keys{1}, [], assertBnd);
     parser_obj.addParameter(input_keys{2}, 0, assertRef);
     parser_obj.addParameter(input_keys{3}, [], assertPos);
     parser_obj.addParameter(input_keys{4}, [], assertPos);
@@ -84,6 +94,11 @@ function mesh = initMesh(var, varargin)
     parser_obj.addParameter(input_keys{7}, 'def', assertDomName);
     parser_obj.addParameter(input_keys{8}, [5, 5], assertDike);
     parser_obj.addParameter(input_keys{9}, false, assertVerbose);
+    parser_obj.addParameter(input_keys{10},[1 1], assertanzChecker);
+    parser_obj.addParameter(input_keys{11},[1 1], assertsizeChecker);
+    parser_obj.addParameter(input_keys{12}, 0, assertgroupChecker);
+    parser_obj.addParameter(input_keys{13}, [], assertstart_Checker);
+    parser_obj.addParameter(input_keys{14}, [], assertEle);
 
     % Exctract all properties from inputParser.
     parse(parser_obj, varargin{:});
@@ -94,20 +109,31 @@ function mesh = initMesh(var, varargin)
     switch var
         case 'cube'
             mesh = Mesh.createUnitCubeMesh(args.bnd, [1, 1], args.verbosity);
-        case 'disc'
-            mesh = Mesh.createUnitDiscMesh(args.ref, args.verbosity);
-            args.ref = 0;
         case 'gmsh_dike'
-            mesh = Mesh.createVerticalDikeMesh(args.bnd, args.TX, ...
-                                               args.dike(1), args.dike(2), ...
-                                               args.ref);
+%             mesh = Mesh.NcreateVerticalDikeMesh(args.TX, ...
+%                                                args.dike(1), args.dike(2), ...
+%                                                args.ref);
+               mesh = Mesh.NcreateNCVerticalDikeMesh(args.TX, ...
+                                               args.dike(1), args.dike(2),args.ref);
+        case 'gmsh_homo'
+            mesh = Mesh.createGmshHomo(args.TX, args.RX,args.ref);
+        case 'gmsh_custom_bnd'
+            mesh = Mesh.createGmshBnd(args.bnd, args.TX, args.RX,args.topo,args.dom_name,args);
+            %with distance fields
         case 'gmsh_create'
-            mesh = Mesh.createGmsh(args.bnd, args);
+            mesh = Mesh.createGmsh(args.bnd, args); %no distance fields
         case 'gmsh_load'
             if isempty(args.name)
                 error('Provide file name as an argument for Mesh.initMesh().');
             end
             mesh = Mesh.loadGmsh(args.name, ...
+                'verbosity', args.verbosity, ...
+                'ref', args.ref);
+
+        case 'checkerboard'
+            mesh = Mesh.createChecker(args.anzChecker, args.sizeChecker,args.groupChecker,args.start_Checker, args.ele);
+        case 'gmsh_mesh'
+            mesh = Mesh.meshGeo(args.name, ...
                 'verbosity', args.verbosity, ...
                 'ref', args.ref);
         otherwise
@@ -165,6 +191,7 @@ function mesh = initMesh(var, varargin)
     % Get maps.
     mesh.maps = cellfun(@(x) {Mesh.getAffineMap(x, mesh)}, ...
                     num2cell(1:size(mesh.cell2vtx, 1)).');
+
 
     % Exclude vertex and edge relations.
     mesh.loc2glo = mesh.maps{1}.loc2glo;
