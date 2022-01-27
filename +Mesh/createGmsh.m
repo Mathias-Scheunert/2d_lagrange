@@ -28,13 +28,6 @@ function mesh = createGmsh(bnd, args)
 
     % Not required, as already done in Mesh.initMesh()
 
-    %% Check Gmsh version.
-
-    gmsh_path = dir('**/gmsh');
-    if isempty(gmsh_path)
-        error('Gmsh executable could not be found in path.');
-    end
-
     %% Create Gmsh input file.
 
     gmsh_file = 'tmp_mesh';
@@ -44,8 +37,7 @@ function mesh = createGmsh(bnd, args)
     %% Run Gmsh.
 
     % TODO: if it occurs, catch error (message) and stop.
-    system([gmsh_path.folder, '/gmsh -2 ', ...
-            gmsh_file, '.geo -v 0 -format msh2']);
+    system(['gmsh -2 ', gmsh_file, '.geo -v 0 -format msh2']);
 
     %% Import mesh information from .msh file.
 

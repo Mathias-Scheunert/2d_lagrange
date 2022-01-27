@@ -71,7 +71,7 @@ bc_type = pick(1, 'D_N', 'DtN_N');
 refinement = 1;
 
 % Set order of Lagrange elements.
-FE_order = pick(2, 1, 2);
+FE_order = 1;
 
 % Define type of numerical integration approach.
 FT_type = pick(1, 'Boerner', 'Bing', 'Xu');
@@ -317,7 +317,7 @@ if debugging && ~strcmp(FT_info.type, 'Bing')
     end
 
     % Compare to 2D FE solutions.
-    figure(fig_nun+1)
+    figure(fig_num+1)
     set(gcf, 'Units', 'normalized', 'OuterPosition', [0, 0, 1, 1])
     all_k_idx = 1:ceil(FT_info.n / 7):FT_info.n;
     for kk = 1:length(all_k_idx)
