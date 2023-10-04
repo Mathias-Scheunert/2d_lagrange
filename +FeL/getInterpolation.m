@@ -2,7 +2,7 @@ function I = getInterpolation(fe, mesh, point)
     % Get map of the DOF to the solution at arbitrary point(s) in the grid.
     %
     % SYNTAX
-    %   I = getInterpolation(fe, point)
+    %   I = getInterpolation(fe, mesh, point)
     %
     % INPUT PARAMETER
     %   fe    ... Struct, including all information to set up Lagrange FE.
