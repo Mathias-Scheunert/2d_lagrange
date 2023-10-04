@@ -1,6 +1,6 @@
 # Install
 
-- clone the repository: `git clone git@git.tu-freiberg.de:ng/2d-lagrange.git`
+- clone the repository: `git@github.com:Mathias-Scheunert/2d_lagrange.git`
 - get the Gmsh executable binary from [(Gmsh)](http://gmsh.info/#Download) and copy the file somewhere to your repo, e.g. `<repo_path>/+Mesh/`
 
 Note that the code was developed at MATLAB 2017b on an Ubuntu 16.04.1 using Gmsh 3.0.6.
@@ -16,7 +16,6 @@ The motivation for this repo was to get familar with the (implementation of the)
 <br/>
 Hence, it provides only the basic functionality which can be extended ad libitum.
 <br/>
-I used the codestyle, introduced at [(codestyle)](https://git.tu-freiberg.de/ng/toolbox/blob/master/template/codeStyleTemplate.m).
 
 Feel free to use this repo for:
 - teaching
@@ -124,11 +123,7 @@ Most of them are themselves copy&paste from the above mentioned DRIVE_ files.
 
 # License
 
-Copyright 2018 Mathias Scheunert <mathias.scheunert@math.tu-freiberg.de>.
+Copyright 2018 Mathias Scheunert <mathias.scheunert.geophysik@gmail.com>.
 This work is free. You can redistribute it and/or modify it under the terms of the Do What The Fuck You Want To Public License, Version 2, as published by Sam Hocevar.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-# CI
-
-[![pipeline status](https://git.tu-freiberg.de/ng/2d-lagrange/badges/master/pipeline.svg)](https://git.tu-freiberg.de/ng/2d-lagrange/commits/master)
